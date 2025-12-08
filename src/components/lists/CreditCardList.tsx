@@ -1,6 +1,6 @@
 import { CreditCard } from '@/types/budget';
-import { Button } from '@/components/ui/button';
-import { Trash2, CreditCard as CardIcon } from 'lucide-react';
+import { CreditCard as CardIcon } from 'lucide-react';
+import { DeleteConfirmDialog } from '@/components/ui/DeleteConfirmDialog';
 
 interface CreditCardListProps {
   cards: CreditCard[];
@@ -46,14 +46,11 @@ export const CreditCardList = ({ cards, spendByCard, onDelete }: CreditCardListP
                   </p>
                 </div>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => onDelete(card.id)}
-                className="text-muted-foreground hover:text-destructive"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              <DeleteConfirmDialog
+                onConfirm={() => onDelete(card.id)}
+                title="Delete Credit Card"
+                description={`Are you sure you want to delete "${card.name}"? This action cannot be undone.`}
+              />
             </div>
 
             <div className="mt-4">

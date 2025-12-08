@@ -1,6 +1,6 @@
 import { Category } from '@/types/budget';
-import { Button } from '@/components/ui/button';
-import { Trash2, Tag } from 'lucide-react';
+import { Tag } from 'lucide-react';
+import { DeleteConfirmDialog } from '@/components/ui/DeleteConfirmDialog';
 
 interface CategoryListProps {
   categories: Category[];
@@ -30,14 +30,11 @@ export const CategoryList = ({ categories, onDelete }: CategoryListProps) => {
             </div>
             <span className="font-medium">{category.name}</span>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => onDelete(category.id)}
-            className="text-muted-foreground hover:text-destructive"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          <DeleteConfirmDialog
+            onConfirm={() => onDelete(category.id)}
+            title="Delete Category"
+            description={`Are you sure you want to delete "${category.name}"? This action cannot be undone.`}
+          />
         </div>
       ))}
     </div>

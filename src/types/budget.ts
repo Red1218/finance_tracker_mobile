@@ -36,6 +36,7 @@ export interface BudgetData {
   spends: Spend[];
   borrowings: Borrowing[];
   creditCards: CreditCard[];
+  budgetLimit: number;
 }
 
 export const defaultBudgetData: BudgetData = {
@@ -49,6 +50,7 @@ export const defaultBudgetData: BudgetData = {
   spends: [],
   borrowings: [],
   creditCards: [],
+  budgetLimit: 0,
 };
 
 export const paymentMethodLabels: Record<PaymentMethod, string> = {

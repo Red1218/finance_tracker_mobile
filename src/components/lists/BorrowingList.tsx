@@ -1,6 +1,6 @@
 import { Borrowing, borrowingTypeLabels } from '@/types/budget';
-import { Button } from '@/components/ui/button';
-import { Trash2, HandCoins } from 'lucide-react';
+import { HandCoins } from 'lucide-react';
+import { DeleteConfirmDialog } from '@/components/ui/DeleteConfirmDialog';
 
 interface BorrowingListProps {
   borrowings: Borrowing[];
@@ -41,14 +41,11 @@ export const BorrowingList = ({ borrowings, onDelete }: BorrowingListProps) => {
                 <p className="mt-1 text-sm text-muted-foreground">{borrowing.note}</p>
               )}
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onDelete(borrowing.id)}
-              className="text-muted-foreground hover:text-destructive"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            <DeleteConfirmDialog
+              onConfirm={() => onDelete(borrowing.id)}
+              title="Delete Borrowing"
+              description={`Are you sure you want to delete this ₹${borrowing.amount.toLocaleString('en-IN')} borrowing entry? This action cannot be undone.`}
+            />
           </div>
         </div>
       ))}
