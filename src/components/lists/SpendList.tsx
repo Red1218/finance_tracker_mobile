@@ -1,7 +1,7 @@
 import { Spend, Category, CreditCard, paymentMethodLabels } from '@/types/budget';
-import { Button } from '@/components/ui/button';
-import { Trash2, Receipt } from 'lucide-react';
+import { Receipt } from 'lucide-react';
 import { format } from 'date-fns';
+import { DeleteConfirmDialog } from '@/components/ui/DeleteConfirmDialog';
 
 interface SpendListProps {
   spends: Spend[];
@@ -57,14 +57,11 @@ export const SpendList = ({ spends, categories, creditCards, onDelete }: SpendLi
                 <p className="mt-2 text-sm text-muted-foreground">{spend.note}</p>
               )}
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onDelete(spend.id)}
-              className="text-muted-foreground hover:text-destructive"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            <DeleteConfirmDialog
+              onConfirm={() => onDelete(spend.id)}
+              title="Delete Spend"
+              description={`Are you sure you want to delete this ₹${spend.amount.toLocaleString('en-IN')} expense? This action cannot be undone.`}
+            />
           </div>
         </div>
       ))}

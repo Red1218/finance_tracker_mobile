@@ -99,6 +99,11 @@ export const useBudget = () => {
     saveData({ ...data, creditCards: data.creditCards.filter(c => c.id !== id) });
   }, [data, saveData]);
 
+  // Budget Limit
+  const setBudgetLimit = useCallback((limit: number) => {
+    saveData({ ...data, budgetLimit: limit });
+  }, [data, saveData]);
+
   // Calculations
   const totalSpend = data.spends.reduce((sum, s) => sum + s.amount, 0);
   const totalBorrowed = data.borrowings.reduce((sum, b) => sum + b.amount, 0);
@@ -129,6 +134,8 @@ export const useBudget = () => {
     deleteBorrowing,
     addCreditCard,
     deleteCreditCard,
+    setBudgetLimit,
+    budgetLimit: data.budgetLimit,
     totalSpend,
     totalBorrowed,
     spendByCategory,

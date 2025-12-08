@@ -3,6 +3,8 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { MonthSwitcher } from '@/components/dashboard/MonthSwitcher';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { CategoryBreakdown } from '@/components/dashboard/CategoryBreakdown';
+import { BudgetProgress } from '@/components/dashboard/BudgetProgress';
+import { SpendingPieChart } from '@/components/dashboard/SpendingPieChart';
 import { useBudgetContext } from '@/contexts/BudgetContext';
 import { TrendingDown, HandCoins, CreditCard } from 'lucide-react';
 
@@ -14,6 +16,8 @@ const Dashboard = () => {
     totalBorrowed,
     spendByCategory,
     spendByCreditCard,
+    budgetLimit,
+    setBudgetLimit,
   } = useBudgetContext();
 
   const totalCreditSpend = spendByCreditCard.reduce((sum, s) => sum + s.amount, 0);
@@ -29,6 +33,12 @@ const Dashboard = () => {
         <MonthSwitcher 
           currentMonth={currentMonth} 
           onMonthChange={setCurrentMonth} 
+        />
+
+        <BudgetProgress
+          budgetLimit={budgetLimit}
+          totalSpend={totalSpend}
+          onSetLimit={setBudgetLimit}
         />
 
         <div className="grid grid-cols-2 gap-3">
@@ -52,6 +62,10 @@ const Dashboard = () => {
             value={totalCreditSpend}
             icon={<CreditCard className="h-4 w-4" />}
           />
+        )}
+
+        {spendByCategory.length > 0 && (
+          <SpendingPieChart items={spendByCategory} />
         )}
 
         <div>
