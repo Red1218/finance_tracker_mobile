@@ -13,7 +13,7 @@ interface BudgetProgressProps {
 
 export const BudgetProgress = ({ budgetLimit, totalSpend, onSetLimit }: BudgetProgressProps) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [inputValue, setInputValue] = useState(budgetLimit.toString());
+  const [inputValue, setInputValue] = useState((budgetLimit ?? 0).toString());
 
   const percentage = budgetLimit > 0 ? (totalSpend / budgetLimit) * 100 : 0;
   const remaining = budgetLimit - totalSpend;
