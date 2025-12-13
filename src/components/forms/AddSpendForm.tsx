@@ -4,6 +4,16 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Category, CreditCard, PaymentMethod, paymentMethodLabels, Spend } from '@/types/budget';
 import { Plus } from 'lucide-react';
+import { z } from 'zod';
+import { toast } from 'sonner';
+
+const spendSchema = z.object({
+  amount: z.number().positive('Amount must be a positive number').max(100000000, 'Amount is too high'),
+  categoryId: z.string().uuid('Invalid category'),
+  note: z.string().trim().max(500, 'Note must be less than 500 characters').optional(),
+  paymentMethod: z.enum(['cash', 'upi', 'credit', 'debit'] as const),
+  creditCardId: z.string().uuid('Invalid credit card').optional(),
+});
 
 interface AddSpendFormProps {
   categories: Category[];
@@ -20,21 +30,30 @@ export const AddSpendForm = ({ categories, creditCards, onAdd }: AddSpendFormPro
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (amount && categoryId) {
-      onAdd({
-        dateISO: new Date().toISOString(),
-        amount: parseFloat(amount),
-        categoryId,
-        note: note || undefined,
-        paymentMethod,
-        creditCardId: paymentMethod === 'credit' ? creditCardId : undefined,
-      });
-      setAmount('');
-      setCategoryId('');
-      setNote('');
-      setPaymentMethod('cash');
-      setCreditCardId('');
+    const result = spendSchema.safeParse({
+      amount: amount ? parseFloat(amount) : undefined,
+      categoryId,
+      note: note || undefined,
+      paymentMethod,
+      creditCardId: paymentMethod === 'credit' ? creditCardId : undefined,
+    });
+    if (!result.success) {
+      toast.error(result.error.errors[0].message);
+      return;
     }
+    onAdd({
+      dateISO: new Date().toISOString(),
+      amount: result.data.amount,
+      categoryId: result.data.categoryId,
+      note: result.data.note,
+      paymentMethod: result.data.paymentMethod,
+      creditCardId: result.data.creditCardId,
+    });
+    setAmount('');
+    setCategoryId('');
+    setNote('');
+    setPaymentMethod('cash');
+    setCreditCardId('');
   };
 
   return (
@@ -94,6 +113,7 @@ export const AddSpendForm = ({ categories, creditCards, onAdd }: AddSpendFormPro
         placeholder="Note (optional)"
         value={note}
         onChange={(e) => setNote(e.target.value)}
+        maxLength={500}
       />
 
       <Button 

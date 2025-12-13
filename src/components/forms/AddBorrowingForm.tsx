@@ -4,6 +4,15 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BorrowingType, borrowingTypeLabels, Borrowing } from '@/types/budget';
 import { Plus } from 'lucide-react';
+import { z } from 'zod';
+import { toast } from 'sonner';
+
+const borrowingSchema = z.object({
+  type: z.enum(['personal', 'loan_app', 'friend', 'credit_provider', 'other'] as const),
+  amount: z.number().positive('Amount must be a positive number').max(100000000, 'Amount is too high'),
+  from: z.string().trim().min(1, 'Source is required').max(100, 'Source must be less than 100 characters'),
+  note: z.string().trim().max(500, 'Note must be less than 500 characters').optional(),
+});
 
 interface AddBorrowingFormProps {
   onAdd: (borrowing: Omit<Borrowing, 'id'>) => void;
@@ -17,18 +26,26 @@ export const AddBorrowingForm = ({ onAdd }: AddBorrowingFormProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (amount && from) {
-      onAdd({
-        type,
-        amount: parseFloat(amount),
-        from,
-        note: note || undefined,
-      });
-      setAmount('');
-      setFrom('');
-      setNote('');
-      setType('personal');
+    const result = borrowingSchema.safeParse({
+      type,
+      amount: amount ? parseFloat(amount) : undefined,
+      from,
+      note: note || undefined,
+    });
+    if (!result.success) {
+      toast.error(result.error.errors[0].message);
+      return;
     }
+    onAdd({
+      type: result.data.type,
+      amount: result.data.amount,
+      from: result.data.from,
+      note: result.data.note,
+    });
+    setAmount('');
+    setFrom('');
+    setNote('');
+    setType('personal');
   };
 
   return (
@@ -59,6 +76,7 @@ export const AddBorrowingForm = ({ onAdd }: AddBorrowingFormProps) => {
           placeholder="From whom"
           value={from}
           onChange={(e) => setFrom(e.target.value)}
+          maxLength={100}
         />
       </div>
 
@@ -66,6 +84,7 @@ export const AddBorrowingForm = ({ onAdd }: AddBorrowingFormProps) => {
         placeholder="Note (optional)"
         value={note}
         onChange={(e) => setNote(e.target.value)}
+        maxLength={500}
       />
 
       <Button type="submit" className="w-full" disabled={!amount || !from}>
