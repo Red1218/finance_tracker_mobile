@@ -214,6 +214,55 @@ export const useBudget = () => {
     }
   }, [user]);
 
+  const updateSpend = useCallback(async (id: string, spend: Omit<Spend, 'id'>) => {
+    if (!user) return;
+
+    try {
+      const { data: updatedSpend, error } = await supabase
+        .from('spends')
+        .update({
+          amount: spend.amount,
+          category_id: spend.categoryId || null,
+          note: spend.note || null,
+          payment_method: spend.paymentMethod,
+          credit_card_id: spend.creditCardId || null,
+          spend_date: spend.dateISO,
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const mappedSpend: Spend = {
+        id: updatedSpend.id,
+        dateISO: updatedSpend.spend_date,
+        amount: Number(updatedSpend.amount),
+        categoryId: updatedSpend.category_id || '',
+        note: updatedSpend.note || undefined,
+        paymentMethod: updatedSpend.payment_method as PaymentMethod,
+        creditCardId: updatedSpend.credit_card_id || undefined,
+      };
+
+      setData(prev => ({
+        ...prev,
+        spends: prev.spends.map(s => s.id === id ? mappedSpend : s),
+      }));
+
+      toast({
+        title: 'Updated',
+        description: 'Spend updated successfully.',
+      });
+    } catch (error) {
+      console.error('Error updating spend:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update spend.',
+        variant: 'destructive',
+      });
+    }
+  }, [user]);
+
   // Borrowings
   const addBorrowing = useCallback(async (borrowing: Omit<Borrowing, 'id'>) => {
     if (!user) return;
@@ -385,6 +434,7 @@ export const useBudget = () => {
     deleteCategory,
     addSpend,
     deleteSpend,
+    updateSpend,
     addBorrowing,
     deleteBorrowing,
     addCreditCard,
