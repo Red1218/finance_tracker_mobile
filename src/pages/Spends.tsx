@@ -5,7 +5,7 @@ import { SpendList } from '@/components/lists/SpendList';
 import { useBudgetContext } from '@/contexts/BudgetContext';
 
 const Spends = () => {
-  const { data, addSpend, deleteSpend } = useBudgetContext();
+  const { data, addSpend, deleteSpend, updateSpend } = useBudgetContext();
 
   return (
     <Layout>
@@ -24,7 +24,8 @@ const Spends = () => {
           spends={data.spends} 
           categories={data.categories}
           creditCards={data.creditCards}
-          onDelete={deleteSpend} 
+          onDelete={deleteSpend}
+          onUpdate={updateSpend}
         />
       </div>
     </Layout>

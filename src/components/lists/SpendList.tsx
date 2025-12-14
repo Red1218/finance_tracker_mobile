@@ -2,15 +2,17 @@ import { Spend, Category, CreditCard, paymentMethodLabels } from '@/types/budget
 import { Receipt } from 'lucide-react';
 import { format } from 'date-fns';
 import { DeleteConfirmDialog } from '@/components/ui/DeleteConfirmDialog';
+import { EditSpendDialog } from '@/components/forms/EditSpendDialog';
 
 interface SpendListProps {
   spends: Spend[];
   categories: Category[];
   creditCards: CreditCard[];
   onDelete: (id: string) => void;
+  onUpdate: (id: string, spend: Omit<Spend, 'id'>) => void;
 }
 
-export const SpendList = ({ spends, categories, creditCards, onDelete }: SpendListProps) => {
+export const SpendList = ({ spends, categories, creditCards, onDelete, onUpdate }: SpendListProps) => {
   const getCategoryName = (id: string) => {
     return categories.find((c) => c.id === id)?.name || 'Unknown';
   };
@@ -57,11 +59,19 @@ export const SpendList = ({ spends, categories, creditCards, onDelete }: SpendLi
                 <p className="mt-2 text-sm text-muted-foreground">{spend.note}</p>
               )}
             </div>
-            <DeleteConfirmDialog
-              onConfirm={() => onDelete(spend.id)}
-              title="Delete Spend"
-              description={`Are you sure you want to delete this ₹${spend.amount.toLocaleString('en-IN')} expense? This action cannot be undone.`}
-            />
+            <div className="flex items-center gap-1">
+              <EditSpendDialog
+                spend={spend}
+                categories={categories}
+                creditCards={creditCards}
+                onUpdate={onUpdate}
+              />
+              <DeleteConfirmDialog
+                onConfirm={() => onDelete(spend.id)}
+                title="Delete Spend"
+                description={`Are you sure you want to delete this ₹${spend.amount.toLocaleString('en-IN')} expense? This action cannot be undone.`}
+              />
+            </div>
           </div>
         </div>
       ))}

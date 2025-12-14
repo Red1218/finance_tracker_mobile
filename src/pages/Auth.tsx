@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
@@ -21,6 +22,19 @@ const Auth = () => {
   // Login form state
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(() => {
+    return localStorage.getItem('rememberMe') === 'true';
+  });
+
+  // Load saved email on mount if rememberMe was checked
+  useEffect(() => {
+    if (rememberMe) {
+      const savedEmail = localStorage.getItem('savedEmail');
+      if (savedEmail) {
+        setLoginEmail(savedEmail);
+      }
+    }
+  }, []);
 
   // Signup form state
   const [signupEmail, setSignupEmail] = useState('');
@@ -52,6 +66,16 @@ const Auth = () => {
     }
 
     setIsSubmitting(true);
+    
+    // Handle remember me
+    if (rememberMe) {
+      localStorage.setItem('rememberMe', 'true');
+      localStorage.setItem('savedEmail', loginEmail);
+    } else {
+      localStorage.removeItem('rememberMe');
+      localStorage.removeItem('savedEmail');
+    }
+    
     const { error } = await signIn(loginEmail, loginPassword);
     setIsSubmitting(false);
 
@@ -173,6 +197,16 @@ const Auth = () => {
                       onChange={(e) => setLoginPassword(e.target.value)}
                       required
                     />
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="remember-me" 
+                      checked={rememberMe}
+                      onCheckedChange={(checked) => setRememberMe(checked === true)}
+                    />
+                    <Label htmlFor="remember-me" className="text-sm font-normal cursor-pointer">
+                      Remember me
+                    </Label>
                   </div>
                   <Button type="submit" className="w-full" disabled={isSubmitting}>
                     {isSubmitting ? (
