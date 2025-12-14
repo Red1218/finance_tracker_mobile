@@ -5,6 +5,7 @@ import { StatCard } from '@/components/dashboard/StatCard';
 import { CategoryBreakdown } from '@/components/dashboard/CategoryBreakdown';
 import { BudgetProgress } from '@/components/dashboard/BudgetProgress';
 import { SpendingPieChart } from '@/components/dashboard/SpendingPieChart';
+import { DailySpendingList } from '@/components/dashboard/DailySpendingList';
 import { useBudgetContext } from '@/contexts/BudgetContext';
 import { TrendingDown, HandCoins, CreditCard } from 'lucide-react';
 
@@ -18,6 +19,7 @@ const Dashboard = () => {
     spendByCreditCard,
     budgetLimit,
     setBudgetLimit,
+    data,
   } = useBudgetContext();
 
   const totalCreditSpend = spendByCreditCard.reduce((sum, s) => sum + s.amount, 0);
@@ -73,6 +75,13 @@ const Dashboard = () => {
             Spending by Category
           </h2>
           <CategoryBreakdown items={spendByCategory} totalSpend={totalSpend} />
+        </div>
+
+        <div>
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+            Day by Day
+          </h2>
+          <DailySpendingList spends={data.spends} categories={data.categories} />
         </div>
       </div>
     </Layout>
