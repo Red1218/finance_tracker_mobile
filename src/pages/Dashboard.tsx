@@ -34,11 +34,6 @@ const Dashboard = () => {
       />
 
       <div className="space-y-6">
-        <MonthSwitcher 
-          currentMonth={currentMonth} 
-          onMonthChange={setCurrentMonth} 
-        />
-
         <BudgetProgress
           budgetLimit={budgetLimit}
           totalSpend={totalSpend}
