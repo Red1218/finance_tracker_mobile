@@ -8,8 +8,7 @@ import { BudgetProvider } from "@/contexts/BudgetContext";
 import Index from "./pages/Index";
 import Categories from "./pages/Categories";
 import Spends from "./pages/Spends";
-import CreditCards from "./pages/CreditCards";
-import Borrowed from "./pages/Borrowed";
+import FinancesPage from "./pages/FinancesPage";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
@@ -62,21 +61,16 @@ const AppRoutes = () => (
       }
     />
     <Route
-      path="/cards"
+      path="/finances"
       element={
         <ProtectedRoute>
-          <CreditCards />
+          <FinancesPage />
         </ProtectedRoute>
       }
     />
-    <Route
-      path="/borrowed"
-      element={
-        <ProtectedRoute>
-          <Borrowed />
-        </ProtectedRoute>
-      }
-    />
+    {/* Redirect old routes to new finances page */}
+    <Route path="/cards" element={<Navigate to="/finances" replace />} />
+    <Route path="/borrowed" element={<Navigate to="/finances" replace />} />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );
