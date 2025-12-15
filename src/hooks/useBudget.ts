@@ -54,7 +54,7 @@ export const useBudget = () => {
       const creditCards: CreditCard[] = (creditCardsRes.data || []).map(c => ({
         id: c.id,
         name: c.name,
-        limit: 0, // We don't have limit in DB
+        limit: Number((c as any).credit_limit) || 0,
       }));
 
       const spends: Spend[] = (spendsRes.data || []).map(s => ({
@@ -335,6 +335,7 @@ export const useBudget = () => {
         .insert({
           user_id: user.id,
           name: card.name,
+          credit_limit: card.limit,
         })
         .select()
         .single();
@@ -343,7 +344,7 @@ export const useBudget = () => {
 
       setData(prev => ({
         ...prev,
-        creditCards: [...prev.creditCards, { id: newCard.id, name: newCard.name, limit: 0 }],
+        creditCards: [...prev.creditCards, { id: newCard.id, name: newCard.name, limit: Number((newCard as any).credit_limit) || 0 }],
       }));
     } catch (error) {
       console.error('Error adding credit card:', error);
