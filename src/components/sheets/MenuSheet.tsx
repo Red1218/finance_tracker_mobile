@@ -53,7 +53,7 @@ export const MenuSheet = () => {
             <Menu className="h-5 w-5" />
           </Button>
         </SheetTrigger>
-        <SheetContent side="right" className="w-[280px]">
+        <SheetContent side="right" className="w-[280px] bg-background/80 backdrop-blur-xl border-l border-border/50">
           <SheetHeader className="mb-6">
             <SheetTitle>Menu</SheetTitle>
           </SheetHeader>
