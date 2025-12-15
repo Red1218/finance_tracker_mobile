@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { MonthSwitcher } from '@/components/dashboard/MonthSwitcher';
@@ -10,6 +11,7 @@ import { useBudgetContext } from '@/contexts/BudgetContext';
 import { TrendingDown, HandCoins, CreditCard } from 'lucide-react';
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const {
     currentMonth,
     setCurrentMonth,
@@ -50,12 +52,17 @@ const Dashboard = () => {
             icon={<TrendingDown className="h-4 w-4" />}
             variant="primary"
           />
-          <StatCard
-            title="Borrowed"
-            value={totalBorrowed}
-            icon={<HandCoins className="h-4 w-4" />}
-            variant="warning"
-          />
+          <div 
+            onClick={() => navigate('/finances')}
+            className="cursor-pointer"
+          >
+            <StatCard
+              title="Borrowed"
+              value={totalBorrowed}
+              icon={<HandCoins className="h-4 w-4" />}
+              variant="warning"
+            />
+          </div>
         </div>
 
         {totalCreditSpend > 0 && (
