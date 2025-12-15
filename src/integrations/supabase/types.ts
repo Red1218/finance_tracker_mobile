@@ -95,6 +95,7 @@ export type Database = {
       credit_cards: {
         Row: {
           created_at: string
+          credit_limit: number
           id: string
           last_four: string | null
           name: string
@@ -102,6 +103,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          credit_limit?: number
           id?: string
           last_four?: string | null
           name: string
@@ -109,6 +111,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          credit_limit?: number
           id?: string
           last_four?: string | null
           name?: string
