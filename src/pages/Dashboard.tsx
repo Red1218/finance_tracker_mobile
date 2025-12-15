@@ -8,8 +8,10 @@ import { SpendingPieChart } from '@/components/dashboard/SpendingPieChart';
 import { DailySpendingList } from '@/components/dashboard/DailySpendingList';
 import { useBudgetContext } from '@/contexts/BudgetContext';
 import { TrendingDown, HandCoins, CreditCard } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const {
     currentMonth,
     setCurrentMonth,
@@ -44,26 +46,41 @@ const Dashboard = () => {
         />
 
         <div className="grid grid-cols-2 gap-3">
-          <StatCard
-            title="Total Spent"
-            value={totalSpend}
-            icon={<TrendingDown className="h-4 w-4" />}
-            variant="primary"
-          />
-          <StatCard
-            title="Borrowed"
-            value={totalBorrowed}
-            icon={<HandCoins className="h-4 w-4" />}
-            variant="warning"
-          />
+          <div
+            onClick={() => navigate('/history')}
+            className="cursor-pointer hover:opacity-80 transition-opacity"
+          >
+            <StatCard
+              title="Total Spent"
+              value={totalSpend}
+              icon={<TrendingDown className="h-4 w-4" />}
+              variant="primary"
+            />
+          </div>
+          <div
+            onClick={() => navigate('/cards')}
+            className="cursor-pointer hover:opacity-80 transition-opacity"
+          >
+            <StatCard
+              title="Borrowed"
+              value={totalBorrowed}
+              icon={<HandCoins className="h-4 w-4" />}
+              variant="warning"
+            />
+          </div>
         </div>
 
         {totalCreditSpend > 0 && (
-          <StatCard
-            title="Credit Card Spend"
-            value={totalCreditSpend}
-            icon={<CreditCard className="h-4 w-4" />}
-          />
+          <div
+            onClick={() => navigate('/cards')}
+            className="cursor-pointer hover:opacity-80 transition-opacity"
+          >
+            <StatCard
+              title="Credit Card Spend"
+              value={totalCreditSpend}
+              icon={<CreditCard className="h-4 w-4" />}
+            />
+          </div>
         )}
 
         {spendByCategory.length > 0 && (

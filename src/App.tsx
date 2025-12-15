@@ -9,7 +9,6 @@ import Index from "./pages/Index";
 import Categories from "./pages/Categories";
 import Spends from "./pages/Spends";
 import CreditCards from "./pages/CreditCards";
-import Borrowed from "./pages/Borrowed";
 import History from "./pages/History";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -67,14 +66,6 @@ const AppRoutes = () => (
       element={
         <ProtectedRoute>
           <CreditCards />
-        </ProtectedRoute>
-      }
-    />
-    <Route
-      path="/borrowed"
-      element={
-        <ProtectedRoute>
-          <Borrowed />
         </ProtectedRoute>
       }
     />
