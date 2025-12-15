@@ -10,6 +10,7 @@ import Categories from "./pages/Categories";
 import Spends from "./pages/Spends";
 import CreditCards from "./pages/CreditCards";
 import Borrowed from "./pages/Borrowed";
+import History from "./pages/History";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
@@ -74,6 +75,14 @@ const AppRoutes = () => (
       element={
         <ProtectedRoute>
           <Borrowed />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/history"
+      element={
+        <ProtectedRoute>
+          <History />
         </ProtectedRoute>
       }
     />
