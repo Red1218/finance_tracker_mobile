@@ -377,6 +377,45 @@ export const useBudget = () => {
     }
   }, [user]);
 
+  const updateCreditCard = useCallback(async (id: string, updates: { name: string; limit: number }) => {
+    if (!user) return;
+
+    try {
+      const { data: updatedCard, error } = await supabase
+        .from('credit_cards')
+        .update({
+          name: updates.name,
+          credit_limit: updates.limit,
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setData(prev => ({
+        ...prev,
+        creditCards: prev.creditCards.map(c => 
+          c.id === id 
+            ? { id: updatedCard.id, name: updatedCard.name, limit: Number(updatedCard.credit_limit) || 0 }
+            : c
+        ),
+      }));
+
+      toast({
+        title: 'Updated',
+        description: 'Credit card updated successfully.',
+      });
+    } catch (error) {
+      console.error('Error updating credit card:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update credit card.',
+        variant: 'destructive',
+      });
+    }
+  }, [user]);
+
   // Budget Limit
   const setBudgetLimit = useCallback(async (limit: number) => {
     if (!user) return;
@@ -440,6 +479,7 @@ export const useBudget = () => {
     deleteBorrowing,
     addCreditCard,
     deleteCreditCard,
+    updateCreditCard,
     setBudgetLimit,
     budgetLimit: data.budgetLimit,
     totalSpend,

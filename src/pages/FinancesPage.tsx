@@ -13,7 +13,8 @@ const FinancesPage = () => {
   const { 
     data, 
     addCreditCard, 
-    deleteCreditCard, 
+    deleteCreditCard,
+    updateCreditCard,
     spendByCreditCard,
     addBorrowing, 
     deleteBorrowing, 
@@ -66,7 +67,8 @@ const FinancesPage = () => {
             <CreditCardList 
               cards={data.creditCards} 
               spendByCard={spendByCreditCard}
-              onDelete={deleteCreditCard} 
+              onDelete={deleteCreditCard}
+              onEdit={updateCreditCard}
             />
           </TabsContent>
           

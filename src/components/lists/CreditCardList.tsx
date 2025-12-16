@@ -1,14 +1,16 @@
 import { CreditCard } from '@/types/budget';
 import { CreditCard as CardIcon } from 'lucide-react';
 import { DeleteConfirmDialog } from '@/components/ui/DeleteConfirmDialog';
+import { EditCreditCardDialog } from '@/components/forms/EditCreditCardDialog';
 
 interface CreditCardListProps {
   cards: CreditCard[];
   spendByCard: Array<{ card: CreditCard; amount: number }>;
   onDelete: (id: string) => void;
+  onEdit: (id: string, data: { name: string; limit: number }) => void;
 }
 
-export const CreditCardList = ({ cards, spendByCard, onDelete }: CreditCardListProps) => {
+export const CreditCardList = ({ cards, spendByCard, onDelete, onEdit }: CreditCardListProps) => {
   const getSpendAmount = (cardId: string) => {
     return spendByCard.find((s) => s.card.id === cardId)?.amount || 0;
   };
@@ -46,11 +48,14 @@ export const CreditCardList = ({ cards, spendByCard, onDelete }: CreditCardListP
                   </p>
                 </div>
               </div>
-              <DeleteConfirmDialog
-                onConfirm={() => onDelete(card.id)}
-                title="Delete Credit Card"
-                description={`Are you sure you want to delete "${card.name}"? This action cannot be undone.`}
-              />
+              <div className="flex items-center gap-1">
+                <EditCreditCardDialog card={card} onSave={onEdit} />
+                <DeleteConfirmDialog
+                  onConfirm={() => onDelete(card.id)}
+                  title="Delete Credit Card"
+                  description={`Are you sure you want to delete "${card.name}"? This action cannot be undone.`}
+                />
+              </div>
             </div>
 
             <div className="mt-4">
