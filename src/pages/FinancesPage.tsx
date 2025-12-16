@@ -15,9 +15,11 @@ const FinancesPage = () => {
     addCreditCard, 
     deleteCreditCard,
     updateCreditCard,
+    setDefaultCard,
     spendByCreditCard,
     addBorrowing, 
-    deleteBorrowing, 
+    deleteBorrowing,
+    updateBorrowing,
     totalBorrowed 
   } = useBudgetContext();
 
@@ -69,6 +71,7 @@ const FinancesPage = () => {
               spendByCard={spendByCreditCard}
               onDelete={deleteCreditCard}
               onEdit={updateCreditCard}
+              onSetDefault={setDefaultCard}
             />
           </TabsContent>
           
@@ -76,7 +79,8 @@ const FinancesPage = () => {
             <AddBorrowingForm onAdd={addBorrowing} />
             <BorrowingList 
               borrowings={data.borrowings} 
-              onDelete={deleteBorrowing} 
+              onDelete={deleteBorrowing}
+              onUpdate={updateBorrowing}
             />
           </TabsContent>
         </Tabs>

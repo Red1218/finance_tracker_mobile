@@ -7,7 +7,7 @@ import { useBudgetContext } from '@/contexts/BudgetContext';
 import { HandCoins } from 'lucide-react';
 
 const Borrowed = () => {
-  const { data, addBorrowing, deleteBorrowing, totalBorrowed } = useBudgetContext();
+  const { data, addBorrowing, deleteBorrowing, updateBorrowing, totalBorrowed } = useBudgetContext();
 
   return (
     <Layout>
@@ -28,7 +28,8 @@ const Borrowed = () => {
         <AddBorrowingForm onAdd={addBorrowing} />
         <BorrowingList 
           borrowings={data.borrowings} 
-          onDelete={deleteBorrowing} 
+          onDelete={deleteBorrowing}
+          onUpdate={updateBorrowing}
         />
       </div>
     </Layout>
