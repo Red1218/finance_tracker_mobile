@@ -5,7 +5,7 @@ import { CreditCardList } from '@/components/lists/CreditCardList';
 import { useBudgetContext } from '@/contexts/BudgetContext';
 
 const CreditCards = () => {
-  const { data, addCreditCard, deleteCreditCard, spendByCreditCard } = useBudgetContext();
+  const { data, addCreditCard, deleteCreditCard, updateCreditCard, spendByCreditCard } = useBudgetContext();
 
   return (
     <Layout>
@@ -19,7 +19,8 @@ const CreditCards = () => {
         <CreditCardList 
           cards={data.creditCards} 
           spendByCard={spendByCreditCard}
-          onDelete={deleteCreditCard} 
+          onDelete={deleteCreditCard}
+          onEdit={updateCreditCard}
         />
       </div>
     </Layout>
