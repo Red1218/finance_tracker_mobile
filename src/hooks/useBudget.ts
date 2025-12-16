@@ -55,6 +55,7 @@ export const useBudget = () => {
         id: c.id,
         name: c.name,
         limit: Number((c as any).credit_limit) || 0,
+        isDefault: (c as any).is_default || false,
       }));
 
       const spends: Spend[] = (spendsRes.data || []).map(s => ({
@@ -325,6 +326,51 @@ export const useBudget = () => {
     }
   }, [user]);
 
+  const updateBorrowing = useCallback(async (id: string, updates: Omit<Borrowing, 'id'>) => {
+    if (!user) return;
+
+    try {
+      const { data: updatedBorrowing, error } = await supabase
+        .from('borrowings')
+        .update({
+          type: updates.type,
+          amount: updates.amount,
+          source: updates.from,
+          note: updates.note || null,
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const mappedBorrowing: Borrowing = {
+        id: updatedBorrowing.id,
+        type: updatedBorrowing.type as Borrowing['type'],
+        amount: Number(updatedBorrowing.amount),
+        from: updatedBorrowing.source,
+        note: updatedBorrowing.note || undefined,
+      };
+
+      setData(prev => ({
+        ...prev,
+        borrowings: prev.borrowings.map(b => b.id === id ? mappedBorrowing : b),
+      }));
+
+      toast({
+        title: 'Updated',
+        description: 'Borrowing updated successfully.',
+      });
+    } catch (error) {
+      console.error('Error updating borrowing:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update borrowing.',
+        variant: 'destructive',
+      });
+    }
+  }, [user]);
+
   // Credit Cards
   const addCreditCard = useCallback(async (card: Omit<CreditCard, 'id'>) => {
     if (!user) return;
@@ -344,7 +390,7 @@ export const useBudget = () => {
 
       setData(prev => ({
         ...prev,
-        creditCards: [...prev.creditCards, { id: newCard.id, name: newCard.name, limit: Number((newCard as any).credit_limit) || 0 }],
+        creditCards: [...prev.creditCards, { id: newCard.id, name: newCard.name, limit: Number((newCard as any).credit_limit) || 0, isDefault: (newCard as any).is_default || false }],
       }));
     } catch (error) {
       console.error('Error adding credit card:', error);
@@ -397,7 +443,7 @@ export const useBudget = () => {
         ...prev,
         creditCards: prev.creditCards.map(c => 
           c.id === id 
-            ? { id: updatedCard.id, name: updatedCard.name, limit: Number(updatedCard.credit_limit) || 0 }
+            ? { id: updatedCard.id, name: updatedCard.name, limit: Number(updatedCard.credit_limit) || 0, isDefault: (updatedCard as any).is_default || false }
             : c
         ),
       }));
@@ -411,6 +457,40 @@ export const useBudget = () => {
       toast({
         title: 'Error',
         description: 'Failed to update credit card.',
+        variant: 'destructive',
+      });
+    }
+  }, [user]);
+
+  const setDefaultCard = useCallback(async (id: string) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('credit_cards')
+        .update({ is_default: true })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // The trigger will unset other default cards, so update local state
+      setData(prev => ({
+        ...prev,
+        creditCards: prev.creditCards.map(c => ({
+          ...c,
+          isDefault: c.id === id,
+        })),
+      }));
+
+      toast({
+        title: 'Updated',
+        description: 'Default card set successfully.',
+      });
+    } catch (error) {
+      console.error('Error setting default card:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to set default card.',
         variant: 'destructive',
       });
     }
@@ -465,6 +545,8 @@ export const useBudget = () => {
       .reduce((sum, s) => sum + s.amount, 0),
   }));
 
+  const defaultCard = data.creditCards.find(c => c.isDefault);
+
   return {
     currentMonth,
     setCurrentMonth,
@@ -477,9 +559,12 @@ export const useBudget = () => {
     updateSpend,
     addBorrowing,
     deleteBorrowing,
+    updateBorrowing,
     addCreditCard,
     deleteCreditCard,
     updateCreditCard,
+    setDefaultCard,
+    defaultCard,
     setBudgetLimit,
     budgetLimit: data.budgetLimit,
     totalSpend,

@@ -18,10 +18,11 @@ const spendSchema = z.object({
 interface AddSpendFormProps {
   categories: Category[];
   creditCards: CreditCard[];
+  defaultCard?: CreditCard;
   onAdd: (spend: Omit<Spend, 'id'>) => void;
 }
 
-export const AddSpendForm = ({ categories, creditCards, onAdd }: AddSpendFormProps) => {
+export const AddSpendForm = ({ categories, creditCards, defaultCard, onAdd }: AddSpendFormProps) => {
   const [amount, setAmount] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [note, setNote] = useState('');
@@ -81,7 +82,16 @@ export const AddSpendForm = ({ categories, creditCards, onAdd }: AddSpendFormPro
         </Select>
       </div>
 
-      <Select value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as PaymentMethod)}>
+      <Select 
+        value={paymentMethod} 
+        onValueChange={(v) => {
+          setPaymentMethod(v as PaymentMethod);
+          // Auto-select default card when switching to credit
+          if (v === 'credit' && defaultCard && !creditCardId) {
+            setCreditCardId(defaultCard.id);
+          }
+        }}
+      >
         <SelectTrigger>
           <SelectValue placeholder="Payment Method" />
         </SelectTrigger>

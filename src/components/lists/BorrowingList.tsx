@@ -1,13 +1,15 @@
 import { Borrowing, borrowingTypeLabels } from '@/types/budget';
 import { HandCoins } from 'lucide-react';
 import { DeleteConfirmDialog } from '@/components/ui/DeleteConfirmDialog';
+import { EditBorrowingDialog } from '@/components/forms/EditBorrowingDialog';
 
 interface BorrowingListProps {
   borrowings: Borrowing[];
   onDelete: (id: string) => void;
+  onUpdate: (id: string, updates: Omit<Borrowing, 'id'>) => void;
 }
 
-export const BorrowingList = ({ borrowings, onDelete }: BorrowingListProps) => {
+export const BorrowingList = ({ borrowings, onDelete, onUpdate }: BorrowingListProps) => {
   if (borrowings.length === 0) {
     return (
       <div className="rounded-xl border border-border bg-card p-8 text-center">
@@ -41,11 +43,14 @@ export const BorrowingList = ({ borrowings, onDelete }: BorrowingListProps) => {
                 <p className="mt-1 text-sm text-muted-foreground">{borrowing.note}</p>
               )}
             </div>
-            <DeleteConfirmDialog
-              onConfirm={() => onDelete(borrowing.id)}
-              title="Delete Borrowing"
-              description={`Are you sure you want to delete this ₹${borrowing.amount.toLocaleString('en-IN')} borrowing entry? This action cannot be undone.`}
-            />
+            <div className="flex items-center gap-1">
+              <EditBorrowingDialog borrowing={borrowing} onUpdate={onUpdate} />
+              <DeleteConfirmDialog
+                onConfirm={() => onDelete(borrowing.id)}
+                title="Delete Borrowing"
+                description={`Are you sure you want to delete this ₹${borrowing.amount.toLocaleString('en-IN')} borrowing entry? This action cannot be undone.`}
+              />
+            </div>
           </div>
         </div>
       ))}

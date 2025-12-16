@@ -5,7 +5,7 @@ import { SpendList } from '@/components/lists/SpendList';
 import { useBudgetContext } from '@/contexts/BudgetContext';
 
 const Spends = () => {
-  const { data, addSpend, deleteSpend, updateSpend } = useBudgetContext();
+  const { data, addSpend, deleteSpend, updateSpend, defaultCard } = useBudgetContext();
 
   return (
     <Layout>
@@ -18,6 +18,7 @@ const Spends = () => {
         <AddSpendForm 
           categories={data.categories}
           creditCards={data.creditCards}
+          defaultCard={defaultCard}
           onAdd={addSpend} 
         />
         <SpendList 

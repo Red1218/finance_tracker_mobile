@@ -29,6 +29,7 @@ export interface CreditCard {
   id: string;
   name: string;
   limit: number;
+  isDefault?: boolean;
 }
 
 export interface BudgetData {

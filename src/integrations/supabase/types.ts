@@ -97,6 +97,7 @@ export type Database = {
           created_at: string
           credit_limit: number
           id: string
+          is_default: boolean
           last_four: string | null
           name: string
           user_id: string
@@ -105,6 +106,7 @@ export type Database = {
           created_at?: string
           credit_limit?: number
           id?: string
+          is_default?: boolean
           last_four?: string | null
           name: string
           user_id: string
@@ -113,6 +115,7 @@ export type Database = {
           created_at?: string
           credit_limit?: number
           id?: string
+          is_default?: boolean
           last_four?: string | null
           name?: string
           user_id?: string

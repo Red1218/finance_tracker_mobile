@@ -1,16 +1,18 @@
 import { CreditCard } from '@/types/budget';
-import { CreditCard as CardIcon } from 'lucide-react';
+import { CreditCard as CardIcon, Star } from 'lucide-react';
 import { DeleteConfirmDialog } from '@/components/ui/DeleteConfirmDialog';
 import { EditCreditCardDialog } from '@/components/forms/EditCreditCardDialog';
+import { Button } from '@/components/ui/button';
 
 interface CreditCardListProps {
   cards: CreditCard[];
   spendByCard: Array<{ card: CreditCard; amount: number }>;
   onDelete: (id: string) => void;
   onEdit: (id: string, data: { name: string; limit: number }) => void;
+  onSetDefault: (id: string) => void;
 }
 
-export const CreditCardList = ({ cards, spendByCard, onDelete, onEdit }: CreditCardListProps) => {
+export const CreditCardList = ({ cards, spendByCard, onDelete, onEdit, onSetDefault }: CreditCardListProps) => {
   const getSpendAmount = (cardId: string) => {
     return spendByCard.find((s) => s.card.id === cardId)?.amount || 0;
   };
@@ -42,13 +44,31 @@ export const CreditCardList = ({ cards, spendByCard, onDelete, onEdit }: CreditC
                   <CardIcon className="h-5 w-5 text-primary-foreground" />
                 </div>
                 <div>
-                  <h3 className="font-semibold">{card.name}</h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold">{card.name}</h3>
+                    {card.isDefault && (
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                        Default
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-muted-foreground">
                     Limit: ₹{card.limit.toLocaleString('en-IN')}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-1">
+                {!card.isDefault && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => onSetDefault(card.id)}
+                    title="Set as default"
+                  >
+                    <Star className="h-4 w-4" />
+                  </Button>
+                )}
                 <EditCreditCardDialog card={card} onSave={onEdit} />
                 <DeleteConfirmDialog
                   onConfirm={() => onDelete(card.id)}
