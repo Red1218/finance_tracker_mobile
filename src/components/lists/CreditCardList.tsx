@@ -58,17 +58,16 @@ export const CreditCardList = ({ cards, spendByCard, onDelete, onEdit, onSetDefa
                 </div>
               </div>
               <div className="flex items-center gap-1">
-                {!card.isDefault && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => onSetDefault(card.id)}
-                    title="Set as default"
-                  >
-                    <Star className="h-4 w-4" />
-                  </Button>
-                )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={`h-8 w-8 ${card.isDefault ? 'text-yellow-500' : 'text-muted-foreground hover:text-yellow-500'}`}
+                  onClick={() => !card.isDefault && onSetDefault(card.id)}
+                  title={card.isDefault ? "Default card" : "Set as default"}
+                  disabled={card.isDefault}
+                >
+                  <Star className={`h-4 w-4 ${card.isDefault ? 'fill-yellow-500' : ''}`} />
+                </Button>
                 <EditCreditCardDialog card={card} onSave={onEdit} />
                 <DeleteConfirmDialog
                   onConfirm={() => onDelete(card.id)}
