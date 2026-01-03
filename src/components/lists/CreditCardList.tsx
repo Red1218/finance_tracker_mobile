@@ -61,12 +61,12 @@ export const CreditCardList = ({ cards, spendByCard, onDelete, onEdit, onSetDefa
                 <Button
                   variant="ghost"
                   size="icon"
-                  className={`h-8 w-8 ${card.isDefault ? 'text-yellow-500' : 'text-muted-foreground hover:text-yellow-500'}`}
+                  className={`h-8 w-8 ${card.isDefault ? 'text-amber-400' : 'text-muted-foreground hover:text-amber-400'}`}
                   onClick={() => !card.isDefault && onSetDefault(card.id)}
                   title={card.isDefault ? "Default card" : "Set as default"}
                   disabled={card.isDefault}
                 >
-                  <Star className={`h-4 w-4 ${card.isDefault ? 'fill-yellow-500' : ''}`} />
+                  <Star className={`h-4 w-4 ${card.isDefault ? 'fill-amber-400' : ''}`} />
                 </Button>
                 <EditCreditCardDialog card={card} onSave={onEdit} />
                 <DeleteConfirmDialog
