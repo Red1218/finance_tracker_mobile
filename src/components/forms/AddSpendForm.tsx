@@ -3,9 +3,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Category, CreditCard, PaymentMethod, paymentMethodLabels, Spend } from '@/types/budget';
-import { Plus } from 'lucide-react';
+import { Plus, CalendarIcon } from 'lucide-react';
 import { z } from 'zod';
 import { toast } from 'sonner';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 const spendSchema = z.object({
   amount: z.number().positive('Amount must be a positive number').max(100000000, 'Amount is too high'),
@@ -13,6 +17,7 @@ const spendSchema = z.object({
   note: z.string().trim().max(500, 'Note must be less than 500 characters').optional(),
   paymentMethod: z.enum(['cash', 'upi', 'credit', 'debit'] as const),
   creditCardId: z.string().uuid('Invalid credit card').optional(),
+  spendDate: z.date(),
 });
 
 interface AddSpendFormProps {
@@ -28,6 +33,7 @@ export const AddSpendForm = ({ categories, creditCards, defaultCard, onAdd }: Ad
   const [note, setNote] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
   const [creditCardId, setCreditCardId] = useState('');
+  const [spendDate, setSpendDate] = useState<Date>(new Date());
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,13 +43,14 @@ export const AddSpendForm = ({ categories, creditCards, defaultCard, onAdd }: Ad
       note: note || undefined,
       paymentMethod,
       creditCardId: paymentMethod === 'credit' ? creditCardId : undefined,
+      spendDate: spendDate || new Date(),
     });
     if (!result.success) {
       toast.error(result.error.errors[0].message);
       return;
     }
     onAdd({
-      dateISO: new Date().toISOString(),
+      dateISO: result.data.spendDate.toISOString(),
       amount: result.data.amount,
       categoryId: result.data.categoryId,
       note: result.data.note,
@@ -55,6 +62,7 @@ export const AddSpendForm = ({ categories, creditCards, defaultCard, onAdd }: Ad
     setNote('');
     setPaymentMethod('cash');
     setCreditCardId('');
+    setSpendDate(new Date());
   };
 
   return (
@@ -68,19 +76,43 @@ export const AddSpendForm = ({ categories, creditCards, defaultCard, onAdd }: Ad
           min="0"
           step="0.01"
         />
-        <Select value={categoryId} onValueChange={setCategoryId}>
-          <SelectTrigger>
-            <SelectValue placeholder="Category" />
-          </SelectTrigger>
-          <SelectContent>
-            {categories.map((cat) => (
-              <SelectItem key={cat.id} value={cat.id}>
-                {cat.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className={cn(
+                "justify-start text-left font-normal",
+                !spendDate && "text-muted-foreground"
+              )}
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {spendDate ? format(spendDate, "MMM d, yyyy") : "Pick date"}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={spendDate}
+              onSelect={(date) => setSpendDate(date || new Date())}
+              initialFocus
+              className="pointer-events-auto"
+            />
+          </PopoverContent>
+        </Popover>
       </div>
+
+      <Select value={categoryId} onValueChange={setCategoryId}>
+        <SelectTrigger>
+          <SelectValue placeholder="Category" />
+        </SelectTrigger>
+        <SelectContent>
+          {categories.map((cat) => (
+            <SelectItem key={cat.id} value={cat.id}>
+              {cat.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
       <Select 
         value={paymentMethod} 
