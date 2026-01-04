@@ -39,13 +39,13 @@ const Dashboard = () => {
   return (
     <Layout>
       {/* Welcome Header */}
-      <div className="mb-6">
-        <p className="text-sm text-muted-foreground">Welcome back,</p>
-        <h1 className="text-xl font-bold text-foreground">{displayName}</h1>
+      <div className="mb-4">
+        <p className="text-xs text-muted-foreground">Welcome back,</p>
+        <h1 className="text-lg font-bold text-foreground">{displayName}</h1>
       </div>
 
       {/* Month Selector */}
-      <MonthSelector 
+      <MonthSelector
         currentMonth={currentMonth} 
         onMonthChange={setCurrentMonth} 
       />

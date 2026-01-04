@@ -5,16 +5,16 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import { MonthSwitcher } from '@/components/dashboard/MonthSwitcher';
 import { DailySpendingList } from '@/components/dashboard/DailySpendingList';
 import { useBudgetContext } from '@/contexts/BudgetContext';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Search, Download, X } from 'lucide-react';
+import { Search, Download, X, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { PaymentMethod, paymentMethodLabels } from '@/types/budget';
 import * as XLSX from 'xlsx';
-import { format } from 'date-fns';
+import { format, parse, subMonths, addMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, getDay } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface HistorySheetProps {
   open: boolean;
@@ -26,9 +26,43 @@ export const HistorySheet = ({ open, onOpenChange }: HistorySheetProps) => {
   const [searchAmount, setSearchAmount] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterPaymentMethod, setFilterPaymentMethod] = useState<string>('all');
+  const [filterDate, setFilterDate] = useState<string | null>(null);
+
+  const currentDate = parse(currentMonth, 'yyyy-MM', new Date());
+
+  // Calculate spending per day for the calendar
+  const spendingByDay = useMemo(() => {
+    const byDay: Record<string, number> = {};
+    data.spends.forEach((spend) => {
+      const dateKey = spend.dateISO.split('T')[0];
+      byDay[dateKey] = (byDay[dateKey] || 0) + spend.amount;
+    });
+    return byDay;
+  }, [data.spends]);
+
+  // Generate calendar days
+  const calendarDays = useMemo(() => {
+    const start = startOfMonth(currentDate);
+    const end = endOfMonth(currentDate);
+    const days = eachDayOfInterval({ start, end });
+    
+    // Add padding for the first week
+    const startDay = getDay(start);
+    const paddingDays = Array(startDay).fill(null);
+    
+    return [...paddingDays, ...days];
+  }, [currentDate]);
 
   const filteredSpends = useMemo(() => {
     return data.spends.filter((spend) => {
+      // Filter by date
+      if (filterDate) {
+        const spendDate = spend.dateISO.split('T')[0];
+        if (spendDate !== filterDate) {
+          return false;
+        }
+      }
+
       // Filter by amount
       if (searchAmount) {
         const amount = parseFloat(searchAmount);
@@ -49,15 +83,37 @@ export const HistorySheet = ({ open, onOpenChange }: HistorySheetProps) => {
 
       return true;
     });
-  }, [data.spends, searchAmount, filterCategory, filterPaymentMethod]);
+  }, [data.spends, searchAmount, filterCategory, filterPaymentMethod, filterDate]);
 
   const clearFilters = () => {
     setSearchAmount('');
     setFilterCategory('all');
     setFilterPaymentMethod('all');
+    setFilterDate(null);
   };
 
-  const hasActiveFilters = searchAmount || filterCategory !== 'all' || filterPaymentMethod !== 'all';
+  const hasActiveFilters = searchAmount || filterCategory !== 'all' || filterPaymentMethod !== 'all' || filterDate;
+
+  const handlePrevMonth = () => {
+    const prevMonth = subMonths(currentDate, 1);
+    setCurrentMonth(format(prevMonth, 'yyyy-MM'));
+    setFilterDate(null);
+  };
+
+  const handleNextMonth = () => {
+    const nextMonth = addMonths(currentDate, 1);
+    setCurrentMonth(format(nextMonth, 'yyyy-MM'));
+    setFilterDate(null);
+  };
+
+  const handleDayClick = (day: Date) => {
+    const dateStr = format(day, 'yyyy-MM-dd');
+    if (filterDate === dateStr) {
+      setFilterDate(null);
+    } else {
+      setFilterDate(dateStr);
+    }
+  };
 
   const exportToExcel = () => {
     const exportData = filteredSpends.map((spend) => {
@@ -89,21 +145,99 @@ export const HistorySheet = ({ open, onOpenChange }: HistorySheetProps) => {
     ];
     ws['!cols'] = colWidths;
 
-    XLSX.writeFile(wb, `spending-history-${format(currentMonth, 'MMM-yyyy')}.xlsx`);
+    XLSX.writeFile(wb, `spending-history-${format(currentDate, 'MMM-yyyy')}.xlsx`);
   };
+
+  const weekDays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="h-[85vh] overflow-y-auto">
+      <SheetContent side="bottom" className="h-[90vh] overflow-y-auto">
         <SheetHeader className="mb-4">
           <SheetTitle>Spending History</SheetTitle>
         </SheetHeader>
         
         <div className="space-y-4">
-          <MonthSwitcher 
-            currentMonth={currentMonth} 
-            onMonthChange={setCurrentMonth} 
-          />
+          {/* Month Navigation */}
+          <div className="flex items-center justify-between">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handlePrevMonth}
+              className="h-9 w-9 rounded-lg bg-secondary"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-primary" />
+              <span className="text-base font-semibold text-foreground">
+                {format(currentDate, 'MMMM yyyy')}
+              </span>
+            </div>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleNextMonth}
+              className="h-9 w-9 rounded-lg bg-secondary"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </Button>
+          </div>
+
+          {/* Mini Calendar */}
+          <div className="rounded-xl border border-border bg-card p-3">
+            {/* Week day headers */}
+            <div className="grid grid-cols-7 gap-1 mb-2">
+              {weekDays.map((day, i) => (
+                <div key={i} className="text-center text-xs font-medium text-muted-foreground">
+                  {day}
+                </div>
+              ))}
+            </div>
+            
+            {/* Calendar grid */}
+            <div className="grid grid-cols-7 gap-1">
+              {calendarDays.map((day, i) => {
+                if (!day) {
+                  return <div key={`empty-${i}`} className="h-10" />;
+                }
+                
+                const dateStr = format(day, 'yyyy-MM-dd');
+                const daySpend = spendingByDay[dateStr] || 0;
+                const isSelected = filterDate === dateStr;
+                const hasSpending = daySpend > 0;
+                
+                return (
+                  <button
+                    key={dateStr}
+                    onClick={() => handleDayClick(day)}
+                    className={cn(
+                      "flex flex-col items-center justify-center h-10 rounded-lg text-xs transition-colors",
+                      isSelected
+                        ? "bg-primary text-primary-foreground"
+                        : hasSpending
+                        ? "bg-destructive/10 hover:bg-destructive/20"
+                        : "hover:bg-accent"
+                    )}
+                  >
+                    <span className={cn(
+                      "font-medium",
+                      !isSelected && hasSpending && "text-destructive"
+                    )}>
+                      {format(day, 'd')}
+                    </span>
+                    {hasSpending && !isSelected && (
+                      <span className="text-[9px] text-destructive font-medium">
+                        ₹{daySpend >= 1000 ? `${(daySpend / 1000).toFixed(1)}k` : daySpend}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
           {/* Search and Filters */}
           <div className="space-y-3 rounded-lg border border-border bg-card p-3">
