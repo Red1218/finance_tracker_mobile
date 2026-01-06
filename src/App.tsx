@@ -8,6 +8,7 @@ import { BudgetProvider } from "@/contexts/BudgetContext";
 import Index from "./pages/Index";
 import Categories from "./pages/Categories";
 import Spends from "./pages/Spends";
+import Savings from "./pages/Savings";
 import FinancesPage from "./pages/FinancesPage";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -65,6 +66,14 @@ const AppRoutes = () => (
       element={
         <ProtectedRoute>
           <FinancesPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/savings"
+      element={
+        <ProtectedRoute>
+          <Savings />
         </ProtectedRoute>
       }
     />
