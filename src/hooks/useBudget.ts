@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { BudgetData, defaultBudgetData, Category, Spend, Borrowing, CreditCard, PaymentMethod } from '@/types/budget';
+import { BudgetData, defaultBudgetData, Category, Spend, Borrowing, CreditCard, PaymentMethod, Saving, DEFAULT_CATEGORIES } from '@/types/budget';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -25,7 +25,7 @@ export const useBudget = () => {
       const monthEnd = endOfMonth(monthStart);
 
       // Fetch all data in parallel
-      const [categoriesRes, creditCardsRes, spendsRes, borrowingsRes, budgetSettingsRes] = await Promise.all([
+      const [categoriesRes, creditCardsRes, spendsRes, borrowingsRes, budgetSettingsRes, savingsRes] = await Promise.all([
         supabase.from('categories').select('*').eq('user_id', user.id),
         supabase.from('credit_cards').select('*').eq('user_id', user.id),
         supabase
@@ -37,6 +37,13 @@ export const useBudget = () => {
           .order('created_at', { ascending: false }),
         supabase.from('borrowings').select('*').eq('user_id', user.id),
         supabase.from('budget_settings').select('*').eq('user_id', user.id).eq('month', currentMonth).maybeSingle(),
+        supabase
+          .from('savings')
+          .select('*')
+          .eq('user_id', user.id)
+          .gte('savings_date', format(monthStart, 'yyyy-MM-dd'))
+          .lte('savings_date', format(monthEnd, 'yyyy-MM-dd'))
+          .order('created_at', { ascending: false }),
       ]);
 
       if (categoriesRes.error) throw categoriesRes.error;
@@ -44,12 +51,30 @@ export const useBudget = () => {
       if (spendsRes.error) throw spendsRes.error;
       if (borrowingsRes.error) throw borrowingsRes.error;
       if (budgetSettingsRes.error) throw budgetSettingsRes.error;
+      if (savingsRes.error) throw savingsRes.error;
 
-      // Map database data to app types
-      const categories: Category[] = (categoriesRes.data || []).map(c => ({
+      // Seed default categories if user has none
+      let categories: Category[] = (categoriesRes.data || []).map(c => ({
         id: c.id,
         name: c.name,
       }));
+
+      if (categories.length === 0) {
+        // Insert default categories
+        const defaultCats = DEFAULT_CATEGORIES.map(name => ({
+          name,
+          user_id: user.id,
+        }));
+        
+        const { data: newCats, error: seedError } = await supabase
+          .from('categories')
+          .insert(defaultCats)
+          .select();
+        
+        if (!seedError && newCats) {
+          categories = newCats.map(c => ({ id: c.id, name: c.name }));
+        }
+      }
 
       const creditCards: CreditCard[] = (creditCardsRes.data || []).map(c => ({
         id: c.id,
@@ -76,6 +101,13 @@ export const useBudget = () => {
         note: b.note || undefined,
       }));
 
+      const savings: Saving[] = (savingsRes.data || []).map(s => ({
+        id: s.id,
+        amount: Number(s.amount),
+        note: s.note || undefined,
+        dateISO: s.savings_date,
+      }));
+
       const budgetLimit = budgetSettingsRes.data?.budget_limit ? Number(budgetSettingsRes.data.budget_limit) : 0;
 
       setData({
@@ -83,6 +115,7 @@ export const useBudget = () => {
         spends,
         borrowings,
         creditCards,
+        savings,
         budgetLimit,
       });
     } catch (error) {
@@ -527,9 +560,113 @@ export const useBudget = () => {
     }
   }, [user, currentMonth]);
 
+  // Savings
+  const addSaving = useCallback(async (saving: Omit<Saving, 'id'>) => {
+    if (!user) return;
+
+    try {
+      const { data: newSaving, error } = await supabase
+        .from('savings')
+        .insert({
+          user_id: user.id,
+          amount: saving.amount,
+          note: saving.note || null,
+          savings_date: saving.dateISO,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const mappedSaving: Saving = {
+        id: newSaving.id,
+        amount: Number(newSaving.amount),
+        note: newSaving.note || undefined,
+        dateISO: newSaving.savings_date,
+      };
+
+      setData(prev => ({
+        ...prev,
+        savings: [mappedSaving, ...prev.savings],
+      }));
+    } catch (error) {
+      console.error('Error adding saving:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to add saving.',
+        variant: 'destructive',
+      });
+    }
+  }, [user]);
+
+  const deleteSaving = useCallback(async (id: string) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase.from('savings').delete().eq('id', id);
+      if (error) throw error;
+
+      setData(prev => ({
+        ...prev,
+        savings: prev.savings.filter(s => s.id !== id),
+      }));
+    } catch (error) {
+      console.error('Error deleting saving:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete saving.',
+        variant: 'destructive',
+      });
+    }
+  }, [user]);
+
+  const updateSaving = useCallback(async (id: string, saving: Omit<Saving, 'id'>) => {
+    if (!user) return;
+
+    try {
+      const { data: updatedSaving, error } = await supabase
+        .from('savings')
+        .update({
+          amount: saving.amount,
+          note: saving.note || null,
+          savings_date: saving.dateISO,
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const mappedSaving: Saving = {
+        id: updatedSaving.id,
+        amount: Number(updatedSaving.amount),
+        note: updatedSaving.note || undefined,
+        dateISO: updatedSaving.savings_date,
+      };
+
+      setData(prev => ({
+        ...prev,
+        savings: prev.savings.map(s => s.id === id ? mappedSaving : s),
+      }));
+
+      toast({
+        title: 'Updated',
+        description: 'Saving updated successfully.',
+      });
+    } catch (error) {
+      console.error('Error updating saving:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update saving.',
+        variant: 'destructive',
+      });
+    }
+  }, [user]);
+
   // Calculations
   const totalSpend = data.spends.reduce((sum, s) => sum + s.amount, 0);
   const totalBorrowed = data.borrowings.reduce((sum, b) => sum + b.amount, 0);
+  const totalSaved = data.savings.reduce((sum, s) => sum + s.amount, 0);
 
   const spendByCategory = data.categories.map(cat => ({
     category: cat,
@@ -569,6 +706,10 @@ export const useBudget = () => {
     budgetLimit: data.budgetLimit,
     totalSpend,
     totalBorrowed,
+    totalSaved,
+    addSaving,
+    deleteSaving,
+    updateSaving,
     spendByCategory,
     spendByCreditCard,
   };

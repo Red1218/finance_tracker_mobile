@@ -32,27 +32,40 @@ export interface CreditCard {
   isDefault?: boolean;
 }
 
+export interface Saving {
+  id: string;
+  amount: number;
+  note?: string;
+  dateISO: string;
+}
+
 export interface BudgetData {
   categories: Category[];
   spends: Spend[];
   borrowings: Borrowing[];
   creditCards: CreditCard[];
+  savings: Saving[];
   budgetLimit: number;
 }
 
 export const defaultBudgetData: BudgetData = {
-  categories: [
-    { id: '1', name: 'Food & Dining' },
-    { id: '2', name: 'Transportation' },
-    { id: '3', name: 'Entertainment' },
-    { id: '4', name: 'Shopping' },
-    { id: '5', name: 'Bills & Utilities' },
-  ],
+  categories: [],
   spends: [],
   borrowings: [],
   creditCards: [],
+  savings: [],
   budgetLimit: 0,
 };
+
+export const DEFAULT_CATEGORIES = [
+  'Grocery',
+  'Electricity',
+  'Rent',
+  'Travel',
+  'Food & Dining',
+  'Entertainment',
+  'Shopping',
+];
 
 export const paymentMethodLabels: Record<PaymentMethod, string> = {
   cash: 'Cash',
