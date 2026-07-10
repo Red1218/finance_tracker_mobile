@@ -1,9 +1,11 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { Redirect, Tabs } from 'expo-router';
 import { Home, Receipt, Tags, Wallet } from 'lucide-react-native';
+import { usePaymentListener } from '@/hooks/usePaymentListener';
 
 export default function TabLayout() {
   const { user, loading } = useAuth();
+  usePaymentListener();
 
   if (loading) {
     return null; // or a loading screen

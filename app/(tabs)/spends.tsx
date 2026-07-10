@@ -1,10 +1,12 @@
 import { useBudgetContext } from '@/contexts/BudgetContext';
+import { useDrafts } from '@/hooks/useDrafts';
 import { PaymentMethod, Spend } from '@/types/budget';
 import { addMonths, eachDayOfInterval, endOfMonth, endOfWeek, format, isSameDay, isSameMonth, startOfMonth, startOfWeek, subMonths } from 'date-fns';
-import { Calendar as CalendarIcon, Check, ChevronDown, ChevronLeft, ChevronRight, Edit2, Plus, Receipt, Trash2, X } from 'lucide-react-native';
-import React, { useRef, useState } from 'react';
+import { Calendar as CalendarIcon, Check, ChevronDown, ChevronLeft, ChevronRight, Edit2, Plus, Receipt, Trash2, X, MessageSquare } from 'lucide-react-native';
+import React, { useRef, useState, useCallback } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from 'expo-router';
 
 const COLORS = {
     bg: '#0a0a0a', card: '#141414', border: '#292929',
@@ -23,8 +25,15 @@ const PAYMENT_METHODS: { id: PaymentMethod, label: string }[] = [
 
 export default function SpendsScreen() {
     const { data, addSpend, updateSpend, deleteSpend } = useBudgetContext();
+    const { drafts, removeDraft, refreshDrafts } = useDrafts();
     const defaultCard = data?.creditCards?.find(c => c.isDefault);
     const scrollRef = useRef<ScrollView>(null);
+
+    useFocusEffect(
+        useCallback(() => {
+            refreshDrafts();
+        }, [])
+    );
 
     const [isEditing, setIsEditing] = useState<string | null>(null);
     const [amount, setAmount] = useState('');
@@ -47,6 +56,33 @@ export default function SpendsScreen() {
     // Delete confirm
     const [deleteModalVisible, setDeleteModalVisible] = useState(false);
     const [spendToDelete, setSpendToDelete] = useState<string | null>(null);
+
+    const [expandedDraftGroups, setExpandedDraftGroups] = useState<Set<string>>(new Set());
+
+    const toggleDraftGroup = (source: string) => {
+        setExpandedDraftGroups(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(source)) newSet.delete(source);
+            else newSet.add(source);
+            return newSet;
+        });
+    };
+
+    const groupedDrafts = drafts.reduce((acc, draft) => {
+        const source = draft.note || 'Unknown';
+        if (!acc[source]) acc[source] = [];
+        acc[source].push(draft);
+        return acc;
+    }, {} as Record<string, typeof drafts>);
+
+    const handleApproveDraft = (draft: any) => {
+        setAmount(String(draft.amount));
+        setNote(draft.note);
+        setSelectedPaymentMethod(draft.paymentMethod);
+        setDate(new Date(draft.dateISO));
+        removeDraft(draft.id);
+        scrollRef.current?.scrollTo({ y: 0, animated: true });
+    };
 
     const getCategoryColor = (catId: string) => {
         if (!data?.categories) return '#ff3d3d';
@@ -171,6 +207,84 @@ export default function SpendsScreen() {
             )}
 
             <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false} ref={scrollRef}>
+                {/* Drafts Section */}
+                {drafts && drafts.length > 0 && (
+                    <View style={{ marginBottom: 24 }}>
+                        <Text style={{ color: COLORS.text, fontSize: 16, fontWeight: '600', marginBottom: 12 }}>
+                            Pending Payments ({drafts.length})
+                        </Text>
+                        {Object.entries(groupedDrafts).map(([source, groupDrafts]) => {
+                            if (groupDrafts.length === 1) {
+                                const draft = groupDrafts[0];
+                                return (
+                                    <View key={draft.id} style={styles.draftCard}>
+                                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
+                                                <View style={[styles.itemIcon, { backgroundColor: 'rgba(59, 130, 246, 0.15)' }]}>
+                                                    <MessageSquare size={18} color="#3b82f6" />
+                                                </View>
+                                                <View style={{ flex: 1 }}>
+                                                    <Text style={styles.itemTitle}>{draft.note}</Text>
+                                                    <Text style={styles.itemSubtitle}>Detected via SMS</Text>
+                                                </View>
+                                            </View>
+                                            <Text style={[styles.amount, { color: COLORS.text }]}>₹{draft.amount}</Text>
+                                        </View>
+                                        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12, marginTop: 12 }}>
+                                            <TouchableOpacity onPress={() => removeDraft(draft.id)} style={styles.draftBtnSecondary}>
+                                                <Text style={styles.draftBtnTextSecondary}>Discard</Text>
+                                            </TouchableOpacity>
+                                            <TouchableOpacity onPress={() => handleApproveDraft(draft)} style={styles.draftBtnPrimary}>
+                                                <Text style={styles.draftBtnTextPrimary}>Review & Add</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                    </View>
+                                );
+                            }
+
+                            // Grouped Drafts
+                            const isExpanded = expandedDraftGroups.has(source);
+                            return (
+                                <View key={source} style={styles.draftCard}>
+                                    <TouchableOpacity onPress={() => toggleDraftGroup(source)} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
+                                            <View style={[styles.itemIcon, { backgroundColor: 'rgba(59, 130, 246, 0.15)' }]}>
+                                                <MessageSquare size={18} color="#3b82f6" />
+                                            </View>
+                                            <View style={{ flex: 1 }}>
+                                                <Text style={styles.itemTitle}>{source}</Text>
+                                                <Text style={styles.itemSubtitle}>{groupDrafts.length} Pending Payments</Text>
+                                            </View>
+                                        </View>
+                                        <ChevronDown size={20} color={COLORS.muted} style={{ transform: [{ rotate: isExpanded ? '180deg' : '0deg' }] }} />
+                                    </TouchableOpacity>
+
+                                    {isExpanded && (
+                                        <View style={{ marginTop: 16, borderTopWidth: 1, borderTopColor: '#1e3a8a', paddingTop: 16 }}>
+                                            {groupDrafts.map((draft, idx) => (
+                                                <View key={draft.id} style={{ marginBottom: idx < groupDrafts.length - 1 ? 16 : 0 }}>
+                                                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                        <Text style={styles.itemSubtitle}>{format(new Date(draft.dateISO), 'MMM d, h:mm a')}</Text>
+                                                        <Text style={[styles.amount, { color: COLORS.text }]}>₹{draft.amount}</Text>
+                                                    </View>
+                                                    <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12, marginTop: 12 }}>
+                                                        <TouchableOpacity onPress={() => removeDraft(draft.id)} style={styles.draftBtnSecondary}>
+                                                            <Text style={styles.draftBtnTextSecondary}>Discard</Text>
+                                                        </TouchableOpacity>
+                                                        <TouchableOpacity onPress={() => handleApproveDraft(draft)} style={styles.draftBtnPrimary}>
+                                                            <Text style={styles.draftBtnTextPrimary}>Review & Add</Text>
+                                                        </TouchableOpacity>
+                                                    </View>
+                                                </View>
+                                            ))}
+                                        </View>
+                                    )}
+                                </View>
+                            );
+                        })}
+                    </View>
+                )}
+
                 {/* Inline Form */}
                 <View style={[styles.formCard, isEditing && { borderColor: COLORS.primary }]}>
                     {isEditing && (
@@ -470,5 +584,11 @@ const styles = StyleSheet.create({
     confirmCancel: { paddingVertical: 10, paddingHorizontal: 16, borderRadius: 8 },
     confirmCancelText: { color: COLORS.muted, fontSize: 15, fontWeight: '600' },
     confirmDelete: { backgroundColor: COLORS.primary, paddingVertical: 10, paddingHorizontal: 20, borderRadius: 8 },
-    confirmDeleteText: { color: '#fff', fontSize: 15, fontWeight: '600' }
+    confirmDeleteText: { color: '#fff', fontSize: 15, fontWeight: '600' },
+
+    draftCard: { backgroundColor: '#1a2235', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: '#1e3a8a', marginBottom: 12 },
+    draftBtnSecondary: { paddingVertical: 8, paddingHorizontal: 12 },
+    draftBtnTextSecondary: { color: COLORS.muted, fontSize: 13, fontWeight: '600' },
+    draftBtnPrimary: { backgroundColor: '#3b82f6', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 6 },
+    draftBtnTextPrimary: { color: '#fff', fontSize: 13, fontWeight: '600' }
 });
