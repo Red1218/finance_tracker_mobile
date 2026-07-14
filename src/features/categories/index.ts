@@ -1,2 +1,2 @@
 // Export future root feature API here
-export {};
+export * from './composition';
