@@ -54,9 +54,9 @@ export class UpdateExpenseUseCase {
         updateProps.merchant = request.merchant === null ? undefined : new MerchantName(request.merchant);
       }
 
-      expense.update(updateProps);
+      const updatedExpense = expense.update(updateProps);
 
-      return await this.expenseRepository.update(expense);
+      return await this.expenseRepository.update(updatedExpense);
     });
   }
 }
