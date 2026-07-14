@@ -27,7 +27,9 @@ export class RepositoryError extends AppError {
     
     this.name = 'RepositoryError';
     
-    Object.setPrototypeOf(this, RepositoryError.prototype);
-    Object.freeze(this);
+    Object.setPrototypeOf(this, new.target.prototype);
+    if (new.target === RepositoryError) {
+      Object.freeze(this);
+    }
   }
 }
