@@ -1,4 +1,4 @@
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/src/features/identity/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Borrowing, BudgetData, Category, CreditCard, DEFAULT_CATEGORIES, defaultBudgetData, PaymentMethod, Spend } from '@/types/budget';

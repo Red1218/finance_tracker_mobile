@@ -1,4 +1,4 @@
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/src/features/identity/hooks/useAuth';
 import { useBudgetContext } from '@/contexts/BudgetContext';
 import { format, subMonths } from 'date-fns';
 import { ArrowRight, CreditCard, History, Landmark, Menu, Pencil, Receipt, Settings, Target, TrendingDown, User, Wallet, X } from 'lucide-react-native';
