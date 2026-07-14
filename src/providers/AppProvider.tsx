@@ -1,5 +1,6 @@
 import type { ComponentType, ReactNode } from 'react';
 import { ReactQueryProvider } from './ReactQueryProvider';
+import { AuthProvider } from '../platform/authentication';
 
 /**
  * Ordered list of providers wrapping the application.
@@ -8,6 +9,7 @@ import { ReactQueryProvider } from './ReactQueryProvider';
  */
 const providers: readonly ComponentType<{ children: ReactNode }>[] = Object.freeze([
   ReactQueryProvider,
+  AuthProvider,
 ]);
 
 export type AppProviderProps = Readonly<{

@@ -1,4 +1,3 @@
-
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
@@ -8,7 +7,8 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/components/useColorScheme';
 import { BudgetProvider } from '@/contexts/BudgetContext';
-import { AppProvider } from '@/src/app/providers/AppProvider';
+import { Bootstrap } from '@/src/app/bootstrap';
+import { NavigationContainer } from '@/src/app/navigation';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -44,11 +44,13 @@ export default function RootLayout() {
   }
 
   return (
-    <AppProvider>
-        <BudgetProvider>
+    <Bootstrap>
+      <BudgetProvider>
+        <NavigationContainer>
           <RootLayoutNav />
-        </BudgetProvider>
-    </AppProvider>
+        </NavigationContainer>
+      </BudgetProvider>
+    </Bootstrap>
   );
 }
 
