@@ -21,7 +21,9 @@ export class AppError extends Error {
     this.context = context;
     this.cause = cause;
 
-    Object.setPrototypeOf(this, AppError.prototype);
-    Object.freeze(this);
+    Object.setPrototypeOf(this, new.target.prototype);
+    if (new.target === AppError) {
+      Object.freeze(this);
+    }
   }
 }

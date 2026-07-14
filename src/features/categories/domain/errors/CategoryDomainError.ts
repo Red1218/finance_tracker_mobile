@@ -22,7 +22,9 @@ export class CategoryDomainError extends AppError {
     
     this.name = 'CategoryDomainError';
     
-    Object.setPrototypeOf(this, CategoryDomainError.prototype);
-    Object.freeze(this);
+    Object.setPrototypeOf(this, new.target.prototype);
+    if (new.target === CategoryDomainError) {
+      Object.freeze(this);
+    }
   }
 }
