@@ -12,7 +12,7 @@ export class CreateCategoryUseCase {
 
   public async execute(request: CreateCategoryRequest): Promise<UseCaseResult> {
     return executeUseCase(async () => {
-      const categoryId = new CategoryId(request.id);
+      const categoryId = new CategoryId(crypto.randomUUID());
       const categoryName = new CategoryName(request.name);
 
       const existsResult = await this.categoryRepository.existsByName(categoryName);
