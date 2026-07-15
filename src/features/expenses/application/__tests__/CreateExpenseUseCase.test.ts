@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { CreateExpenseUseCase } from '../use-cases/CreateExpenseUseCase';
+import { PaymentMethodType } from '../../domain/value-objects/PaymentMethod';
 import { InMemoryExpenseRepository } from './InMemoryExpenseRepository';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -18,7 +19,7 @@ describe('CreateExpenseUseCase', () => {
       amount: 5000,
       currency: 'INR',
       date: Date.now(),
-      paymentMethod: 'UPI' as const,
+      paymentMethod: PaymentMethodType.UPI,
       note: 'Grocery',
     };
 
@@ -43,7 +44,7 @@ describe('CreateExpenseUseCase', () => {
       amount: -100,
       currency: 'INR',
       date: Date.now(),
-      paymentMethod: 'UPI' as const,
+      paymentMethod: PaymentMethodType.UPI,
     };
 
     const result = await useCase.execute(request);
@@ -51,6 +52,6 @@ describe('CreateExpenseUseCase', () => {
     expect(result.success).toBe(false);
     if (result.success) return;
     
-    expect(result.error.code).toBe('INVALID_AMOUNT');
+    expect((result.error as any).code).toBe('INVALID_AMOUNT');
   });
 });

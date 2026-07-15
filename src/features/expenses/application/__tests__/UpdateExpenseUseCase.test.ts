@@ -79,7 +79,7 @@ describe('UpdateExpenseUseCase', () => {
 
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.code).toBe('INVALID_IDENTIFIER');
+      expect((result.error as any).code).toBe('INVALID_IDENTIFIER');
     }
   });
 });

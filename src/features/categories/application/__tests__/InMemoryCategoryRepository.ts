@@ -1,6 +1,6 @@
 import { ICategoryRepository } from '../repositories/ICategoryRepository';
 import { Category, CategoryId, CategoryName } from '../../domain';
-import { Result } from '../../../../platform/persistence';
+import { Result, RepositoryResult, RepositoryError } from '../../../../platform/persistence';
 
 export class InMemoryCategoryRepository implements ICategoryRepository {
   private categories: Map<string, Category> = new Map();
@@ -14,14 +14,14 @@ export class InMemoryCategoryRepository implements ICategoryRepository {
     this.categories.set(category.id.value, category);
   }
 
-  private checkFailure<T>(): Result<T> | null {
+  private checkFailure<T>(): RepositoryResult<T, RepositoryError> | null {
     if (this.forceFailureMessage) {
-      return Result.failure(new Error(this.forceFailureMessage));
+      return Result.failure(new Error(this.forceFailureMessage) as any);
     }
     return null;
   }
 
-  async existsByName(name: CategoryName): Promise<Result<boolean>> {
+  async existsByName(name: CategoryName): Promise<RepositoryResult<boolean, RepositoryError>> {
     const failure = this.checkFailure<boolean>();
     if (failure) return failure;
 
@@ -31,7 +31,7 @@ export class InMemoryCategoryRepository implements ICategoryRepository {
     return Result.success(exists);
   }
 
-  async getById(id: CategoryId): Promise<Result<Category | null>> {
+  async getById(id: CategoryId): Promise<RepositoryResult<Category | null, RepositoryError>> {
     const failure = this.checkFailure<Category | null>();
     if (failure) return failure;
 
@@ -39,14 +39,14 @@ export class InMemoryCategoryRepository implements ICategoryRepository {
     return Result.success(category);
   }
 
-  async list(): Promise<Result<Category[]>> {
+  async list(): Promise<RepositoryResult<Category[], RepositoryError>> {
     const failure = this.checkFailure<Category[]>();
     if (failure) return failure;
 
     return Result.success(Array.from(this.categories.values()));
   }
 
-  async create(category: Category): Promise<Result<void>> {
+  async create(category: Category): Promise<RepositoryResult<void, RepositoryError>> {
     const failure = this.checkFailure<void>();
     if (failure) return failure;
 
@@ -54,7 +54,7 @@ export class InMemoryCategoryRepository implements ICategoryRepository {
     return Result.success(undefined);
   }
 
-  async update(category: Category): Promise<Result<void>> {
+  async update(category: Category): Promise<RepositoryResult<void, RepositoryError>> {
     const failure = this.checkFailure<void>();
     if (failure) return failure;
 
@@ -62,7 +62,7 @@ export class InMemoryCategoryRepository implements ICategoryRepository {
     return Result.success(undefined);
   }
 
-  async delete(id: CategoryId): Promise<Result<void>> {
+  async delete(id: CategoryId): Promise<RepositoryResult<void, RepositoryError>> {
     const failure = this.checkFailure<void>();
     if (failure) return failure;
 

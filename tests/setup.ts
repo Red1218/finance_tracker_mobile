@@ -1,4 +1,5 @@
 // Object.freeze is not monkey-patched anymore as production code was adjusted to handle immutability correctly.
+import { vi } from 'vitest';
 
 // Mock react-native-url-polyfill to prevent parsing errors
 vi.mock('react-native-url-polyfill/auto', () => ({}));
@@ -13,4 +14,4 @@ vi.mock('expo-secure-store', () => ({
 // Mock environment variables for config validation
 process.env.EXPO_PUBLIC_SUPABASE_URL = 'https://mock.supabase.co';
 process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY = 'mock-key';
-process.env.NODE_ENV = 'test';
+(process.env as any).NODE_ENV = 'test';

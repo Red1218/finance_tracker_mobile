@@ -3,7 +3,7 @@ import { ExpenseMapper } from '../ExpenseMapper';
 import { ExpenseRow } from '../../../../features/expenses/contracts';
 import { Expense } from '../../../../features/expenses/domain/entities/Expense';
 import { CategoryId } from '../../../../features/categories/domain';
-import { ExpenseId, ExpenseAmount, CurrencyCode, ExpenseDate, PaymentMethod } from '../../../../features/expenses/domain';
+import { ExpenseId, ExpenseAmount, CurrencyCode, ExpenseDate, PaymentMethod, PaymentMethodType } from '../../../../features/expenses/domain';
 import { v4 as uuidv4 } from 'uuid';
 
 describe('ExpenseMapper', () => {
@@ -13,8 +13,8 @@ describe('ExpenseMapper', () => {
       category_id: '550e8400-e29b-41d4-a716-446655440000',
       amount: 1500,
       currency_code: 'INR',
-      date: 1672531200000,
-      payment_method: 'UPI',
+      date: new Date(1672531200000).toISOString(),
+      payment_method: PaymentMethodType.UPI,
       note: 'Test note',
       merchant: 'Test merchant',
       created_at: '2023-01-01T00:00:00.000Z',
@@ -30,7 +30,7 @@ describe('ExpenseMapper', () => {
     expect(domain.amount.value).toBe(1500);
     expect(domain.currency.value).toBe('INR');
     expect(domain.date.value).toBe(1672531200000);
-    expect(domain.paymentMethod.value).toBe('UPI');
+    expect(domain.paymentMethod.value).toBe(PaymentMethodType.UPI);
     expect(domain.note?.value).toBe('Test note');
     expect(domain.merchant?.value).toBe('Test merchant');
   });
@@ -42,7 +42,7 @@ describe('ExpenseMapper', () => {
       amount: new ExpenseAmount(2500),
       currency: new CurrencyCode('INR'),
       date: new ExpenseDate(1672531200000),
-      paymentMethod: new PaymentMethod('UPI'),
+      paymentMethod: new PaymentMethod(PaymentMethodType.UPI),
     });
 
     const persistence = ExpenseMapper.toPersistence(entity);
@@ -52,7 +52,7 @@ describe('ExpenseMapper', () => {
     expect(persistence.amount).toBe(2500);
     expect(persistence.currency_code).toBe('INR');
     expect(persistence.date).toBe('2023-01-01T00:00:00.000Z');
-    expect(persistence.payment_method).toBe('UPI');
+    expect(persistence.payment_method).toBe(PaymentMethodType.UPI);
     expect(persistence.note).toBeNull();
     expect(persistence.merchant).toBeNull();
   });
