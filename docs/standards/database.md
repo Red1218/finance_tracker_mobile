@@ -367,3 +367,241 @@ Migration Guide
   2. not exist yet.
   
   Empty migrations can be recorded as applied, leaving the database and repository out of sync. This complements our existing "immutable applied migrations" rule.
+
+  ## Migration Quality Checklist
+
+Every migration must satisfy the following requirements before being committed:
+
+### Structure
+- One logical change per migration.
+- Descriptive migration name.
+- Migration file is not empty.
+- Migration executes successfully on a fresh database.
+
+### Schema
+- Primary keys defined.
+- Foreign keys added where required.
+- Appropriate constraints implemented.
+- Necessary indexes created.
+- Table and important column comments included.
+
+### Security
+- RLS enabled for user-owned tables.
+- FORCE ROW LEVEL SECURITY enabled.
+- Required policies implemented.
+- Ownership rules verified.
+
+### Verification
+- Migration applied successfully.
+- Schema verified.
+- Constraints verified.
+- Indexes verified.
+- Policies verified.
+- Representative data tested where applicable.
+
+### Documentation
+- Related documentation updated.
+- Clear commit message written.
+
+### Immutable Migration Rule
+Once a migration has been applied to a shared environment, it must never be modified. Any correction must be implemented through a new migration.
+
+## Migration Verification Standards
+
+A migration is not considered complete until it has been verified.
+
+### Verification Stages
+
+1. Schema Verification
+   - Tables
+   - Columns
+   - Data types
+   - Defaults
+   - Comments
+
+2. Integrity Verification
+   - Primary keys
+   - Foreign keys
+   - CHECK constraints
+   - UNIQUE constraints
+   - NOT NULL constraints
+
+3. Performance Verification
+   - Indexes
+   - Query plans
+   - Expected index usage
+
+4. Security Verification
+   - RLS enabled
+   - FORCE RLS enabled
+   - Policies verified
+   - Ownership rules verified
+
+### Standard Workflow
+
+Write → Apply → Verify → Document → Commit
+
+### Rollback Consideration
+
+Before deploying a migration, evaluate:
+- Recovery strategy if the migration fails.
+- Whether existing data is affected.
+- Whether the migration can be safely rerun.
+- Whether the change should be split into smaller migrations.
+
+## Performance Standards
+
+### Principles
+
+- Optimize last.
+- Measure before changing.
+- Create indexes deliberately.
+- Keep queries simple and maintainable.
+- Review performance periodically.
+
+### Performance Checklist
+
+- Query performance measured before optimization.
+- Query performance measured after optimization.
+- Index necessity justified.
+- Query plans reviewed when applicable.
+- No redundant indexes introduced.
+- Performance improvements documented.
+
+### Scalability Principle
+
+Optimize for expected scale, not hypothetical scale. Prefer maintainability and correctness until real-world usage demonstrates the need for further optimization.
+
+## Database Review Checklist
+
+### Design Review
+- Schema design is appropriate.
+- Relationships are correct.
+- Constraints reflect business rules.
+- Security model is appropriate.
+
+### Implementation Review
+- Migration follows project standards.
+- Verification completed.
+- Performance considered.
+- Documentation updated.
+- Commit message follows conventions.
+
+## Database Release Readiness Checklist
+
+### Migration
+- Migrations verified.
+- No empty migrations.
+- Applied migrations unchanged.
+- Naming follows convention.
+
+### Schema
+- Tables reviewed.
+- Constraints verified.
+- Indexes verified.
+- Comments reviewed.
+
+### Security
+- RLS verified.
+- FORCE RLS verified.
+- Policies verified.
+- Ownership isolation confirmed.
+
+### Verification
+- Schema verified.
+- Integrity verified.
+- Security verified.
+- Performance verified.
+
+### Documentation
+- Database handbook updated.
+- ADRs updated if required.
+- README updated if required.
+
+### Source Control
+- Clean git status.
+- Logical commits.
+- Branch pushed.
+
+### Deployment
+- Fresh migration tested.
+- Existing database tested.
+- Recovery strategy reviewed.
+
+### Migration Risk Classification
+- Low
+- Medium
+- High
+
+## Documentation Review Checklist
+
+### Accuracy
+- Documentation matches implementation.
+- Examples verified.
+- No obsolete guidance.
+
+### Completeness
+- Standards documented.
+- Checklists actionable.
+- Design decisions recorded.
+
+### Consistency
+- Terminology consistent.
+- Naming consistent.
+- Formatting consistent.
+
+### Maintainability
+- Single source of truth.
+- Minimal duplication.
+- Easy navigation.
+
+## Documentation Lifecycle
+
+Every major engineering document should include:
+
+- Status
+- Owner
+- Last Reviewed
+
+## Final Database Audit
+
+### Architecture
+- Schema reviewed.
+- Relationships verified.
+- Naming conventions consistent.
+- Business rules enforced.
+
+### Migrations
+- Migration history complete.
+- Applied migrations immutable.
+- Fresh setup verified.
+
+### Security
+- RLS verified.
+- FORCE RLS verified.
+- Policies reviewed.
+
+### Performance
+- Indexes reviewed.
+- Query paths documented.
+
+### Documentation
+- Engineering Principles complete.
+- Database Handbook complete.
+- Architecture documentation current.
+
+### Quality
+- Migration checklist complete.
+- Verification standards complete.
+- Review checklist complete.
+- Release checklist complete.
+
+### Repository
+- Clean git status.
+- Branch pushed.
+- Ready for release.
+
+## Future Improvements
+
+Document enhancements that have been intentionally deferred, along with the reasoning behind each decision.
+

@@ -155,3 +155,17 @@ These principles apply to every part of Finance Tracker v2, including:
 This document should change very rarely.
 
 Changes require architectural review because they affect the engineering philosophy of the entire project.
+
+# Definition of Done
+
+A task is considered complete only when:
+
+- Requirements are satisfied.
+- Architecture aligns with project principles.
+- Implementation follows project standards.
+- Documentation is updated.
+- Verification is completed.
+- Tests (where applicable) pass.
+- Code is reviewed.
+- Changes are committed with a descriptive message.
+- Branch is pushed to the remote repository.
