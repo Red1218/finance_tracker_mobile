@@ -1,10 +1,13 @@
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { expensesModule } from './module';
 import { RestoreExpenseRequest } from '../../application/use-cases';
+import { budgetKeys } from '../../../budgets/presentation/hooks/queryKeys';
 
 export function useRestoreExpense() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   const restoreExpense = async (request: RestoreExpenseRequest): Promise<boolean> => {
     setIsLoading(true);
@@ -13,6 +16,7 @@ export function useRestoreExpense() {
     try {
       const result = await expensesModule.restoreExpenseUseCase.execute(request);
       if (result.success) {
+        queryClient.invalidateQueries({ queryKey: budgetKeys.summaries() });
         return true;
       } else {
         setError(result.error.message);

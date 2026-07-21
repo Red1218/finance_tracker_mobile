@@ -1,66 +1,42 @@
 import React from 'react';
-import { View, Text, StyleSheet, Modal } from 'react-native';
-import { Button } from '../../../../shared/components';
-import { useTheme } from '../../../../shared/theme';
-import { BudgetItemModel } from '../models';
+import { View, Text, Modal, TouchableOpacity } from 'react-native';
 
 interface DeleteBudgetDialogProps {
   visible: boolean;
-  budget: BudgetItemModel | null;
-  onConfirm: (budget: BudgetItemModel) => void;
+  onConfirm: () => void;
   onCancel: () => void;
-  isLoading?: boolean;
+  isDeleting?: boolean;
 }
 
-export function DeleteBudgetDialog({ visible, budget, onConfirm, onCancel, isLoading }: DeleteBudgetDialogProps) {
-  const { colors, spacing, typography, radius } = useTheme();
-
-  if (!budget) return null;
-
+export const DeleteBudgetDialog: React.FC<DeleteBudgetDialogProps> = ({ visible, onConfirm, onCancel, isDeleting }) => {
   return (
     <Modal visible={visible} transparent animationType="fade">
-      <View style={[styles.overlay, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
-        <View style={[styles.dialog, { backgroundColor: colors.surfacePrimary, padding: spacing.space24, borderRadius: radius.medium }]}>
-          <Text style={[typography.heading, { color: colors.textPrimary, marginBottom: spacing.space16 }]}>
-            Delete Budget
-          </Text>
-          <Text style={[typography.body, { color: colors.textSecondary, marginBottom: spacing.space24 }]}>
-            Are you sure you want to delete this budget for period {budget.period}? This action cannot be undone.
+      <View className="flex-1 justify-center items-center bg-black/50 px-4">
+        <View className="bg-white rounded-xl p-6 w-full max-w-sm">
+          <Text className="text-lg font-bold text-gray-900 mb-2">Delete Budget</Text>
+          <Text className="text-sm text-gray-600 mb-6">
+            Are you sure you want to delete this budget? Your tracked expenses will remain safe.
           </Text>
           
-          <View style={styles.actions}>
-            <Button
-              title="Cancel"
+          <View className="flex-row justify-end space-x-3">
+            <TouchableOpacity 
               onPress={onCancel}
-              disabled={isLoading}
-              style={{ flex: 1, marginRight: spacing.space8, backgroundColor: colors.surfaceSecondary }}
-            />
-            <Button
-              title={isLoading ? 'Deleting...' : 'Delete'}
-              onPress={() => onConfirm(budget)}
-              disabled={isLoading}
-              style={{ flex: 1, marginLeft: spacing.space8, backgroundColor: colors.error }}
-            />
+              disabled={isDeleting}
+              className="px-4 py-2"
+            >
+              <Text className="text-gray-600 font-semibold">Cancel</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              onPress={onConfirm}
+              disabled={isDeleting}
+              className="px-4 py-2 bg-red-600 rounded-md"
+            >
+              <Text className="text-white font-semibold">{isDeleting ? 'Deleting...' : 'Delete'}</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </View>
     </Modal>
   );
-}
-
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  dialog: {
-    width: '100%',
-    maxWidth: 400,
-  },
-  actions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-  }
-});
+};

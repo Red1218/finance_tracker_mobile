@@ -1,46 +1,24 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { useTheme } from '../../../../shared/theme';
+import { View } from 'react-native';
 
 interface BudgetProgressBarProps {
-  progressPercentage: number;
-  isOverBudget: boolean;
+  percentage: number;
+  status: 'OnTrack' | 'AtRisk' | 'Overbudget';
 }
 
-export function BudgetProgressBar({ progressPercentage, isOverBudget }: BudgetProgressBarProps) {
-  const { colors, radius } = useTheme();
+export const BudgetProgressBar: React.FC<BudgetProgressBarProps> = ({ percentage, status }) => {
+  const cappedPercentage = Math.min(percentage, 100);
   
-  const barColor = isOverBudget ? colors.error : colors.brandPrimary;
+  let color = 'bg-green-500';
+  if (status === 'AtRisk') color = 'bg-yellow-500';
+  if (status === 'Overbudget') color = 'bg-red-500';
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.backgroundBar, { backgroundColor: colors.surfaceSecondary, borderRadius: radius.small }]}>
-        <View 
-          style={[
-            styles.fillBar, 
-            { 
-              backgroundColor: barColor, 
-              width: `${progressPercentage}%`,
-              borderRadius: radius.small
-            }
-          ]} 
-        />
-      </View>
+    <View className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+      <View 
+        className={`h-full ${color}`} 
+        style={{ width: `${cappedPercentage}%` }} 
+      />
     </View>
   );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    width: '100%',
-    marginVertical: 8,
-  },
-  backgroundBar: {
-    height: 8,
-    width: '100%',
-    overflow: 'hidden',
-  },
-  fillBar: {
-    height: '100%',
-  }
-});
+};

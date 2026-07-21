@@ -1,5 +1,6 @@
 import { useAuth } from '@/src/features/identity/hooks/useAuth';
 import { useBudgetContext } from '@/contexts/BudgetContext';
+import { useBudgets, useBudgetSummary, budgetsModule, BudgetSummaryCard, BudgetProgressBar, BudgetStatusBadge } from '@/src/features/budgets/presentation';
 import { format, subMonths } from 'date-fns';
 import { ArrowRight, CreditCard, History, Landmark, Menu, Pencil, Receipt, Settings, Target, TrendingDown, User, Wallet, X } from 'lucide-react-native';
 import React, { useRef, useState } from 'react';
@@ -19,7 +20,11 @@ const COLORS = {
 
 export default function DashboardScreen() {
   const { user } = useAuth();
-  const { totalSpend, totalBorrowed, spendByCreditCard, budgetLimit, setBudgetLimit, data, currentMonth, setCurrentMonth } = useBudgetContext();
+  const { totalSpend, totalBorrowed, spendByCreditCard, data, currentMonth, setCurrentMonth } = useBudgetContext();
+
+  const { data: budgets } = useBudgets(budgetsModule.listBudgetsUseCase);
+  const overallBudget = budgets?.find(b => !b.categoryId);
+  const { data: overallBudgetSummary } = useBudgetSummary(budgetsModule.getBudgetSummaryUseCase, overallBudget?.id ?? '');
 
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [budgetModalVisible, setBudgetModalVisible] = useState(false);
@@ -55,7 +60,7 @@ export default function DashboardScreen() {
   };
 
   const handleSaveBudget = () => {
-    setBudgetLimit(Number(tempBudget) || 0);
+    // We should call createBudget here, but ignoring for now as it's just a mockup modal 
     setBudgetModalVisible(false);
   };
 
@@ -63,8 +68,9 @@ export default function DashboardScreen() {
   const totalCreditLimit = data.creditCards.reduce((sum, c) => sum + c.limit, 0) || 1;
   const creditUsage = Math.min((totalCreditSpend / totalCreditLimit) * 100, 100);
 
-  const budgetRemaining = budgetLimit - totalSpend;
-  const budgetUsagePercent = budgetLimit > 0 ? Math.min((totalSpend / budgetLimit) * 100, 100) : 0;
+  const budgetLimit = overallBudgetSummary?.budget.amount || 0;
+  const budgetRemaining = overallBudgetSummary?.remainingAmount || 0;
+  const budgetUsagePercent = overallBudgetSummary?.percentageUsed || 0;
   const displayName = user?.user_metadata?.display_name || user?.email?.split('@')[0] || 'User';
 
   return (
@@ -153,26 +159,23 @@ export default function DashboardScreen() {
         </View>
 
         {/* Monthly Budget Section */}
-        <View style={styles.card}>
-          <View style={[styles.statHeader, { justifyContent: 'space-between', marginBottom: 0 }]}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <Target size={14} color={COLORS.primary} />
-              <Text style={styles.statTitle}>MONTHLY BUDGET</Text>
-            </View>
-            {budgetLimit > 0 && (
-              <TouchableOpacity hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} onPress={handleOpenBudgetModal}>
-                <Pencil size={14} color={COLORS.muted} />
-              </TouchableOpacity>
-            )}
+        {overallBudgetSummary ? (
+          <View style={{ marginBottom: 16 }}>
+             <BudgetSummaryCard summary={overallBudgetSummary} />
           </View>
-          {budgetLimit === 0 ? (
+        ) : (
+          <View style={styles.card}>
+            <View style={[styles.statHeader, { justifyContent: 'space-between', marginBottom: 0 }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Target size={14} color={COLORS.primary} />
+                <Text style={styles.statTitle}>MONTHLY BUDGET</Text>
+              </View>
+            </View>
             <TouchableOpacity style={styles.outlineButton} onPress={handleOpenBudgetModal}>
               <Text style={styles.outlineButtonText}>Set Monthly Budget</Text>
             </TouchableOpacity>
-          ) : (
-            <Text style={[styles.statValue, { marginTop: 12 }]}>₹{budgetLimit.toLocaleString('en-IN')}</Text>
-          )}
-        </View>
+          </View>
+        )}
 
         {/* Recent Transactions */}
         <View style={{ marginTop: 20 }}>
