@@ -1,9 +1,8 @@
-import { IBudgetRepository, BudgetFilter } from '../repositories';
-import { Budget, BudgetPeriod, BudgetStatus } from '../../domain';
-import { CategoryId } from '../../../categories/domain';
-import { ListBudgetsRequest } from './ListBudgetsRequest';
+import { IBudgetRepository } from '../repositories/IBudgetRepository';
+import { ListBudgetsRequest } from '../requests/ListBudgetsRequest';
 import { UseCaseResult } from './UseCaseTypes';
 import { executeUseCase } from './UseCaseHelpers';
+import { Budget } from '../../domain';
 
 export class ListBudgetsUseCase {
   constructor(private readonly budgetRepository: IBudgetRepository) {
@@ -12,18 +11,7 @@ export class ListBudgetsUseCase {
 
   public async execute(request: ListBudgetsRequest): Promise<UseCaseResult<Budget[]>> {
     return executeUseCase(async () => {
-      const filter: BudgetFilter = {
-        period: request.period ? new BudgetPeriod(request.period) : undefined,
-        categoryId: request.categoryId ? new CategoryId(request.categoryId) : undefined,
-        status: request.status ? new BudgetStatus(request.status) : undefined,
-        includeDeleted: request.includeDeleted,
-      };
-
-      if (request.categoryId === null) {
-        filter.categoryId = null;
-      }
-
-      return await this.budgetRepository.list(filter);
+      return await this.budgetRepository.list();
     });
   }
 }

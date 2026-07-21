@@ -1,34 +1,17 @@
-import { useState } from 'react';
-import { budgetsModule } from './module';
-import { CreateBudgetRequest } from '../../application/use-cases';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { CreateBudgetUseCase, CreateBudgetRequest } from '../../application';
 
-export function useCreateBudget() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export function useCreateBudget(createBudgetUseCase: CreateBudgetUseCase) {
+  const queryClient = useQueryClient();
 
-  const createBudget = async (request: CreateBudgetRequest): Promise<boolean> => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const result = await budgetsModule.createBudgetUseCase.execute(request);
-      if (result.success) {
-        return true;
-      } else {
-        setError(result.error.message);
-        return false;
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to create budget');
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return {
-    createBudget,
-    isLoading,
-    error,
-  };
+  return useMutation({
+    mutationFn: async (request: CreateBudgetRequest) => {
+      const result = await createBudgetUseCase.execute(request);
+      if (!result.success) throw result.error;
+      return result.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['budgets'] });
+    },
+  });
 }

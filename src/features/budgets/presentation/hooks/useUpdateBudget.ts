@@ -1,34 +1,18 @@
-import { useState } from 'react';
-import { budgetsModule } from './module';
-import { UpdateBudgetRequest } from '../../application/use-cases';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { UpdateBudgetUseCase, UpdateBudgetRequest } from '../../application';
 
-export function useUpdateBudget() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export function useUpdateBudget(updateBudgetUseCase: UpdateBudgetUseCase) {
+  const queryClient = useQueryClient();
 
-  const updateBudget = async (request: UpdateBudgetRequest): Promise<boolean> => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const result = await budgetsModule.updateBudgetUseCase.execute(request);
-      if (result.success) {
-        return true;
-      } else {
-        setError(result.error.message);
-        return false;
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to update budget');
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return {
-    updateBudget,
-    isLoading,
-    error,
-  };
+  return useMutation({
+    mutationFn: async (request: UpdateBudgetRequest) => {
+      const result = await updateBudgetUseCase.execute(request);
+      if (!result.success) throw result.error;
+      return result.data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['budgets'] });
+      queryClient.invalidateQueries({ queryKey: ['budgetSummary', variables.id] });
+    },
+  });
 }

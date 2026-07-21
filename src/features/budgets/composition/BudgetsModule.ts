@@ -1,9 +1,10 @@
-import { SupabaseBudgetRepository } from '../../../platform/persistence/budgets';
+import { SupabaseBudgetRepository } from '../infrastructure/repositories/SupabaseBudgetRepository';
 import {
   CreateBudgetUseCase,
   UpdateBudgetUseCase,
   DeleteBudgetUseCase,
   ListBudgetsUseCase,
+  GetBudgetSummaryUseCase,
   CloneBudgetPeriodUseCase,
 } from '../application';
 
@@ -13,6 +14,7 @@ export class BudgetsModule {
   public readonly deleteBudgetUseCase: DeleteBudgetUseCase;
   public readonly listBudgetsUseCase: ListBudgetsUseCase;
   public readonly cloneBudgetPeriodUseCase: CloneBudgetPeriodUseCase;
+  public readonly getBudgetSummaryUseCase: GetBudgetSummaryUseCase;
 
   constructor(repository: SupabaseBudgetRepository = new SupabaseBudgetRepository()) {
     this.createBudgetUseCase = new CreateBudgetUseCase(repository);
@@ -20,6 +22,7 @@ export class BudgetsModule {
     this.deleteBudgetUseCase = new DeleteBudgetUseCase(repository);
     this.listBudgetsUseCase = new ListBudgetsUseCase(repository);
     this.cloneBudgetPeriodUseCase = new CloneBudgetPeriodUseCase(repository);
+    this.getBudgetSummaryUseCase = new GetBudgetSummaryUseCase(repository);
     
     Object.freeze(this);
   }

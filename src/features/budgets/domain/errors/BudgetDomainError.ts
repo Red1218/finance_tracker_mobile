@@ -6,16 +6,22 @@ export type BudgetErrorCode =
   | 'INVALID_AMOUNT'
   | 'INVALID_CURRENCY'
   | 'INVALID_PERIOD_FORMAT'
-  | 'INVALID_STATUS'
-  | 'DUPLICATE_BUDGET';
+  | 'INVALID_DATE_RANGE'
+  | 'DUPLICATE_BUDGET'
+  | 'CATEGORY_INACTIVE'
+  | 'CATEGORY_MISMATCH'
+  | 'HISTORICAL_BUDGET_IMMUTABLE';
 
 const BUDGET_ERROR_MAP: Record<BudgetErrorCode, ErrorCategory> = {
   INVALID_IDENTIFIER: ErrorCategory.Validation,
   INVALID_AMOUNT: ErrorCategory.Validation,
   INVALID_CURRENCY: ErrorCategory.Validation,
   INVALID_PERIOD_FORMAT: ErrorCategory.Validation,
-  INVALID_STATUS: ErrorCategory.Validation,
+  INVALID_DATE_RANGE: ErrorCategory.Validation,
   DUPLICATE_BUDGET: ErrorCategory.Conflict,
+  CATEGORY_INACTIVE: ErrorCategory.Validation,
+  CATEGORY_MISMATCH: ErrorCategory.Validation,
+  HISTORICAL_BUDGET_IMMUTABLE: ErrorCategory.Validation,
 };
 
 export class BudgetDomainError extends AppError {
