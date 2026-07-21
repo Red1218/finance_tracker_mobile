@@ -30,6 +30,7 @@ export class CreateCategoryUseCase {
         id: categoryId,
         name: categoryName,
         type: request.type,
+        isArchived: false,
       });
 
       return await this.categoryRepository.create(category);

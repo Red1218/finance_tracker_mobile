@@ -22,10 +22,11 @@ export class ExpenseMapper {
       paymentMethod: new PaymentMethod(row.payment_method),
       note: row.note ? new ExpenseNote(row.note) : undefined,
       merchant: row.merchant ? new MerchantName(row.merchant) : undefined,
+      deletedAt: row.deleted_at ? new Date(row.deleted_at) : undefined,
     });
   }
 
-  public static toPersistence(entity: Expense): Omit<ExpenseRow, 'created_at' | 'updated_at' | 'deleted_at'> {
+  public static toPersistence(entity: Expense): Omit<ExpenseRow, 'created_at' | 'updated_at'> {
     return {
       id: entity.id.value,
       category_id: entity.categoryId.value,
@@ -35,6 +36,7 @@ export class ExpenseMapper {
       payment_method: entity.paymentMethod.value,
       note: entity.note?.value ?? null,
       merchant: entity.merchant?.value ?? null,
+      deleted_at: entity.deletedAt ? entity.deletedAt.toISOString() : null,
     };
   }
 

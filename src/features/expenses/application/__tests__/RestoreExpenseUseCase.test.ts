@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { DeleteExpenseUseCase } from '../use-cases/DeleteExpenseUseCase';
+import { RestoreExpenseUseCase } from '../use-cases/RestoreExpenseUseCase';
 import { InMemoryExpenseRepository } from './InMemoryExpenseRepository';
 import { Expense } from '../../domain/entities/Expense';
 import { ExpenseId } from '../../domain/value-objects/ExpenseId';
@@ -10,19 +10,19 @@ import { ExpenseDate } from '../../domain/value-objects/ExpenseDate';
 import { PaymentMethod } from '../../domain/value-objects/PaymentMethod';
 import { v4 as uuidv4 } from 'uuid';
 
-describe('DeleteExpenseUseCase', () => {
+describe('RestoreExpenseUseCase', () => {
   let repository: InMemoryExpenseRepository;
-  let useCase: DeleteExpenseUseCase;
-  let existingExpenseId: string;
+  let useCase: RestoreExpenseUseCase;
+  let deletedExpenseId: string;
 
   beforeEach(async () => {
     repository = new InMemoryExpenseRepository();
-    useCase = new DeleteExpenseUseCase(repository);
+    useCase = new RestoreExpenseUseCase(repository);
 
     const id = new ExpenseId(uuidv4());
-    existingExpenseId = id.value;
+    deletedExpenseId = id.value;
     
-    const expense = new Expense({
+    let expense = new Expense({
       id,
       categoryId: new CategoryId(uuidv4()),
       amount: new ExpenseAmount(1500),
@@ -31,18 +31,19 @@ describe('DeleteExpenseUseCase', () => {
       paymentMethod: new PaymentMethod('UPI'),
     });
 
+    expense = expense.delete();
     await repository.create(expense);
   });
 
-  it('should successfully delete an existing expense', async () => {
-    const result = await useCase.execute({ id: existingExpenseId });
+  it('should successfully restore a deleted expense', async () => {
+    const result = await useCase.execute({ id: deletedExpenseId });
 
     expect(result.success).toBe(true);
     
-    const saved = await repository.getById(new ExpenseId(existingExpenseId));
+    const saved = await repository.getById(new ExpenseId(deletedExpenseId));
     expect(saved.success).toBe(true);
     if (saved.success) {
-      expect(saved.data?.isDeleted).toBe(true);
+      expect(saved.data?.isDeleted).toBe(false);
     }
   });
 

@@ -1,16 +1,19 @@
 import { IExpenseRepository } from '../repositories';
 import { ExpenseId, ExpenseDomainError } from '../../domain';
 import { Result } from '../../../../platform/persistence';
-import { DeleteExpenseRequest } from './DeleteExpenseRequest';
 import { UseCaseResult } from './UseCaseTypes';
 import { executeUseCase, fetchExpenseOrError } from './UseCaseHelpers';
 
-export class DeleteExpenseUseCase {
+export interface RestoreExpenseRequest {
+  id: string;
+}
+
+export class RestoreExpenseUseCase {
   constructor(private readonly expenseRepository: IExpenseRepository) {
     Object.freeze(this);
   }
 
-  public async execute(request: DeleteExpenseRequest): Promise<UseCaseResult> {
+  public async execute(request: RestoreExpenseRequest): Promise<UseCaseResult> {
     return executeUseCase(async () => {
       const expenseId = new ExpenseId(request.id);
 
@@ -21,15 +24,14 @@ export class DeleteExpenseUseCase {
 
       const expense = fetchResult.data!;
 
-      // Use domain entity to enforce business rules
       try {
-        const deletedExpense = expense.delete();
-        return await this.expenseRepository.delete(deletedExpense.id);
+        const restoredExpense = expense.restore();
+        return await this.expenseRepository.restore(restoredExpense.id);
       } catch (e) {
         return Result.failure(
           new ExpenseDomainError(
-            'EXPENSE_ALREADY_DELETED',
-            'This expense has already been deleted.'
+            'EXPENSE_NOT_DELETED',
+            'Cannot restore an expense that is not deleted.'
           )
         );
       }

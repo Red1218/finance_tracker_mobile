@@ -2,8 +2,13 @@ import { useState, useCallback, useEffect } from 'react';
 import { expensesModule } from './module';
 import { ExpenseItemModel, GroupedExpenses } from '../models';
 import { ListExpensesRequest } from '../../application/use-cases';
+import { Category } from '../../../categories/domain';
 
-export function useExpenses(filter?: ListExpensesRequest) {
+export function useExpenses(
+  filter?: ListExpensesRequest,
+  categories: Category[] = [],
+  searchQuery: string = ''
+) {
   const [groupedExpenses, setGroupedExpenses] = useState<GroupedExpenses[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -18,9 +23,12 @@ export function useExpenses(filter?: ListExpensesRequest) {
       const result = await expensesModule.listExpensesUseCase.execute(currentFilter);
       
       if (result.success) {
+        const categoryMap = new Map(categories.map(c => [c.id.value, c.name.value]));
+        
         const viewModels: ExpenseItemModel[] = result.data.map(e => ({
           id: e.id.value,
           categoryId: e.categoryId.value,
+          categoryName: categoryMap.get(e.categoryId.value) || 'Unknown Category',
           amount: e.amount.value,
           currency: e.currency.value,
           formattedAmount: `${e.currency.value} ${(e.amount.value / 100).toFixed(2)}`,
@@ -29,10 +37,21 @@ export function useExpenses(filter?: ListExpensesRequest) {
           paymentMethod: e.paymentMethod.value,
           note: e.note?.value,
           merchant: e.merchant?.value,
+          isDeleted: e.isDeleted,
         }));
+        
+        let filteredModels = viewModels;
+        if (searchQuery.trim().length > 0) {
+          const query = searchQuery.toLowerCase();
+          filteredModels = viewModels.filter(vm => 
+            (vm.merchant && vm.merchant.toLowerCase().includes(query)) ||
+            (vm.note && vm.note.toLowerCase().includes(query)) ||
+            (vm.categoryName && vm.categoryName.toLowerCase().includes(query))
+          );
+        }
 
         const groupsMap = new Map<string, ExpenseItemModel[]>();
-        for (const vm of viewModels) {
+        for (const vm of filteredModels) {
           const groupList = groupsMap.get(vm.formattedDate) || [];
           groupList.push(vm);
           groupsMap.set(vm.formattedDate, groupList);
@@ -52,7 +71,7 @@ export function useExpenses(filter?: ListExpensesRequest) {
     } finally {
       setIsLoading(false);
     }
-  }, [filterHash]);
+  }, [filterHash, categories, searchQuery]);
 
   useEffect(() => {
     fetchExpenses();

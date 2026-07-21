@@ -1,45 +1,77 @@
 # Architectural Decision Records (ADRs)
 
+This directory contains all Architectural Decision Records for the Finance Tracker project.
+
+---
+
 ## What is an ADR?
-An Architectural Decision Record (ADR) is a short document that captures a single, significant architectural decision made for the project. It describes the context, the decision itself, and the consequences of that decision.
 
-## When to create one?
-You should create an ADR when you are making a decision that:
-- Significantly impacts the architecture (e.g., choosing a framework, defining a database standard).
-- Has long-term consequences that future maintainers will need to understand.
-- Requires consensus among the engineering team or stakeholders.
-- Replaces or significantly alters a previous architectural decision.
+An ADR is a short document that captures a single significant architectural decision — the context that drove it, the decision itself, and its consequences.
 
-Minor implementation details or transient code changes do not require an ADR.
+ADRs create an auditable history of why the system is designed the way it is. They are invaluable for onboarding, code review, and architectural governance.
 
-## How ADRs are numbered
-ADRs are numbered sequentially using a three-digit format starting from `001` (e.g., `ADR-001-database-naming.md`).
-- We do not use `000` for engineering principles, as those are stored in the canonical `docs/principles/` directory.
+---
 
-## When to supersede an ADR instead of editing it
-ADRs are immutable records of historical decisions. Once an ADR is accepted:
-- **DO NOT** edit its core decision or consequences just because the system evolves.
-- **DO** create a new ADR if a past decision needs to be reversed or fundamentally changed. The new ADR should reference the old one and mark the old one as "Superseded".
+## When to Write an ADR
 
-## Standard ADR Template
-When creating a new ADR, use the following markdown template:
+Create an ADR when a decision:
 
-```markdown
-# ADR-[Number]: [Short Title]
+- Significantly impacts the architecture (e.g., choosing a framework, selecting a data access pattern, defining a security model)
+- Has consequences that future maintainers need to understand
+- Replaces or significantly alters a prior architectural decision
+- Requires team or stakeholder consensus
 
-## Status
+Do **not** create an ADR for:
 
-[Proposed | Accepted | Superseded by ADR-XXX | Rejected]
+- Minor implementation details
+- Transient configuration changes
+- Decisions that are obvious from the code itself
 
-## Context
+---
 
-[Describe the context and problem statement in a few sentences. What forces are at play? What constraints do we have?]
+## Numbering
 
-## Decision
+ADRs are numbered sequentially using a three-digit zero-padded format:
 
-[Describe the specific decision made to resolve the problem. Keep it clear and declarative.]
-
-## Consequences
-
-[What becomes easier or more difficult because of this decision? Note both positive and negative consequences.]
 ```
+ADR-001-<short-title>.md
+ADR-002-<short-title>.md
+```
+
+Numbering in this project begins at `ADR-010`. The first nine numbers were allocated to architectural decisions made before this ADR system was formalised — those decisions are now embedded in `PROJECT_CONSTITUTION.md` and `ARCHITECTURE.md` rather than in separate ADR files.
+
+---
+
+## Lifecycle
+
+| Status | Meaning |
+|--------|---------|
+| `Proposed` | Under discussion — not yet implemented |
+| `Approved` | Accepted and implemented |
+| `Superseded` | Replaced by a newer ADR (referenced in the document) |
+| `Rejected` | Considered but not adopted |
+
+### Immutability Rule
+
+ADRs are immutable records of historical decisions.
+
+- **Do not** edit the decision or consequences of an approved ADR because the system has evolved.
+- **Do** create a new ADR if a prior decision needs to be reversed or replaced. The new ADR references the old one and updates its status to `Superseded by ADR-XXX`.
+
+---
+
+## Creating a New ADR
+
+1. Copy [ADR_TEMPLATE.md](./ADR_TEMPLATE.md)
+2. Name it: `ADR-<NNN>-<short-title>.md`
+3. Fill in every section
+4. Set status to `Proposed`
+5. Submit for review via Pull Request
+6. Update status to `Approved` upon merge
+7. Add it to [INDEX.md](./INDEX.md)
+
+---
+
+## Index
+
+See [INDEX.md](./INDEX.md) for the full list of all ADRs and their current status.

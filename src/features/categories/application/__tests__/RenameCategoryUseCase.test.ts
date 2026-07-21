@@ -17,6 +17,7 @@ describe('RenameCategoryUseCase', () => {
       id: new CategoryId(id),
       name: new CategoryName(name),
       type,
+      isArchived: false,
     });
     repository.seed(category);
   };

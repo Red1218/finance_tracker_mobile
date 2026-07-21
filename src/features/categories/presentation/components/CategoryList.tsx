@@ -8,10 +8,10 @@ import { useTheme } from '../../../../shared/theme';
 interface CategoryListProps {
   categories: Category[];
   onSelect: (category: Category) => void;
-  onDelete?: (category: Category) => void;
+  onArchive?: (category: Category) => void;
 }
 
-export function CategoryList({ categories, onSelect, onDelete }: CategoryListProps) {
+export function CategoryList({ categories, onSelect, onArchive }: CategoryListProps) {
   const { spacing } = useTheme();
 
   if (categories.length === 0) {
@@ -30,12 +30,12 @@ export function CategoryList({ categories, onSelect, onDelete }: CategoryListPro
       renderItem={({ item }) => {
         const isProtected = item.type === CategoryType.Protected;
         return (
-          <CategoryItem 
-            category={item} 
-            onPress={onSelect} 
-            onDelete={onDelete}
+          <CategoryItem
+            category={item}
+            onPress={onSelect}
+            onArchive={onArchive}
             isReadonly={isProtected}
-            canDelete={!isProtected}
+            canArchive={!isProtected}
           />
         );
       }}

@@ -1,21 +1,21 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { Category } from '../../domain';
+import { Category, CategoryType } from '../../domain';
 import { useTheme } from '../../../../shared/theme';
 
 interface CategoryItemProps {
   category: Category;
   onPress: (category: Category) => void;
-  onDelete?: (category: Category) => void;
+  onArchive?: (category: Category) => void;
   isReadonly?: boolean;
-  canDelete?: boolean;
+  canArchive?: boolean;
 }
 
-export function CategoryItem({ category, onPress, onDelete, isReadonly, canDelete }: CategoryItemProps) {
+export function CategoryItem({ category, onPress, onArchive, isReadonly, canArchive }: CategoryItemProps) {
   const { colors, spacing, typography, radius } = useTheme();
 
   return (
-    <Pressable 
+    <Pressable
       style={({ pressed }) => [
         styles.container,
         {
@@ -25,7 +25,7 @@ export function CategoryItem({ category, onPress, onDelete, isReadonly, canDelet
           marginBottom: spacing.space8,
           opacity: pressed ? 0.8 : 1,
         }
-      ]} 
+      ]}
       onPress={() => onPress(category)}
     >
       <View style={styles.content}>
@@ -38,15 +38,15 @@ export function CategoryItem({ category, onPress, onDelete, isReadonly, canDelet
           </Text>
         )}
       </View>
-      {canDelete && onDelete && (
-        <Pressable 
-          onPress={() => onDelete(category)} 
+      {canArchive && onArchive && (
+        <Pressable
+          onPress={() => onArchive(category)}
           style={({ pressed }) => [
-            styles.deleteButton,
+            styles.actionButton,
             { padding: spacing.space8, opacity: pressed ? 0.6 : 1 }
           ]}
         >
-          <Text style={[{ color: colors.error }, typography.label]}>Delete</Text>
+          <Text style={[{ color: colors.error }, typography.label]}>Archive</Text>
         </Pressable>
       )}
     </Pressable>
@@ -62,7 +62,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
   },
-  deleteButton: {
+  actionButton: {
     justifyContent: 'center',
     alignItems: 'center',
   },

@@ -4,12 +4,12 @@ import { Screen, Loading, Button } from '../../../../shared/components';
 import { useTheme } from '../../../../shared/theme';
 import { CategoriesModule } from '../../composition';
 import { Category, CategoryType } from '../../domain';
-import { CategoryList, CategoryForm, DeleteCategoryDialog } from '../components';
+import { CategoryList, CategoryForm, ArchiveCategoryDialog } from '../components';
 import {
   useCategories,
   useCreateCategory,
   useRenameCategory,
-  useDeleteCategory,
+  useArchiveCategory,
 } from '../hooks';
 
 const categoriesModule = new CategoriesModule();
@@ -20,22 +20,22 @@ export function CategoriesScreen() {
   const { categories, isLoading: isFetching, error: fetchError, refresh } = useCategories(
     categoriesModule.listCategoriesUseCase
   );
-  
+
   const { createCategory, isLoading: isCreating } = useCreateCategory(
     categoriesModule.createCategoryUseCase
   );
-  
+
   const { renameCategory, isLoading: isRenaming } = useRenameCategory(
     categoriesModule.renameCategoryUseCase
   );
-  
-  const { deleteCategory, isLoading: isDeleting } = useDeleteCategory(
-    categoriesModule.deleteCategoryUseCase
+
+  const { archiveCategory, isLoading: isArchiving } = useArchiveCategory(
+    categoriesModule.archiveCategoryUseCase
   );
 
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
-  const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
+  const [categoryToArchive, setCategoryToArchive] = useState<Category | null>(null);
 
   const handleAddCategory = () => {
     setSelectedCategory(null);
@@ -47,8 +47,8 @@ export function CategoriesScreen() {
     setIsFormVisible(true);
   };
 
-  const handleDeleteRequest = (category: Category) => {
-    setCategoryToDelete(category);
+  const handleArchiveRequest = (category: Category) => {
+    setCategoryToArchive(category);
   };
 
   const handleFormSubmit = async (data: { name: string; type: CategoryType }) => {
@@ -65,11 +65,11 @@ export function CategoriesScreen() {
     }
   };
 
-  const handleConfirmDelete = async () => {
-    if (!categoryToDelete) return;
-    const success = await deleteCategory({ id: categoryToDelete.id.value });
+  const handleConfirmArchive = async () => {
+    if (!categoryToArchive) return;
+    const success = await archiveCategory({ id: categoryToArchive.id.value });
     if (success) {
-      setCategoryToDelete(null);
+      setCategoryToArchive(null);
       refresh();
     }
   };
@@ -98,7 +98,7 @@ export function CategoriesScreen() {
         <CategoryList
           categories={categories}
           onSelect={handleEditCategory}
-          onDelete={handleDeleteRequest}
+          onArchive={handleArchiveRequest}
         />
       )}
 
@@ -116,14 +116,14 @@ export function CategoriesScreen() {
         </View>
       </Modal>
 
-      <Modal visible={!!categoryToDelete} transparent animationType="fade">
+      <Modal visible={!!categoryToArchive} transparent animationType="fade">
         <View style={styles.modalOverlay}>
-          {categoryToDelete && (
-            <DeleteCategoryDialog
-              categoryName={categoryToDelete.name.value}
-              onConfirm={handleConfirmDelete}
-              onCancel={() => setCategoryToDelete(null)}
-              isLoading={isDeleting}
+          {categoryToArchive && (
+            <ArchiveCategoryDialog
+              categoryName={categoryToArchive.name.value}
+              onConfirm={handleConfirmArchive}
+              onCancel={() => setCategoryToArchive(null)}
+              isLoading={isArchiving}
             />
           )}
         </View>

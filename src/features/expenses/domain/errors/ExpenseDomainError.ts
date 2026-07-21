@@ -9,7 +9,10 @@ export type ExpenseErrorCode =
   | 'FUTURE_DATE_NOT_ALLOWED'
   | 'INVALID_NOTE_LENGTH'
   | 'INVALID_MERCHANT_NAME_LENGTH'
-  | 'INVALID_PAYMENT_METHOD';
+  | 'INVALID_PAYMENT_METHOD'
+  | 'EXPENSE_ALREADY_DELETED'
+  | 'EXPENSE_NOT_DELETED'
+  | 'ARCHIVED_CATEGORY_SELECTION';
 
 const EXPENSE_ERROR_MAP: Record<ExpenseErrorCode, ErrorCategory> = {
   INVALID_IDENTIFIER: ErrorCategory.Validation,
@@ -20,6 +23,9 @@ const EXPENSE_ERROR_MAP: Record<ExpenseErrorCode, ErrorCategory> = {
   INVALID_NOTE_LENGTH: ErrorCategory.Validation,
   INVALID_MERCHANT_NAME_LENGTH: ErrorCategory.Validation,
   INVALID_PAYMENT_METHOD: ErrorCategory.Validation,
+  EXPENSE_ALREADY_DELETED: ErrorCategory.BusinessRule,
+  EXPENSE_NOT_DELETED: ErrorCategory.BusinessRule,
+  ARCHIVED_CATEGORY_SELECTION: ErrorCategory.BusinessRule,
 };
 
 export class ExpenseDomainError extends AppError {

@@ -9,23 +9,38 @@ import { CurrencyCode } from '../../domain/value-objects/CurrencyCode';
 import { ExpenseDate } from '../../domain/value-objects/ExpenseDate';
 import { PaymentMethod } from '../../domain/value-objects/PaymentMethod';
 import { ExpenseNote } from '../../domain/value-objects/ExpenseNote';
+import { InMemoryCategoryRepository } from '../../../categories/application/__tests__/InMemoryCategoryRepository';
+import { Category, CategoryName, CategoryType } from '../../../categories/domain';
 import { v4 as uuidv4 } from 'uuid';
 
 describe('UpdateExpenseUseCase', () => {
   let repository: InMemoryExpenseRepository;
+  let categoryRepository: InMemoryCategoryRepository;
   let useCase: UpdateExpenseUseCase;
   let existingExpenseId: string;
+  let validCategoryId: string;
 
   beforeEach(async () => {
     repository = new InMemoryExpenseRepository();
-    useCase = new UpdateExpenseUseCase(repository);
+    categoryRepository = new InMemoryCategoryRepository();
+    useCase = new UpdateExpenseUseCase(repository, categoryRepository);
+
+    validCategoryId = uuidv4();
+    categoryRepository.seed(
+      new Category({
+        id: new CategoryId(validCategoryId),
+        name: new CategoryName('Valid Category'),
+        type: CategoryType.Expense,
+        isArchived: false,
+      })
+    );
 
     const id = new ExpenseId(uuidv4());
     existingExpenseId = id.value;
     
     const expense = new Expense({
       id,
-      categoryId: new CategoryId(uuidv4()),
+      categoryId: new CategoryId(validCategoryId),
       amount: new ExpenseAmount(1500),
       currency: new CurrencyCode('INR'),
       date: new ExpenseDate(Date.now()),

@@ -1,18 +1,18 @@
 import { useState, useCallback } from 'react';
-import { DeleteCategoryUseCase, DeleteCategoryRequest } from '../../application';
+import { ArchiveCategoryUseCase, ArchiveCategoryRequest } from '../../application';
 
-export function useDeleteCategory(deleteCategoryUseCase: DeleteCategoryUseCase) {
+export function useArchiveCategory(archiveCategoryUseCase: ArchiveCategoryUseCase) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const deleteCategory = useCallback(
-    async (request: DeleteCategoryRequest) => {
+  const archiveCategory = useCallback(
+    async (request: ArchiveCategoryRequest) => {
       setIsLoading(true);
       setError(null);
 
       try {
-        const result = await deleteCategoryUseCase.execute(request);
-        
+        const result = await archiveCategoryUseCase.execute(request);
+
         if (result.success) {
           return true;
         } else {
@@ -20,17 +20,17 @@ export function useDeleteCategory(deleteCategoryUseCase: DeleteCategoryUseCase) 
           return false;
         }
       } catch (e) {
-        setError(e instanceof Error ? e.message : 'Failed to delete category');
+        setError(e instanceof Error ? e.message : 'Failed to archive category');
         return false;
       } finally {
         setIsLoading(false);
       }
     },
-    [deleteCategoryUseCase]
+    [archiveCategoryUseCase]
   );
 
   return {
-    deleteCategory,
+    archiveCategory,
     isLoading,
     error,
   };

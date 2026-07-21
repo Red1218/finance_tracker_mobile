@@ -8,4 +8,5 @@ export interface IExpenseRepository {
   create(expense: Expense): Promise<RepositoryResult<void, RepositoryError>>;
   update(expense: Expense): Promise<RepositoryResult<void, RepositoryError>>;
   delete(id: ExpenseId): Promise<RepositoryResult<void, RepositoryError>>;
+  restore(id: ExpenseId): Promise<RepositoryResult<void, RepositoryError>>;
 }

@@ -7,6 +7,7 @@ export class CategoryMapper {
       id: new CategoryId(row.id),
       name: new CategoryName(row.name),
       type: row.type,
+      isArchived: row.is_archived,
     });
   }
 
@@ -15,6 +16,7 @@ export class CategoryMapper {
       id: entity.id.value,
       name: entity.name.value,
       type: entity.type,
+      is_archived: entity.isArchived,
     };
   }
 }

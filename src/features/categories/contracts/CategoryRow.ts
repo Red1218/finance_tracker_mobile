@@ -4,4 +4,5 @@ export interface CategoryRow {
   id: string;
   name: string;
   type: CategoryType;
+  is_archived: boolean;
 }

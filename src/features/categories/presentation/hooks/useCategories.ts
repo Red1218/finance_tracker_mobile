@@ -2,7 +2,10 @@ import { useState, useCallback, useEffect } from 'react';
 import { Category } from '../../domain';
 import { ListCategoriesUseCase } from '../../application';
 
-export function useCategories(listCategoriesUseCase: ListCategoriesUseCase) {
+export function useCategories(
+  listCategoriesUseCase: ListCategoriesUseCase,
+  includeArchived: boolean = false
+) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -12,7 +15,7 @@ export function useCategories(listCategoriesUseCase: ListCategoriesUseCase) {
     setError(null);
     
     try {
-      const result = await listCategoriesUseCase.execute({});
+      const result = await listCategoriesUseCase.execute({ includeArchived });
       if (result.success) {
         setCategories(result.data);
       } else {
@@ -23,7 +26,7 @@ export function useCategories(listCategoriesUseCase: ListCategoriesUseCase) {
     } finally {
       setIsLoading(false);
     }
-  }, [listCategoriesUseCase]);
+  }, [listCategoriesUseCase, includeArchived]);
 
   useEffect(() => {
     fetchCategories();

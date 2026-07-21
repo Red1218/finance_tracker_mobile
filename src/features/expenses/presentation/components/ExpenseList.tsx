@@ -9,10 +9,16 @@ interface ExpenseListProps {
   groupedExpenses: GroupedExpenses[];
   onSelect: (expense: ExpenseItemModel) => void;
   onDeleteRequest: (expense: ExpenseItemModel) => void;
+  onRestoreRequest?: (expense: ExpenseItemModel) => void;
   isLoading?: boolean;
+  filterState?: {
+    visibility?: string;
+    searchQuery?: string;
+    categoryId?: string;
+  };
 }
 
-export function ExpenseList({ groupedExpenses, onSelect, onDeleteRequest, isLoading }: ExpenseListProps) {
+export function ExpenseList({ groupedExpenses, onSelect, onDeleteRequest, onRestoreRequest, isLoading, filterState }: ExpenseListProps) {
   const { colors, spacing, typography } = useTheme();
 
   if (isLoading && groupedExpenses.length === 0) {
@@ -24,10 +30,24 @@ export function ExpenseList({ groupedExpenses, onSelect, onDeleteRequest, isLoad
   }
 
   if (groupedExpenses.length === 0) {
+    let title = "No expenses";
+    let description = "Create an expense to get started";
+    
+    if (filterState?.searchQuery) {
+      title = "No results found";
+      description = `No expenses match "${filterState.searchQuery}"`;
+    } else if (filterState?.visibility === 'deleted') {
+      title = "No deleted expenses";
+      description = "Deleted expenses will appear here";
+    } else if (filterState?.categoryId) {
+      title = "No expenses in category";
+      description = "No expenses found for this category";
+    }
+
     return (
       <EmptyState
-        title="No expenses"
-        description="Create an expense to get started"
+        title={title}
+        description={description}
       />
     );
   }
@@ -43,6 +63,7 @@ export function ExpenseList({ groupedExpenses, onSelect, onDeleteRequest, isLoad
           expense={expense}
           onPress={onSelect}
           onDeletePress={onDeleteRequest}
+          onRestorePress={onRestoreRequest}
         />
       ))}
     </View>

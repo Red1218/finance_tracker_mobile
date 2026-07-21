@@ -3,19 +3,19 @@ import { View, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native';
 import { Button } from '../../../../shared/components';
 import { useTheme } from '../../../../shared/theme';
 
-interface DeleteCategoryDialogProps {
+interface ArchiveCategoryDialogProps {
   categoryName: string;
   onConfirm: () => void;
   onCancel: () => void;
   isLoading?: boolean;
 }
 
-export function DeleteCategoryDialog({
+export function ArchiveCategoryDialog({
   categoryName,
   onConfirm,
   onCancel,
   isLoading,
-}: DeleteCategoryDialogProps) {
+}: ArchiveCategoryDialogProps) {
   const { colors, spacing, typography, radius } = useTheme();
 
   const containerStyle: ViewStyle = {
@@ -41,9 +41,9 @@ export function DeleteCategoryDialog({
 
   return (
     <View style={containerStyle}>
-      <Text style={titleStyle}>Delete Category</Text>
+      <Text style={titleStyle}>Archive Category</Text>
       <Text style={messageStyle}>
-        Are you sure you want to delete "{categoryName}"? This action cannot be undone.
+        Archive "{categoryName}"? It will be hidden from pickers but remain attached to existing expenses. You can restore it at any time.
       </Text>
 
       <View style={styles.actions}>
@@ -56,7 +56,7 @@ export function DeleteCategoryDialog({
         />
         <View style={{ width: spacing.space16 }} />
         <Button
-          title="Delete"
+          title="Archive"
           variant="destructive"
           onPress={onConfirm}
           loading={isLoading}

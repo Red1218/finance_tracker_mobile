@@ -1,15 +1,15 @@
 import { ICategoryRepository } from '../repositories/ICategoryRepository';
 import { CategoryId } from '../../domain';
-import { DeleteCategoryRequest } from './DeleteCategoryRequest';
+import { RestoreCategoryRequest } from './RestoreCategoryRequest';
 import { UseCaseResult } from './UseCaseTypes';
 import { executeUseCase, fetchCategoryOrError } from './UseCaseHelpers';
 
-export class DeleteCategoryUseCase {
+export class RestoreCategoryUseCase {
   constructor(private readonly categoryRepository: ICategoryRepository) {
     Object.freeze(this);
   }
 
-  public async execute(request: DeleteCategoryRequest): Promise<UseCaseResult> {
+  public async execute(request: RestoreCategoryRequest): Promise<UseCaseResult> {
     return executeUseCase(async () => {
       const categoryId = new CategoryId(request.id);
 
@@ -17,11 +17,11 @@ export class DeleteCategoryUseCase {
       if (!categoryResult.success) {
         return categoryResult;
       }
-      const category = categoryResult.data;
 
-      category.validateDeletion();
+      // Domain enforces: restoring a non-archived category is a business rule violation.
+      const restored = categoryResult.data.restore();
 
-      return await this.categoryRepository.delete(categoryId);
+      return await this.categoryRepository.restore(restored.id);
     });
   }
 }

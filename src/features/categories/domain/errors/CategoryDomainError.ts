@@ -4,12 +4,16 @@ import { ErrorCategory } from '../../../../core/errors/ErrorCategory';
 export type CategoryErrorCode =
   | 'INVALID_NAME'
   | 'INVALID_IDENTIFIER'
-  | 'PROTECTED_CATEGORY_MODIFICATION';
+  | 'PROTECTED_CATEGORY_MODIFICATION'
+  | 'CATEGORY_ALREADY_ARCHIVED'
+  | 'CATEGORY_NOT_ARCHIVED';
 
 const CATEGORY_ERROR_MAP: Record<CategoryErrorCode, ErrorCategory> = {
   INVALID_NAME: ErrorCategory.Validation,
   INVALID_IDENTIFIER: ErrorCategory.Validation,
   PROTECTED_CATEGORY_MODIFICATION: ErrorCategory.BusinessRule,
+  CATEGORY_ALREADY_ARCHIVED: ErrorCategory.BusinessRule,
+  CATEGORY_NOT_ARCHIVED: ErrorCategory.BusinessRule,
 };
 
 export class CategoryDomainError extends AppError {
@@ -19,9 +23,9 @@ export class CategoryDomainError extends AppError {
     context?: Record<string, unknown>
   ) {
     super(CATEGORY_ERROR_MAP[code], code, message, context);
-    
+
     this.name = 'CategoryDomainError';
-    
+
     Object.setPrototypeOf(this, new.target.prototype);
     if (new.target === CategoryDomainError) {
       Object.freeze(this);

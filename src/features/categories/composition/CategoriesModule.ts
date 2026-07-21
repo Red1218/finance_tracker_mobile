@@ -2,22 +2,25 @@ import { SupabaseCategoryRepository } from '../../../platform/persistence/catego
 import {
   CreateCategoryUseCase,
   RenameCategoryUseCase,
-  DeleteCategoryUseCase,
+  ArchiveCategoryUseCase,
+  RestoreCategoryUseCase,
   ListCategoriesUseCase,
 } from '../application';
 
 export class CategoriesModule {
   public readonly createCategoryUseCase: CreateCategoryUseCase;
   public readonly renameCategoryUseCase: RenameCategoryUseCase;
-  public readonly deleteCategoryUseCase: DeleteCategoryUseCase;
+  public readonly archiveCategoryUseCase: ArchiveCategoryUseCase;
+  public readonly restoreCategoryUseCase: RestoreCategoryUseCase;
   public readonly listCategoriesUseCase: ListCategoriesUseCase;
 
   constructor(repository: SupabaseCategoryRepository = new SupabaseCategoryRepository()) {
     this.createCategoryUseCase = new CreateCategoryUseCase(repository);
     this.renameCategoryUseCase = new RenameCategoryUseCase(repository);
-    this.deleteCategoryUseCase = new DeleteCategoryUseCase(repository);
+    this.archiveCategoryUseCase = new ArchiveCategoryUseCase(repository);
+    this.restoreCategoryUseCase = new RestoreCategoryUseCase(repository);
     this.listCategoriesUseCase = new ListCategoriesUseCase(repository);
-    
+
     Object.freeze(this);
   }
 }

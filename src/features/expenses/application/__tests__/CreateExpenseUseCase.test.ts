@@ -2,20 +2,35 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { CreateExpenseUseCase } from '../use-cases/CreateExpenseUseCase';
 import { PaymentMethodType } from '../../domain/value-objects/PaymentMethod';
 import { InMemoryExpenseRepository } from './InMemoryExpenseRepository';
+import { InMemoryCategoryRepository } from '../../../categories/application/__tests__/InMemoryCategoryRepository';
+import { Category, CategoryId, CategoryName, CategoryType } from '../../../categories/domain';
 import { v4 as uuidv4 } from 'uuid';
 
 describe('CreateExpenseUseCase', () => {
   let repository: InMemoryExpenseRepository;
+  let categoryRepository: InMemoryCategoryRepository;
   let useCase: CreateExpenseUseCase;
+  let validCategoryId: string;
 
   beforeEach(() => {
     repository = new InMemoryExpenseRepository();
-    useCase = new CreateExpenseUseCase(repository);
+    categoryRepository = new InMemoryCategoryRepository();
+    useCase = new CreateExpenseUseCase(repository, categoryRepository);
+
+    validCategoryId = uuidv4();
+    categoryRepository.seed(
+      new Category({
+        id: new CategoryId(validCategoryId),
+        name: new CategoryName('Valid Category'),
+        type: CategoryType.Expense,
+        isArchived: false,
+      })
+    );
   });
 
   it('should successfully create an expense', async () => {
     const request = {
-      categoryId: uuidv4(),
+      categoryId: validCategoryId,
       amount: 5000,
       currency: 'INR',
       date: Date.now(),
@@ -40,7 +55,7 @@ describe('CreateExpenseUseCase', () => {
 
   it('should fail if amount is invalid', async () => {
     const request = {
-      categoryId: uuidv4(),
+      categoryId: validCategoryId,
       amount: -100,
       currency: 'INR',
       date: Date.now(),

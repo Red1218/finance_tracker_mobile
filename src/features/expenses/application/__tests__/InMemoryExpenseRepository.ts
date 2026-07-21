@@ -21,12 +21,30 @@ export class InMemoryExpenseRepository implements IExpenseRepository {
   }
 
   async delete(id: ExpenseId): Promise<RepositoryResult<void, RepositoryError>> {
-    this.expenses.delete(id.value);
+    const expense = this.expenses.get(id.value);
+    if (expense) {
+      this.expenses.set(id.value, expense.delete());
+    }
+    return Result.success(undefined);
+  }
+
+  async restore(id: ExpenseId): Promise<RepositoryResult<void, RepositoryError>> {
+    const expense = this.expenses.get(id.value);
+    if (expense) {
+      this.expenses.set(id.value, expense.restore());
+    }
     return Result.success(undefined);
   }
 
   async list(filter?: ExpenseFilter, limit?: number, offset?: number): Promise<RepositoryResult<Expense[], RepositoryError>> {
     let results = Array.from(this.expenses.values());
+
+    const visibility = filter?.visibility || 'active';
+    if (visibility === 'active') {
+      results = results.filter(e => !e.isDeleted);
+    } else if (visibility === 'deleted') {
+      results = results.filter(e => e.isDeleted);
+    }
 
     if (filter) {
       if (filter.categoryId) {

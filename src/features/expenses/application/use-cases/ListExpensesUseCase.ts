@@ -17,6 +17,7 @@ export class ListExpensesUseCase {
         startDate: request.startDate,
         endDate: request.endDate,
         paymentMethod: request.paymentMethod,
+        visibility: request.visibility,
       };
 
       return await this.expenseRepository.list(filter, request.limit, request.offset);

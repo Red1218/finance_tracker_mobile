@@ -94,19 +94,33 @@ export function ExpenseForm({
         Category
       </Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: spacing.space16 }}>
-        {categories.map((cat) => (
-          <Button 
-            key={cat.id}
-            title={cat.label}
-            onPress={() => setCategoryId(cat.id)}
-            disabled={disabled || isLoading}
-            style={{ 
-              marginRight: spacing.space8, 
-              marginBottom: spacing.space8, 
-              backgroundColor: categoryId === cat.id ? colors.brandPrimary : colors.surfaceSecondary 
-            }}
-          />
-        ))}
+        {categories.map((cat) => {
+          const isSelected = categoryId === cat.id;
+          const isArchived = cat.isArchived;
+          
+          // Business Rule: Archived categories are hidden from pickers unless already selected
+          if (isArchived && !isSelected) return null;
+          
+          const isDisabled = disabled || isLoading || isArchived;
+          const title = isArchived ? `${cat.label} (Archived)` : cat.label;
+          const bgColor = isSelected 
+            ? (isArchived ? colors.warning : colors.brandPrimary) 
+            : colors.surfaceSecondary;
+
+          return (
+            <Button 
+              key={cat.id}
+              title={title}
+              onPress={() => setCategoryId(cat.id)}
+              disabled={isDisabled}
+              style={{ 
+                marginRight: spacing.space8, 
+                marginBottom: spacing.space8, 
+                backgroundColor: bgColor 
+              }}
+            />
+          );
+        })}
       </View>
 
       <Text style={[styles.label, { ...typography.label, color: colors.textSecondary, marginBottom: spacing.space8 }]}>

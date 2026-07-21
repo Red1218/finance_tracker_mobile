@@ -21,7 +21,6 @@ export class SupabaseExpenseRepository extends BaseRepository implements IExpens
         .from(SupabaseExpenseRepository.TABLE)
         .select(SupabaseExpenseRepository.COLUMNS)
         .eq('id', id.value)
-        .is('deleted_at', null)
         .single();
 
       if (error) {
@@ -46,8 +45,14 @@ export class SupabaseExpenseRepository extends BaseRepository implements IExpens
       let query = this.client
         .from(SupabaseExpenseRepository.TABLE)
         .select(SupabaseExpenseRepository.COLUMNS)
-        .is('deleted_at', null)
         .order('date', { ascending: false });
+
+      const visibility = filter?.visibility || 'active';
+      if (visibility === 'active') {
+        query = query.is('deleted_at', null);
+      } else if (visibility === 'deleted') {
+        query = query.not('deleted_at', 'is', null);
+      }
 
       if (filter) {
         if (filter.categoryId) {
@@ -131,6 +136,24 @@ export class SupabaseExpenseRepository extends BaseRepository implements IExpens
       return Result.success(undefined);
     } catch (e) {
       return this.handleError(e, { operation: 'delete', id: id.value });
+    }
+  }
+
+  public async restore(id: ExpenseId): Promise<RepositoryResult<void, RepositoryError>> {
+    try {
+      const { error } = await this.client
+        .from(SupabaseExpenseRepository.TABLE)
+        .update({ deleted_at: null })
+        .eq('id', id.value)
+        .not('deleted_at', 'is', null);
+
+      if (error) {
+        return this.handleError(error, { operation: 'restore', id: id.value });
+      }
+
+      return Result.success(undefined);
+    } catch (e) {
+      return this.handleError(e, { operation: 'restore', id: id.value });
     }
   }
 }

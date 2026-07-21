@@ -18,7 +18,7 @@ export class SupabaseCategoryRepository extends BaseRepository implements ICateg
     try {
       const { data, error } = await this.client
         .from(SupabaseCategoryRepository.TABLE)
-        .select('id,name,type')
+        .select('id,name,type,is_archived')
         .eq('id', id.value)
         .single();
 
@@ -39,12 +39,18 @@ export class SupabaseCategoryRepository extends BaseRepository implements ICateg
     }
   }
 
-  public async list(): Promise<RepositoryResult<Category[], RepositoryError>> {
+  public async list(includeArchived?: boolean): Promise<RepositoryResult<Category[], RepositoryError>> {
     try {
-      const { data, error } = await this.client
+      let query = this.client
         .from(SupabaseCategoryRepository.TABLE)
-        .select('id,name,type')
+        .select(SupabaseCategoryRepository.COLUMNS)
         .order('name', { ascending: true });
+        
+      if (!includeArchived) {
+        query = query.eq('is_archived', false);
+      }
+      
+      const { data, error } = await query;
 
       if (error) {
         return this.handleError(error, { operation: 'list' });
@@ -92,20 +98,37 @@ export class SupabaseCategoryRepository extends BaseRepository implements ICateg
     }
   }
 
-  public async delete(id: CategoryId): Promise<RepositoryResult<void, RepositoryError>> {
+  public async archive(id: CategoryId): Promise<RepositoryResult<void, RepositoryError>> {
     try {
       const { error } = await this.client
         .from(SupabaseCategoryRepository.TABLE)
-        .delete()
+        .update({ is_archived: true })
         .eq('id', id.value);
 
       if (error) {
-        return this.handleError(error, { operation: 'delete', id: id.value });
+        return this.handleError(error, { operation: 'archive', id: id.value });
       }
 
       return Result.success(undefined);
     } catch (e) {
-      return this.handleError(e, { operation: 'delete', id: id.value });
+      return this.handleError(e, { operation: 'archive', id: id.value });
+    }
+  }
+
+  public async restore(id: CategoryId): Promise<RepositoryResult<void, RepositoryError>> {
+    try {
+      const { error } = await this.client
+        .from(SupabaseCategoryRepository.TABLE)
+        .update({ is_archived: false })
+        .eq('id', id.value);
+
+      if (error) {
+        return this.handleError(error, { operation: 'restore', id: id.value });
+      }
+
+      return Result.success(undefined);
+    } catch (e) {
+      return this.handleError(e, { operation: 'restore', id: id.value });
     }
   }
 
@@ -114,7 +137,8 @@ export class SupabaseCategoryRepository extends BaseRepository implements ICateg
       const { error, count } = await this.client
         .from(SupabaseCategoryRepository.TABLE)
         .select('id', { count: 'exact', head: true })
-        .eq('name', name.value);
+        .eq('name', name.value)
+        .eq('is_archived', false);
 
       if (error) {
         return this.handleError(error, { operation: 'existsByName', name: name.value });

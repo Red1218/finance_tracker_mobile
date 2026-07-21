@@ -16,6 +16,7 @@ export interface ExpenseProps {
   paymentMethod: PaymentMethod;
   note?: ExpenseNote;
   merchant?: MerchantName;
+  deletedAt?: Date;
 }
 
 export interface UpdateExpenseRequest {
@@ -37,6 +38,7 @@ export class Expense {
   public readonly paymentMethod: PaymentMethod;
   public readonly note?: ExpenseNote;
   public readonly merchant?: MerchantName;
+  public readonly deletedAt?: Date;
 
   constructor(props: ExpenseProps) {
     this.id = props.id;
@@ -47,11 +49,19 @@ export class Expense {
     this.paymentMethod = props.paymentMethod;
     this.note = props.note;
     this.merchant = props.merchant;
+    this.deletedAt = props.deletedAt;
     
     Object.freeze(this);
   }
 
+  public get isDeleted(): boolean {
+    return this.deletedAt !== undefined;
+  }
+
   public update(request: UpdateExpenseRequest): Expense {
+    if (this.isDeleted) {
+      throw new Error('EXPENSE_ALREADY_DELETED');
+    }
     return new Expense({
       id: this.id,
       categoryId: request.categoryId ?? this.categoryId,
@@ -61,6 +71,41 @@ export class Expense {
       paymentMethod: request.paymentMethod ?? this.paymentMethod,
       note: this.resolveOptional(request, 'note', this.note),
       merchant: this.resolveOptional(request, 'merchant', this.merchant),
+      deletedAt: this.deletedAt,
+    });
+  }
+
+  public delete(deletedAt: Date = new Date()): Expense {
+    if (this.isDeleted) {
+      throw new Error('EXPENSE_ALREADY_DELETED'); // Handled strictly in use case, but protective here
+    }
+    return new Expense({
+      id: this.id,
+      categoryId: this.categoryId,
+      amount: this.amount,
+      currency: this.currency,
+      date: this.date,
+      paymentMethod: this.paymentMethod,
+      note: this.note,
+      merchant: this.merchant,
+      deletedAt,
+    });
+  }
+
+  public restore(): Expense {
+    if (!this.isDeleted) {
+      throw new Error('EXPENSE_NOT_DELETED');
+    }
+    return new Expense({
+      id: this.id,
+      categoryId: this.categoryId,
+      amount: this.amount,
+      currency: this.currency,
+      date: this.date,
+      paymentMethod: this.paymentMethod,
+      note: this.note,
+      merchant: this.merchant,
+      deletedAt: undefined,
     });
   }
 

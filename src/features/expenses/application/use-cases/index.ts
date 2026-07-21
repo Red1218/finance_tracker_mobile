@@ -6,5 +6,6 @@ export * from './UpdateExpenseRequest';
 export * from './UpdateExpenseUseCase';
 export * from './DeleteExpenseRequest';
 export * from './DeleteExpenseUseCase';
+export * from './RestoreExpenseUseCase';
 export * from './ListExpensesRequest';
 export * from './ListExpensesUseCase';

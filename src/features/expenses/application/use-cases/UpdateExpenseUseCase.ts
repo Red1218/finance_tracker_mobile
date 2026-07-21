@@ -1,4 +1,5 @@
 import { IExpenseRepository } from '../repositories';
+import { ICategoryRepository } from '../../../categories/application/repositories/ICategoryRepository';
 import { 
   ExpenseId, 
   ExpenseAmount, 
@@ -13,9 +14,15 @@ import { CategoryId } from '../../../categories/domain';
 import { UpdateExpenseRequest } from './UpdateExpenseRequest';
 import { UseCaseResult } from './UseCaseTypes';
 import { executeUseCase, fetchExpenseOrError } from './UseCaseHelpers';
+import { fetchCategoryOrError } from '../../../categories/application/use-cases/UseCaseHelpers';
+import { ExpenseDomainError } from '../../domain/errors/ExpenseDomainError';
+import { Result } from '../../../../platform/persistence';
 
 export class UpdateExpenseUseCase {
-  constructor(private readonly expenseRepository: IExpenseRepository) {
+  constructor(
+    private readonly expenseRepository: IExpenseRepository,
+    private readonly categoryRepository: ICategoryRepository
+  ) {
     Object.freeze(this);
   }
 
@@ -32,8 +39,21 @@ export class UpdateExpenseUseCase {
 
       const updateProps: Parameters<typeof expense.update>[0] = {};
 
-      if (request.categoryId !== undefined) {
-        updateProps.categoryId = new CategoryId(request.categoryId);
+      if (request.categoryId !== undefined && request.categoryId !== expense.categoryId.value) {
+        const categoryId = new CategoryId(request.categoryId);
+        const categoryResult = await fetchCategoryOrError(this.categoryRepository, categoryId);
+        if (!categoryResult.success) {
+          return categoryResult;
+        }
+        if (categoryResult.data!.isArchived) {
+          return Result.failure(
+            new ExpenseDomainError(
+              'ARCHIVED_CATEGORY_SELECTION',
+              'Cannot assign an expense to an archived category.'
+            )
+          );
+        }
+        updateProps.categoryId = categoryId;
       }
       if (request.amount !== undefined) {
         updateProps.amount = new ExpenseAmount(request.amount);

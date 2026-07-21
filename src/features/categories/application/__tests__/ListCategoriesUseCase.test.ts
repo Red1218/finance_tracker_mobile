@@ -12,11 +12,12 @@ describe('ListCategoriesUseCase', () => {
     useCase = new ListCategoriesUseCase(repository);
   });
 
-  const seedCategory = (id: string, name: string, type: CategoryType = CategoryType.Custom) => {
+  const seedCategory = (id: string, name: string, type: CategoryType = CategoryType.Custom, isArchived = false) => {
     const category = new Category({
       id: new CategoryId(id),
       name: new CategoryName(name),
       type,
+      isArchived,
     });
     repository.seed(category);
   };
@@ -44,6 +45,19 @@ describe('ListCategoriesUseCase', () => {
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.data).toHaveLength(0);
+    }
+  });
+
+  it('should exclude archived categories from results', async () => {
+    seedCategory('cat-active', 'Groceries', CategoryType.Custom, false);
+    seedCategory('cat-archived', 'Old Category', CategoryType.Custom, true);
+
+    const result = await useCase.execute({});
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].id.value).toBe('cat-active');
     }
   });
 

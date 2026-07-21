@@ -14,6 +14,10 @@ export class InMemoryCategoryRepository implements ICategoryRepository {
     this.categories.set(category.id.value, category);
   }
 
+  public getAll(): Category[] {
+    return Array.from(this.categories.values());
+  }
+
   private checkFailure<T>(): RepositoryResult<T, RepositoryError> | null {
     if (this.forceFailureMessage) {
       return Result.failure(new Error(this.forceFailureMessage) as any);
@@ -26,7 +30,7 @@ export class InMemoryCategoryRepository implements ICategoryRepository {
     if (failure) return failure;
 
     const exists = Array.from(this.categories.values()).some(
-      (c) => c.name.value.toLowerCase() === name.value.toLowerCase()
+      (c) => c.name.value.toLowerCase() === name.value.toLowerCase() && !c.isArchived
     );
     return Result.success(exists);
   }
@@ -39,11 +43,15 @@ export class InMemoryCategoryRepository implements ICategoryRepository {
     return Result.success(category);
   }
 
-  async list(): Promise<RepositoryResult<Category[], RepositoryError>> {
+  async list(includeArchived?: boolean): Promise<RepositoryResult<Category[], RepositoryError>> {
     const failure = this.checkFailure<Category[]>();
     if (failure) return failure;
 
-    return Result.success(Array.from(this.categories.values()));
+    let categories = Array.from(this.categories.values());
+    if (!includeArchived) {
+      categories = categories.filter(c => !c.isArchived);
+    }
+    return Result.success(categories);
   }
 
   async create(category: Category): Promise<RepositoryResult<void, RepositoryError>> {
@@ -62,11 +70,25 @@ export class InMemoryCategoryRepository implements ICategoryRepository {
     return Result.success(undefined);
   }
 
-  async delete(id: CategoryId): Promise<RepositoryResult<void, RepositoryError>> {
+  async archive(id: CategoryId): Promise<RepositoryResult<void, RepositoryError>> {
     const failure = this.checkFailure<void>();
     if (failure) return failure;
 
-    this.categories.delete(id.value);
+    const category = this.categories.get(id.value);
+    if (category) {
+      this.categories.set(id.value, category.archive());
+    }
+    return Result.success(undefined);
+  }
+
+  async restore(id: CategoryId): Promise<RepositoryResult<void, RepositoryError>> {
+    const failure = this.checkFailure<void>();
+    if (failure) return failure;
+
+    const category = this.categories.get(id.value);
+    if (category) {
+      this.categories.set(id.value, category.restore());
+    }
     return Result.success(undefined);
   }
 }

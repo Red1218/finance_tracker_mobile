@@ -7,10 +7,14 @@ interface ExpenseItemProps {
   expense: ExpenseItemModel;
   onPress: (expense: ExpenseItemModel) => void;
   onDeletePress: (expense: ExpenseItemModel) => void;
+  onRestorePress?: (expense: ExpenseItemModel) => void;
 }
 
-export function ExpenseItem({ expense, onPress, onDeletePress }: ExpenseItemProps) {
+export function ExpenseItem({ expense, onPress, onDeletePress, onRestorePress }: ExpenseItemProps) {
   const { colors, spacing, typography, radius } = useTheme();
+
+  const isDeleted = expense.isDeleted;
+  const opacity = isDeleted ? 0.6 : 1;
 
   return (
     <TouchableOpacity
@@ -21,9 +25,11 @@ export function ExpenseItem({ expense, onPress, onDeletePress }: ExpenseItemProp
           backgroundColor: colors.surfacePrimary,
           borderRadius: radius.medium,
           marginBottom: spacing.space8,
+          opacity,
         },
       ]}
-      onPress={() => onPress(expense)}
+      onPress={() => !isDeleted && onPress(expense)}
+      activeOpacity={isDeleted ? 1 : 0.2}
       accessibilityRole="button"
       accessibilityLabel={`Expense for ${expense.formattedAmount}`}
     >
@@ -33,7 +39,7 @@ export function ExpenseItem({ expense, onPress, onDeletePress }: ExpenseItemProp
             {expense.merchant || 'Unknown Merchant'}
           </Text>
           <Text style={[typography.caption, { color: colors.textSecondary, marginTop: spacing.space4 }]} numberOfLines={1}>
-            {expense.paymentMethod} • {expense.note || 'No note'}
+            {expense.categoryName} • {expense.paymentMethod} {expense.note ? `• ${expense.note}` : ''}
           </Text>
         </View>
         
@@ -44,17 +50,31 @@ export function ExpenseItem({ expense, onPress, onDeletePress }: ExpenseItemProp
         </View>
       </View>
       
-      <TouchableOpacity
-        style={[styles.deleteButton, { padding: spacing.space8, backgroundColor: colors.error + '20', borderRadius: radius.small, marginTop: spacing.space12 }]}
-        onPress={(e) => {
-          e.stopPropagation();
-          onDeletePress(expense);
-        }}
-        accessibilityRole="button"
-        accessibilityLabel="Delete expense"
-      >
-        <Text style={[typography.label, { color: colors.error, textAlign: 'center' }]}>Delete</Text>
-      </TouchableOpacity>
+      {isDeleted ? (
+        <TouchableOpacity
+          style={[styles.actionButton, { padding: spacing.space8, backgroundColor: colors.success + '20', borderRadius: radius.small, marginTop: spacing.space12 }]}
+          onPress={(e) => {
+            e.stopPropagation();
+            onRestorePress?.(expense);
+          }}
+          accessibilityRole="button"
+          accessibilityLabel="Restore expense"
+        >
+          <Text style={[typography.label, { color: colors.success, textAlign: 'center' }]}>Restore</Text>
+        </TouchableOpacity>
+      ) : (
+        <TouchableOpacity
+          style={[styles.actionButton, { padding: spacing.space8, backgroundColor: colors.error + '20', borderRadius: radius.small, marginTop: spacing.space12 }]}
+          onPress={(e) => {
+            e.stopPropagation();
+            onDeletePress(expense);
+          }}
+          accessibilityRole="button"
+          accessibilityLabel="Delete expense"
+        >
+          <Text style={[typography.label, { color: colors.error, textAlign: 'center' }]}>Delete</Text>
+        </TouchableOpacity>
+      )}
     </TouchableOpacity>
   );
 }
@@ -75,7 +95,7 @@ const styles = StyleSheet.create({
   amountContainer: {
     alignItems: 'flex-end',
   },
-  deleteButton: {
+  actionButton: {
     alignSelf: 'flex-start',
   }
 });
