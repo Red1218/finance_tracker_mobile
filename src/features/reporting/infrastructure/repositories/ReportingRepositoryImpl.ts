@@ -1,0 +1,86 @@
+import { IReportingRepository, ReportingPeriod, DashboardSummary, CategoryBreakdown, MonthlyTrendPoint, BudgetPerformance, LargestTransaction } from '../../domain';
+import { ReportingDataSource, RawCategoryBreakdown } from '../datasources/ReportingDataSource';
+import { RepositoryResult, RepositoryError, Result } from '../../../../platform/persistence';
+import { DashboardSummaryInfraMapper } from '../mappers/DashboardSummaryInfraMapper';
+import { CategoryBreakdownInfraMapper } from '../mappers/CategoryBreakdownInfraMapper';
+import { MonthlyTrendInfraMapper } from '../mappers/MonthlyTrendInfraMapper';
+import { BudgetPerformanceInfraMapper } from '../mappers/BudgetPerformanceInfraMapper';
+import { LargestTransactionInfraMapper } from '../mappers/LargestTransactionInfraMapper';
+
+/**
+ * ReportingRepositoryImpl
+ *
+ * - Implements IReportingRepository.
+ * - Delegates ALL data fetching to ReportingDataSource.
+ * - Performs NO aggregation (that is the datasource/database's responsibility).
+ * - Translates datasource exceptions into RepositoryError (does not swallow them).
+ * - Maps raw persistence shapes into immutable Domain projections.
+ */
+export class ReportingRepositoryImpl implements IReportingRepository {
+  constructor(private readonly dataSource: ReportingDataSource) {}
+
+  public async getDashboardSummary(
+    period: ReportingPeriod,
+    startDate?: Date,
+    endDate?: Date
+  ): Promise<RepositoryResult<DashboardSummary, RepositoryError>> {
+    try {
+      const raw = await this.dataSource.fetchDashboardSummary(period, startDate, endDate);
+      return Result.success(DashboardSummaryInfraMapper.toDomain(raw));
+    } catch (err) {
+      return Result.failure(new RepositoryError('UNKNOWN_PERSISTENCE_ERROR', 'Failed to fetch dashboard summary', undefined, err as Error));
+    }
+  }
+
+  public async getCategoryBreakdown(
+    period: ReportingPeriod,
+    startDate?: Date,
+    endDate?: Date
+  ): Promise<RepositoryResult<CategoryBreakdown[], RepositoryError>> {
+    try {
+      const raw = await this.dataSource.fetchCategoryBreakdown(period, startDate, endDate);
+      return Result.success(CategoryBreakdownInfraMapper.toDomain(raw as (RawCategoryBreakdown & { _grand_total?: number })[]));
+    } catch (err) {
+      return Result.failure(new RepositoryError('UNKNOWN_PERSISTENCE_ERROR', 'Failed to fetch category breakdown', undefined, err as Error));
+    }
+  }
+
+  public async getMonthlyTrend(
+    period: ReportingPeriod,
+    startDate?: Date,
+    endDate?: Date
+  ): Promise<RepositoryResult<MonthlyTrendPoint[], RepositoryError>> {
+    try {
+      const raw = await this.dataSource.fetchMonthlyTrend(period, startDate, endDate);
+      return Result.success(MonthlyTrendInfraMapper.toDomain(raw));
+    } catch (err) {
+      return Result.failure(new RepositoryError('UNKNOWN_PERSISTENCE_ERROR', 'Failed to fetch monthly trend', undefined, err as Error));
+    }
+  }
+
+  public async getBudgetPerformance(
+    period: ReportingPeriod,
+    startDate?: Date,
+    endDate?: Date
+  ): Promise<RepositoryResult<BudgetPerformance[], RepositoryError>> {
+    try {
+      const raw = await this.dataSource.fetchBudgetPerformance(period, startDate, endDate);
+      return Result.success(BudgetPerformanceInfraMapper.toDomain(raw));
+    } catch (err) {
+      return Result.failure(new RepositoryError('UNKNOWN_PERSISTENCE_ERROR', 'Failed to fetch budget performance', undefined, err as Error));
+    }
+  }
+
+  public async getLargestTransactions(
+    period: ReportingPeriod,
+    startDate?: Date,
+    endDate?: Date
+  ): Promise<RepositoryResult<LargestTransaction[], RepositoryError>> {
+    try {
+      const raw = await this.dataSource.fetchLargestTransactions(period, startDate, endDate);
+      return Result.success(LargestTransactionInfraMapper.toDomain(raw));
+    } catch (err) {
+      return Result.failure(new RepositoryError('UNKNOWN_PERSISTENCE_ERROR', 'Failed to fetch largest transactions', undefined, err as Error));
+    }
+  }
+}
