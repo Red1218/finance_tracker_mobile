@@ -1,5 +1,7 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import { BaseRepository, RepositoryResult, Result, RepositoryError } from '../../persistence';
+import { BaseRepository } from '../BaseRepository';
+import { RepositoryResult, Result } from '../RepositoryResult';
+import { RepositoryError } from '../RepositoryError';
 import { IExpenseRepository, ExpenseFilter } from '../../../features/expenses/application';
 import { Expense, ExpenseId } from '../../../features/expenses/domain';
 import { ExpenseMapper } from './ExpenseMapper';

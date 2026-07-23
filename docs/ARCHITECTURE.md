@@ -1,7 +1,8 @@
 # Finance Tracker — Architecture
 
-**Version:** 1.0
+**Version:** 1.2
 **Status:** Active
+**Last Updated:** 2026-07 (Platform Authentication Consolidation)
 
 ---
 
@@ -37,11 +38,13 @@ No component communicates directly with Supabase. The only entry point to the da
 
 **Responsibility:** Render data. Handle user interaction. Dispatch state changes.
 
-- Screens live in `src/app/` using Expo Router file-based routing
+- Route screens live exclusively in `app/` using Expo Router file-based routing
 - Feature-specific components live in `src/features/<feature>/components/`
 - Shared UI components live in `src/components/`
 - Contains no business logic
 - Contains no direct database access
+
+> **Routing boundary rule:** `app/` must contain only Expo Router route files (`_layout.tsx`, screen files, route groups). Infrastructure modules — bootstrap, navigation guards, providers — must never be placed inside `app/` or any directory named `app`. See [ADR-011](./adr/ADR-011-expo-router-directory-boundary.md).
 
 ---
 
@@ -98,11 +101,37 @@ No component communicates directly with Supabase. The only entry point to the da
 ## Folder Structure
 
 ```
+app/                            ← Expo Router route files ONLY
+├── _layout.tsx                 ← Root layout (provider tree, navigation shell)
+├── auth.tsx                    ← Authentication screen
+├── +html.tsx                   ← Web HTML root (web-only)
+└── (tabs)/                     ← Tab navigator route group
+    ├── _layout.tsx
+    ├── index.tsx
+    ├── categories.tsx
+    ├── spends.tsx
+    ├── finances.tsx
+    └── budgets.tsx
+
 src/
-├── app/                        ← Expo Router screens (file-based routing)
-│   ├── _layout.tsx             ← Root layout — provider tree
-│   ├── auth.tsx                ← Authentication screen
-│   └── (tabs)/                 ← Tab navigator group
+├── bootstrap/                  ← Application composition root
+│   ├── Bootstrap.tsx           ← Top-level provider + error boundary wrapper
+│   ├── ErrorBoundary.tsx       ← React error boundary
+│   └── index.ts
+│
+├── navigation/                 ← Navigation infrastructure
+│   ├── AuthGuard.tsx           ← Redirects unauthenticated users to /auth
+│   ├── GuestGuard.tsx          ← Redirects authenticated users away from /auth
+│   ├── NavigationContainer.tsx ← Thin navigation wrapper
+│   ├── NavigationLoading.tsx   ← Loading state during auth resolution
+│   ├── routes.ts               ← Typed route constants (ROUTES.AUTH, ROUTES.HOME)
+│   └── index.ts
+│
+├── providers/                  ← Dependency composition
+│   ├── AppProvider.tsx         ← Canonical provider compositor (ReactQuery + Auth)
+│   ├── ReactQueryProvider.tsx
+│   ├── index.ts
+│   └── legacy/                 ← Archived files pending cleanup PR
 │
 ├── features/                   ← Feature-scoped code (see Import Rules)
 │   └── <feature>/
@@ -114,20 +143,17 @@ src/
 │       ├── validation/         ← Zod schemas
 │       └── index.ts            ← Public API — only import from here
 │
-├── components/                 ← Shared, reusable UI components
+├── platform/                   ← Cross-cutting platform adapters
+│   └── authentication/
 │
-├── shared/
-│   ├── types/
-│   │   └── generated/          ← Auto-generated Supabase TypeScript types
-│   └── lib/                    ← Shared utility functions
-│
-├── contexts/                   ← React contexts (AuthContext, etc.)
-├── hooks/                      ← Shared hooks
-├── styles/                     ← Theme tokens and shared styles
-└── lib/
-    └── supabase/
-        └── client.ts           ← Supabase client singleton
+├── core/                       ← Core utilities (logger, etc.)
+├── config/                     ← Environment configuration
+├── database/                   ← Database client and schema
+├── shared/                     ← Shared types and utilities
+└── components/                 ← Shared, reusable UI components
 ```
+
+> **Critical rule:** No directory named `app` may exist anywhere under `src/`. Expo Router scans directories named `app` as route sources. Infrastructure modules placed inside any `app`-named directory will be misidentified as routes, producing "missing default export" warnings and broken navigation. See [ADR-011](./adr/ADR-011-expo-router-directory-boundary.md).
 
 ---
 
@@ -152,7 +178,7 @@ No other module imports from inside a feature's subdirectories.
 |----------|----------|-------|
 | Server State | TanStack Query | `useQuery`, `useMutation` |
 | Form State | React Hook Form + Zod | Validated before submission |
-| Auth State | React Context | `AuthContext` |
+| Auth State | React Context | `src/platform/authentication/AuthContext` |
 | UI State | `useState` / `useReducer` | Kept local; not lifted unless necessary |
 | Derived State | Computed inline | Never persisted or stored |
 
@@ -160,11 +186,12 @@ No other module imports from inside a feature's subdirectories.
 
 ## Authentication
 
-- Supabase Auth issues JWTs on sign-in
-- Sessions are stored securely via `expo-secure-store` on native platforms
-- Auth state is managed by `AuthContext` and accessible via `useAuth()`
-- Protected routes redirect to `/auth` when no active session exists
-- The JWT is forwarded by the Supabase client on every request, enabling RLS policy evaluation
+- **Single Source of Truth:** `src/platform/authentication` owns the `AuthContext`, `AuthProvider`, `useAuth`, and all authentication state management (login, logout, registration, session restoration).
+- **Clean Architecture Boundary:** Features (e.g., the Identity feature) consume the platform authentication layer. They do not own or provide global authentication state. The legacy feature-layer authentication implementation has been removed.
+- Supabase Auth issues JWTs on sign-in.
+- Sessions are stored securely via `expo-secure-store` on native platforms.
+- Protected routes (via `AuthGuard` and `GuestGuard` in `src/navigation`) rely on `useAuth()` to orchestrate redirects.
+- The JWT is forwarded by the Supabase client on every request, enabling RLS policy evaluation.
 
 ---
 

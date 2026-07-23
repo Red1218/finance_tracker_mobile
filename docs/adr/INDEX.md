@@ -12,6 +12,7 @@ For the reusable template, see [ADR_TEMPLATE.md](./ADR_TEMPLATE.md).
 | Number | Title | Status | Date | Notes |
 |--------|-------|--------|------|-------|
 | [ADR-010](./ADR-010-row-level-security-strategy.md) | Row Level Security Strategy | ✅ Approved | 2026-07 | — |
+| [ADR-011](./ADR-011-expo-router-directory-boundary.md) | Expo Router Directory Boundary | ✅ Approved | 2026-07 | Fixes route discovery bug; enforces `app/` = routes only |
 
 ---
 

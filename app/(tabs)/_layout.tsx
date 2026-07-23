@@ -1,4 +1,4 @@
-import { useAuth } from '@/src/features/identity/hooks/useAuth';
+import { useAuth } from '@/src/platform/authentication';
 import { Redirect, Tabs } from 'expo-router';
 import { Home, Receipt, Tags, Wallet, Target } from 'lucide-react-native';
 import { usePaymentListener } from '@/hooks/usePaymentListener';

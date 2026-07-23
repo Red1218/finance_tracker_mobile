@@ -1,0 +1,142 @@
+# Dashboard Feature Index
+
+## Roadmap & Status
+
+- Stage 0.1 Product Vision: ✅ Completed
+- Stage 0.2 Information Architecture: ✅ Completed
+- Stage 0.3 Layout & Wireframes: ✅ Completed
+- Stage 0.3.5 Visual Inspiration Review: ✅ Completed
+  - **Visual Direction**: "Trustworthy Minimalism"
+  - **Constraints**: Approved Design Patterns and Rejected Design Patterns from this stage are now permanent constraints for Dashboard development.
+- Stage 0.4 Design System: ✅ Completed
+  - **Constraints**: The Design System is now the authoritative visual language for all Dashboard components, including:
+    - Color System
+    - Typography
+    - Spacing
+    - Grid
+    - Elevation
+    - Iconography
+    - Data Visualization
+    - Motion
+    - Accessibility
+    - Design Tokens
+    - Global Design Rules
+  - **Mandate**: Every future Dashboard component must conform to the approved Design System before implementation.
+- Stage 0.5 Component Library: ✅ Completed
+  - **Constraints**: The Dashboard Component Library is now the authoritative source for:
+    - Component inventory
+    - Component anatomy
+    - Component variants
+    - Component states
+    - Composition rules
+    - Responsive behavior
+    - Accessibility requirements
+    - Usage guidelines
+  - **Mandate**: All Dashboard implementations must conform to both the approved Design System (Stage 0.4) and the approved Component Library (Stage 0.5).
+- Stage 0.6 Interaction Design: ✅ Completed
+  - **Constraints**: The Interaction Design document is now the authoritative source for:
+    - Navigation model
+    - User flows
+    - Interaction patterns
+    - Feedback patterns
+    - Motion guidelines
+    - Error recovery
+    - Accessibility interactions
+    - Mobile interaction behavior
+  - **Mandate**: All Dashboard implementations must comply with the approved Interaction Design in addition to the Design System and Component Library.
+- Stage 0.7 Dashboard Specification: ✅ Completed
+  - **Constraints**: The Dashboard Specification is now the authoritative functional reference for Dashboard implementation and resolves any conflicts between earlier design-stage documents.
+  - **Mandate**: The Dashboard Design Workflow (Stages 0.1–0.7) is complete. Implementation may now begin with Phase 1.1 Requirements, using the approved Dashboard design package as the foundation.
+- Phase 1.1 Requirements: ✅ Completed
+  - **Constraints**: The Requirements document is now the authoritative source for:
+    - Functional requirements
+    - Business rules
+    - Non-functional requirements
+    - Dependencies
+    - Error handling
+    - Security & privacy requirements
+    - Acceptance criteria
+    - Traceability
+  - **Mandate**: All future Dashboard architecture and implementation phases must satisfy the approved Requirements document.
+- Current Work: Phase 1.2 Domain Architecture
+- Phase 1.2 Domain Architecture: ✅ Completed
+  - **Constraints**: The Domain Architecture is now the authoritative source for:
+    - Bounded contexts
+    - Domain entities
+    - Value objects
+    - Domain services
+    - Domain relationships
+    - Business invariants
+    - Domain events
+    - Aggregate boundaries
+    - Domain constraints
+  - **Mandate**: All future application, infrastructure, and presentation architecture must conform to the approved Domain Architecture.
+- Current Work: Phase 1.3 Application Architecture
+- Phase 1.3 Application Architecture: ✅ Completed
+  - **Constraints**: The Application Architecture is now the authoritative source for:
+    - Use cases
+    - Commands
+    - Queries
+    - Application services
+    - View models / DTOs
+    - Application workflows
+    - Error propagation
+    - Dependency rules
+    - Application constraints
+  - **Mandate**: All future infrastructure, presentation, and integration phases must conform to the approved Application Architecture.
+- Phase 1.4 Infrastructure Architecture: ✅ Completed
+  - **Constraints**: The Infrastructure Architecture is now the authoritative source for:
+    - Repository abstractions
+    - Data sources
+    - Persistence strategy
+    - Caching strategy
+    - Event infrastructure
+    - External service adapters
+    - Resilience and retry policies
+    - Logging and observability
+    - Security considerations
+    - Infrastructure constraints
+  - **Mandate**: All infrastructure implementations must conform to the approved Infrastructure Architecture.
+- Phase 1.5 Presentation Architecture: ✅ Completed
+  - **Constraints**: The Presentation Architecture is now the authoritative source for:
+    - Screen composition
+    - Component hierarchy
+    - Presentation state ownership
+    - Rendering lifecycle
+    - User interaction flow
+    - Accessibility rendering
+    - Responsive rendering
+    - Error and loading presentation
+    - Presentation constraints
+  - **Mandate**: All Dashboard UI implementations must conform to the approved Presentation Architecture.
+- Phase 1.6 Integration Architecture: ✅ Completed
+  - **Constraints**: The Integration Architecture is now the authoritative source for:
+    - Internal context integrations
+    - External system integrations
+    - Event integration model
+    - Authentication and authorization boundaries
+    - Data synchronization strategy
+    - Failure and recovery coordination
+    - Cross-context observability
+    - Integration constraints
+  - **Mandate**: All future Dashboard integrations must conform to the approved Integration Architecture.
+- Phase 1.7 Enterprise Architecture Review: ✅ Completed
+  - **Constraints**: The Enterprise Architecture Review is the authoritative source for final architecture approval and gate decisions.
+  - **Mandate**: The Dashboard Architecture Package is approved and frozen.
+- Phase 1.8 Implementation Planning: ✅ Completed
+  - **Constraints**: The Implementation Planning document is the authoritative source for:
+    - Development principles
+    - Project organization
+    - Development workflow
+    - Testing strategy
+    - Quality gates
+    - Implementation sequence
+    - Implementation risk mitigation
+    - Success criteria
+  - **Mandate**: All Dashboard implementation work must conform to the approved Implementation Planning document.
+- Phase 1.9 Feature Implementation
+  - Sprint 1 — Domain Foundation: ✅ Completed
+  - Sprint 2 — Application Layer: ✅ Completed
+  - Sprint 3 — Infrastructure Layer: ✅ Completed
+  - Sprint 4 — Presentation Layer: ✅ Completed
+  - Sprint 5 — Integration Layer: ▶ Current

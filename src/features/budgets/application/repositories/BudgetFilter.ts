@@ -1,9 +1,9 @@
-import { BudgetPeriod, BudgetStatus } from '../../domain';
+import { BudgetPeriod } from '../../domain';
 import { CategoryId } from '../../../categories/domain';
 
 export interface BudgetFilter {
   period?: BudgetPeriod;
   categoryId?: CategoryId | null;
-  status?: BudgetStatus;
+  status?: string;
   includeDeleted?: boolean;
 }

@@ -3,6 +3,7 @@ import { vi } from 'vitest';
 
 // Mock react-native-url-polyfill to prevent parsing errors
 vi.mock('react-native-url-polyfill/auto', () => ({}));
+vi.mock('react-native-get-random-values', () => ({}));
 
 // Mock expo-secure-store
 vi.mock('expo-secure-store', () => ({

@@ -3,8 +3,6 @@ import { Category } from '../../domain';
 import { ListCategoriesRequest } from './ListCategoriesRequest';
 import { UseCaseResult } from './UseCaseTypes';
 import { executeUseCase } from './UseCaseHelpers';
-import { Result } from '../../core/Result';
-import { ApplicationError } from '../../core/ApplicationError';
 
 export class ListCategoriesUseCase {
   constructor(private readonly categoryRepository: ICategoryRepository) {

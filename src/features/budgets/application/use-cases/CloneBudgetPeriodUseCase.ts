@@ -1,5 +1,6 @@
 import { IBudgetRepository } from '../repositories';
-import { Budget, BudgetId, BudgetPeriod, BudgetStatus } from '../../domain';
+import { ICategoryRepository } from '../../../categories/application/repositories/ICategoryRepository';
+import { Budget, BudgetPeriod } from '../../domain';
 import { CloneBudgetPeriodRequest } from './CloneBudgetPeriodRequest';
 import { UseCaseResult } from './UseCaseTypes';
 import { executeUseCase } from './UseCaseHelpers';
@@ -7,44 +8,50 @@ import { Result } from '../../../../platform/persistence';
 import { CreateBudgetUseCase } from './CreateBudgetUseCase';
 
 export class CloneBudgetPeriodUseCase {
-  constructor(private readonly budgetRepository: IBudgetRepository) {
+  constructor(
+    private readonly budgetRepository: IBudgetRepository,
+    private readonly categoryRepository: ICategoryRepository
+  ) {
     Object.freeze(this);
   }
 
   public async execute(request: CloneBudgetPeriodRequest): Promise<UseCaseResult> {
     return executeUseCase(async () => {
-      const sourcePeriod = request.sourcePeriod;
-      
-      const sourceBudgetsResult = await this.budgetRepository.list({
-        period: new BudgetPeriod(sourcePeriod),
-        status: new BudgetStatus('Active'),
-        includeDeleted: false
-      });
-      
-      if (!sourceBudgetsResult.success) {
-        return sourceBudgetsResult;
+      const sourcePeriod = request.sourcePeriod as BudgetPeriod;
+
+      // list() takes no filter — retrieve all then filter in-memory.
+      const allBudgetsResult = await this.budgetRepository.list();
+
+      if (!allBudgetsResult.success) {
+        return allBudgetsResult;
       }
-      
-      const createUseCase = new CreateBudgetUseCase(this.budgetRepository);
-      
-      for (const budget of sourceBudgetsResult.data!) {
+
+      const sourceBudgets: Budget[] = allBudgetsResult.data.filter(
+        (b) => b.period === sourcePeriod
+      );
+
+      const createUseCase = new CreateBudgetUseCase(this.budgetRepository, this.categoryRepository);
+
+      for (const budget of sourceBudgets) {
         const createRequest = {
-          categoryId: budget.categoryId?.value,
+          categoryId: budget.categoryId?.value ?? null,
           amount: budget.amount.value,
-          currency: budget.currency.value,
+          currencyCode: budget.currency.value,
           period: request.targetPeriod,
+          startDate: budget.startDate,
+          endDate: budget.endDate,
         };
-        
+
         const createResult = await createUseCase.execute(createRequest);
         if (!createResult.success) {
           const errorCode = (createResult.error as any).code;
           if (errorCode === 'DUPLICATE_BUDGET') {
-            continue; // skip budgets that already exist
+            continue; // skip budgets that already exist in the target period
           }
           return createResult;
         }
       }
-      
+
       return Result.success(undefined);
     });
   }

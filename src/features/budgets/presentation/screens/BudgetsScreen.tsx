@@ -2,15 +2,15 @@ import React, { useState } from 'react';
 import { View, Text, ActivityIndicator } from 'react-native';
 import { useBudgets } from '../hooks/useBudgets';
 import { EmptyBudgetState } from '../components/EmptyBudgetState';
-import { BudgetSummaryCard } from '../components/BudgetSummaryCard';
 import { CategoryBudgetList } from '../components/CategoryBudgetList';
+import { BudgetSummaryLoader } from '../components/BudgetSummaryLoader';
 import { DeleteBudgetDialog } from '../components/DeleteBudgetDialog';
 import { BudgetSummaryViewModel } from '../types/BudgetViewModel';
 
 import { budgetsModule } from '../hooks/module';
 
 export const BudgetsScreen: React.FC = () => {
-  const { data: budgets, isLoading, isError } = useBudgets(budgetsModule.listBudgetsUseCase);
+  const { budgets, isLoading, error } = useBudgets(budgetsModule.listBudgetsUseCase);
   const [selectedBudget, setSelectedBudget] = useState<BudgetSummaryViewModel | null>(null);
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
@@ -22,7 +22,7 @@ export const BudgetsScreen: React.FC = () => {
     );
   }
 
-  if (isError) {
+  if (error) {
     return (
       <View className="flex-1 justify-center items-center bg-gray-50">
         <Text className="text-red-500 font-semibold">Failed to load budgets. Please try again.</Text>

@@ -1,10 +1,11 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { UpdateBudgetUseCase, UpdateBudgetRequest } from '../../application';
+import { budgetsModule } from './module';
 
-export function useUpdateBudget(updateBudgetUseCase: UpdateBudgetUseCase) {
+export function useUpdateBudget(updateBudgetUseCase: UpdateBudgetUseCase = budgetsModule.updateBudgetUseCase) {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: async (request: UpdateBudgetRequest) => {
       const result = await updateBudgetUseCase.execute(request);
       if (!result.success) throw result.error;
@@ -15,4 +16,16 @@ export function useUpdateBudget(updateBudgetUseCase: UpdateBudgetUseCase) {
       queryClient.invalidateQueries({ queryKey: ['budgetSummary', variables.id] });
     },
   });
+
+  return {
+    updateBudget: async (request: UpdateBudgetRequest) => {
+      try {
+        await mutation.mutateAsync(request);
+        return true;
+      } catch (e) {
+        return false;
+      }
+    },
+    isLoading: mutation.isPending,
+  };
 }

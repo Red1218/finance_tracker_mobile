@@ -5,3 +5,5 @@ export * from './UpdateBudgetUseCase';
 export * from './DeleteBudgetUseCase';
 export * from './ListBudgetsUseCase';
 export * from './GetBudgetSummaryUseCase';
+export * from './CloneBudgetPeriodUseCase';
+export * from './CloneBudgetPeriodRequest';

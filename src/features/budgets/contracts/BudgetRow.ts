@@ -1,5 +1,4 @@
 import { SupportedCurrency } from '../../expenses/domain/value-objects/CurrencyCode';
-import { BudgetStatusValue } from '../domain/value-objects/BudgetStatus';
 
 export interface BudgetRow {
   id: string;
@@ -7,7 +6,7 @@ export interface BudgetRow {
   amount: number;
   currency_code: SupportedCurrency;
   period: string;
-  status: BudgetStatusValue;
+  status: string;
   created_at?: string;
   updated_at?: string;
   deleted_at?: string | null;

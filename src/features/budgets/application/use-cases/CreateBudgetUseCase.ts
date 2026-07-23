@@ -4,6 +4,8 @@ import { CreateBudgetRequest } from '../requests/CreateBudgetRequest';
 import { UseCaseResult } from './UseCaseTypes';
 import { executeUseCase } from './UseCaseHelpers';
 import { Budget, BudgetId, BudgetAmount, BudgetPeriod, BudgetDomainError } from '../../domain';
+
+import { generateUUID } from '../../../../core/utils/uuid';
 import { CategoryId } from '../../../categories/domain';
 import { CurrencyCode } from '../../../expenses/domain/value-objects/CurrencyCode';
 import { Result } from '../../../../platform/persistence';
@@ -58,7 +60,7 @@ export class CreateBudgetUseCase {
       }
 
       const budget = Budget.create({
-        id: new BudgetId(crypto.randomUUID()),
+        id: new BudgetId(generateUUID()),
         categoryId: categoryIdObj,
         amount: new BudgetAmount(request.amount),
         currency: new CurrencyCode(request.currencyCode),

@@ -1,23 +1,26 @@
 import React, { ReactNode, useEffect, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { AuthContext } from './AuthContext';
-import type { AuthState } from './auth.types';
+import type { AuthState, AuthResult } from './auth.types';
 import { supabase } from '../../database';
 import { logger } from '../../core/logger';
+import { AuthRedirectService } from './AuthRedirectService';
 
 export type AuthProviderProps = Readonly<{
   children: ReactNode;
 }>;
 
-const buildState = (session: Session | null): AuthState => ({
+const buildState = (session: Session | null): Pick<AuthState, 'user' | 'session'> => ({
   user: session?.user ?? null,
-  isLoading: false,
+  session: session,
 });
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [state, setState] = useState<AuthState>({
     user: null,
-    isLoading: true,
+    session: null,
+    loading: true,
+    error: null,
   });
 
   useEffect(() => {
@@ -35,6 +38,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setState((prevState) => ({
           ...prevState,
           ...buildState(data.session),
+          loading: false,
+          error: error instanceof Error ? error : (error ? new Error((error as any).message || String(error)) : null),
         }));
       })
       .catch((error) => {
@@ -44,6 +49,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setState((prevState) => ({
           ...prevState,
           ...buildState(null),
+          loading: false,
+          error: error instanceof Error ? error : new Error('Unable to restore session.'),
         }));
       });
 
@@ -54,6 +61,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setState((prevState) => ({
         ...prevState,
         ...buildState(session),
+        loading: false,
+        error: null,
       }));
     });
 
@@ -63,8 +72,39 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
   }, []);
 
+  const signIn = async (email: string, password: string): Promise<AuthResult> => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    return { error };
+  };
+
+  const signOut = async (): Promise<AuthResult> => {
+    const { error } = await supabase.auth.signOut();
+    return { error };
+  };
+
+  const signUp = async (email: string, password: string, displayName?: string): Promise<AuthResult> => {
+    const options: any = {
+      emailRedirectTo: AuthRedirectService.getRedirectUrl(),
+    };
+    if (displayName) {
+      options.data = { display_name: displayName };
+    }
+
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options,
+    });
+    return { error };
+  };
+
   return (
-    <AuthContext.Provider value={state}>
+    <AuthContext.Provider value={{
+      ...state,
+      signIn,
+      signOut,
+      signUp,
+    }}>
       {children}
     </AuthContext.Provider>
   );

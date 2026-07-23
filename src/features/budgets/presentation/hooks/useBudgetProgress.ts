@@ -25,9 +25,9 @@ export function useBudgetProgress() {
         remainingAmount: b.amount - spentAmount,
         progressPercentage,
         isOverBudget: spentAmount > b.amount,
-        formattedBudgetAmount: b.formattedAmount,
+        formattedBudgetAmount: `${b.currency} ${b.amount.toFixed(2)}`,
         formattedSpentAmount: `${b.currency} 0.00`,
-        formattedRemainingAmount: b.formattedAmount,
+        formattedRemainingAmount: `${b.currency} ${(b.amount - spentAmount).toFixed(2)}`,
       };
     });
   }, [budgets, categories]);

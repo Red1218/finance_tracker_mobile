@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, Mocked } from 'vitest';
 import { CreateBudgetUseCase } from '../use-cases/CreateBudgetUseCase';
 import { IBudgetRepository } from '../repositories/IBudgetRepository';
 import { ICategoryRepository } from '../../../categories/application/repositories/ICategoryRepository';
@@ -7,8 +7,8 @@ import { Category, CategoryId, CategoryName, CategoryType } from '../../../categ
 import { BudgetPeriod, BudgetDomainError } from '../../domain';
 
 describe('CreateBudgetUseCase', () => {
-  let budgetRepository: vitest.Mocked<IBudgetRepository>;
-  let categoryRepository: vitest.Mocked<ICategoryRepository>;
+  let budgetRepository: Mocked<IBudgetRepository>;
+  let categoryRepository: Mocked<ICategoryRepository>;
   let useCase: CreateBudgetUseCase;
 
   const validRequest = {
@@ -23,14 +23,14 @@ describe('CreateBudgetUseCase', () => {
   const mockCategory = new Category({
     id: new CategoryId(validRequest.categoryId),
     name: new CategoryName('Groceries'),
-    type: CategoryType.Expense,
+    type: 'expense' as any,
     isArchived: false,
   });
 
   const mockArchivedCategory = new Category({
     id: new CategoryId(validRequest.categoryId),
     name: new CategoryName('Old Groceries'),
-    type: CategoryType.Expense,
+    type: 'expense' as any,
     isArchived: true,
   });
 

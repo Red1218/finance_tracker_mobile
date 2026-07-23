@@ -30,7 +30,7 @@ describe('UpdateExpenseUseCase', () => {
       new Category({
         id: new CategoryId(validCategoryId),
         name: new CategoryName('Valid Category'),
-        type: CategoryType.Expense,
+        type: 'expense' as CategoryType,
         isArchived: false,
       })
     );

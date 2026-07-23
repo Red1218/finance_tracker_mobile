@@ -8,13 +8,15 @@ import { BudgetMapper } from '../mappers/BudgetMapper';
 import { BudgetSummaryMapper } from '../mappers/BudgetSummaryMapper';
 import { BUDGETS_TABLE, EXPENSES_TABLE } from '../database/budgetQueries';
 
+import { supabase } from '../../../../database';
+
 export class SupabaseBudgetRepository implements IBudgetRepository {
-  constructor(private readonly supabase: SupabaseClient) {}
+  constructor(private readonly supabaseClient: SupabaseClient = supabase) {}
 
   public async create(budget: Budget): Promise<RepositoryResult<void, RepositoryError>> {
     try {
       const record = BudgetMapper.toPersistence(budget);
-      const { error } = await this.supabase
+      const { error } = await this.supabaseClient
         .from(BUDGETS_TABLE)
         .insert(record);
 
@@ -31,7 +33,7 @@ export class SupabaseBudgetRepository implements IBudgetRepository {
   public async update(budget: Budget): Promise<RepositoryResult<void, RepositoryError>> {
     try {
       const record = BudgetMapper.toPersistence(budget);
-      const { error } = await this.supabase
+      const { error } = await this.supabaseClient
         .from(BUDGETS_TABLE)
         .update({
           amount: record.amount,
@@ -50,7 +52,7 @@ export class SupabaseBudgetRepository implements IBudgetRepository {
 
   public async delete(id: BudgetId): Promise<RepositoryResult<void, RepositoryError>> {
     try {
-      const { error } = await this.supabase
+      const { error } = await this.supabaseClient
         .from(BUDGETS_TABLE)
         .delete()
         .eq('id', id.value);
@@ -67,7 +69,7 @@ export class SupabaseBudgetRepository implements IBudgetRepository {
 
   public async findById(id: BudgetId): Promise<RepositoryResult<Budget | null, RepositoryError>> {
     try {
-      const { data, error } = await this.supabase
+      const { data, error } = await this.supabaseClient
         .from(BUDGETS_TABLE)
         .select('*')
         .eq('id', id.value)
@@ -90,7 +92,7 @@ export class SupabaseBudgetRepository implements IBudgetRepository {
 
   public async list(): Promise<RepositoryResult<Budget[], RepositoryError>> {
     try {
-      const { data, error } = await this.supabase
+      const { data, error } = await this.supabaseClient
         .from(BUDGETS_TABLE)
         .select('*')
         .order('start_date', { ascending: false });
@@ -113,7 +115,7 @@ export class SupabaseBudgetRepository implements IBudgetRepository {
     endDate: Date
   ): Promise<RepositoryResult<Budget | null, RepositoryError>> {
     try {
-      let query = this.supabase
+      let query = this.supabaseClient
         .from(BUDGETS_TABLE)
         .select('*')
         .eq('period', period)
@@ -142,7 +144,7 @@ export class SupabaseBudgetRepository implements IBudgetRepository {
 
   public async getBudgetSummary(id: BudgetId): Promise<RepositoryResult<BudgetSummaryData | null, RepositoryError>> {
     try {
-      const { data: budgetData, error: budgetError } = await this.supabase
+      const { data: budgetData, error: budgetError } = await this.supabaseClient
         .from(BUDGETS_TABLE)
         .select('*')
         .eq('id', id.value)
@@ -152,12 +154,12 @@ export class SupabaseBudgetRepository implements IBudgetRepository {
         if (budgetError.code === 'PGRST116') {
           return Result.success(null);
         }
-        return Result.failure(new RepositoryError('Failed to fetch budget for summary', budgetError));
+        return Result.failure(new RepositoryError('UNKNOWN_PERSISTENCE_ERROR', 'Failed to fetch budget for summary', undefined, budgetError));
       }
 
       if (!budgetData) return Result.success(null);
 
-      let expenseQuery = this.supabase
+      let expenseQuery = this.supabaseClient
         .from(EXPENSES_TABLE)
         .select('amount.sum()', { count: 'exact' })
         .gte('date', budgetData.start_date)
@@ -170,7 +172,7 @@ export class SupabaseBudgetRepository implements IBudgetRepository {
       const { data: expenseData, error: expenseError } = await expenseQuery.single();
       
       if (expenseError && expenseError.code !== 'PGRST116') {
-         return Result.failure(new RepositoryError('Failed to aggregate expenses for summary', expenseError));
+         return Result.failure(new RepositoryError('UNKNOWN_PERSISTENCE_ERROR', 'Failed to aggregate expenses for summary', undefined, expenseError));
       }
 
       let spent = 0;

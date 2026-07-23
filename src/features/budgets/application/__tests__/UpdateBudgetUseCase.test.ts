@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, Mocked } from 'vitest';
 import { UpdateBudgetUseCase } from '../use-cases/UpdateBudgetUseCase';
 import { IBudgetRepository } from '../repositories/IBudgetRepository';
 import { Result } from '../../../../platform/persistence';
@@ -6,7 +6,7 @@ import { Budget, BudgetId, BudgetAmount, BudgetPeriod, BudgetDomainError } from 
 import { CurrencyCode } from '../../../expenses/domain/value-objects/CurrencyCode';
 
 describe('UpdateBudgetUseCase', () => {
-  let budgetRepository: vitest.Mocked<IBudgetRepository>;
+  let budgetRepository: Mocked<IBudgetRepository>;
   let useCase: UpdateBudgetUseCase;
 
   const validBudgetId = '123e4567-e89b-12d3-a456-426614174000';

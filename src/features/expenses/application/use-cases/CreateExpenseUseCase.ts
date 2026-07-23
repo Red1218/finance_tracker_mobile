@@ -6,11 +6,12 @@ import {
   ExpenseAmount, 
   CurrencyCode, 
   ExpenseDate, 
-  PaymentMethod, 
   ExpenseNote, 
   MerchantName,
-  SupportedCurrency
+  SupportedCurrency,
+  PaymentMethod
 } from '../../domain';
+import { generateUUID } from '../../../../core/utils/uuid';
 import { CategoryId } from '../../../categories/domain';
 import { CreateExpenseRequest } from './CreateExpenseRequest';
 import { UseCaseResult } from './UseCaseTypes';
@@ -44,7 +45,7 @@ export class CreateExpenseUseCase {
         );
       }
 
-      const expenseId = new ExpenseId(crypto.randomUUID());
+      const expenseId = new ExpenseId(generateUUID());
       const amount = new ExpenseAmount(request.amount);
       const currency = new CurrencyCode(request.currency as SupportedCurrency);
       const date = new ExpenseDate(request.date);

@@ -1,6 +1,8 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import { BaseRepository, RepositoryResult, Result, RepositoryError } from '../../persistence';
-import { ICategoryRepository } from '../../../features/categories/application';
+import { BaseRepository } from '../BaseRepository';
+import { RepositoryResult, Result } from '../RepositoryResult';
+import { RepositoryError } from '../RepositoryError';
+import { ICategoryRepository } from '../../../features/categories/application/repositories/ICategoryRepository';
 import { Category, CategoryId, CategoryName } from '../../../features/categories/domain';
 import { CategoryMapper } from './CategoryMapper';
 import { CategoryRow } from '../../../features/categories/contracts';
@@ -8,6 +10,7 @@ import { supabase } from '../../../database';
 
 export class SupabaseCategoryRepository extends BaseRepository implements ICategoryRepository {
   private static readonly TABLE = 'categories';
+  private static readonly COLUMNS = 'id,name,type,is_archived';
 
   constructor(client: SupabaseClient = supabase) {
     super(client);

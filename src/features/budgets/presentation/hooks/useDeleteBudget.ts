@@ -1,10 +1,11 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { DeleteBudgetUseCase, DeleteBudgetRequest } from '../../application';
+import { budgetsModule } from './module';
 
-export function useDeleteBudget(deleteBudgetUseCase: DeleteBudgetUseCase) {
+export function useDeleteBudget(deleteBudgetUseCase: DeleteBudgetUseCase = budgetsModule.deleteBudgetUseCase) {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: async (request: DeleteBudgetRequest) => {
       const result = await deleteBudgetUseCase.execute(request);
       if (!result.success) throw result.error;
@@ -15,4 +16,16 @@ export function useDeleteBudget(deleteBudgetUseCase: DeleteBudgetUseCase) {
       queryClient.removeQueries({ queryKey: ['budgetSummary', variables.id] });
     },
   });
+
+  return {
+    deleteBudget: async (request: DeleteBudgetRequest) => {
+      try {
+        await mutation.mutateAsync(request);
+        return true;
+      } catch (e) {
+        return false;
+      }
+    },
+    isLoading: mutation.isPending,
+  };
 }

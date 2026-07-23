@@ -1,4 +1,4 @@
-import { useAuth } from '@/src/features/identity/hooks/useAuth';
+import { useAuth } from '@/src/platform/authentication';
 import { Redirect } from 'expo-router';
 import React, { useState } from 'react';
 import {

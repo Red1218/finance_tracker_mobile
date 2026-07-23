@@ -1,4 +1,5 @@
-import { RepositoryResult, RepositoryError } from '../../../../platform/persistence';
+import { RepositoryError } from '../../../../platform/persistence/RepositoryError';
+import { RepositoryResult } from '../../../../platform/persistence/RepositoryResult';
 import { Category, CategoryId, CategoryName } from '../../domain';
 
 export interface ICategoryRepository {

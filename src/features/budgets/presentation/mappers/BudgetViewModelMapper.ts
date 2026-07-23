@@ -1,4 +1,4 @@
-import { Budget } from '../../../domain';
+import { Budget } from '../../domain';
 import { BudgetSummaryResponse } from '../../application/responses/BudgetSummaryResponse';
 import { BudgetViewModel, BudgetSummaryViewModel } from '../types/BudgetViewModel';
 
