@@ -93,3 +93,20 @@ npx expo start --clear
 Never patch `.expo/types/router.d.ts` directly to fix TypeScript errors.
 The correct fix is always to ensure the actual `app/` directory contains only
 valid route files.
+
+---
+
+# Feature Definition of Done (DoD)
+
+For every feature or major architectural change, ensure all of the following criteria are verified before completing:
+
+- [ ] Architecture review complete
+- [ ] Implementation complete & Clean Architecture / DDD boundaries enforced
+- [ ] Automated tests pass (`npm test`)
+- [ ] TypeScript type checking passes (`npx tsc --noEmit`)
+- [ ] Expo doctor checked (`npx expo-doctor`)
+- [ ] Database schema verified against live Supabase tables
+- [ ] RLS policies and database permissions verified
+- [ ] Manual smoke test / dev-client runtime verification passed
+- [ ] Documentation updated
+- [ ] Ready to merge
