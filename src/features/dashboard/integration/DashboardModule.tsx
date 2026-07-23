@@ -9,6 +9,7 @@ import type { DashboardFacade } from '../application/facade/DashboardFacade';
 
 interface DashboardModuleProps {
   userId: string;
+  enableMockData?: boolean;
 }
 
 /**
@@ -16,13 +17,19 @@ interface DashboardModuleProps {
  * Lazily bootstraps the Dashboard dependency graph (idempotent) and
  * renders the DashboardScreen once the facade is ready.
  */
-export function DashboardModule({ userId }: DashboardModuleProps) {
+export function DashboardModule({ userId, enableMockData }: DashboardModuleProps) {
   const [facade, setFacade] = useState<DashboardFacade | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    setupDashboardMock();
-    DashboardBootstrap.initialize({ apiBaseUrl: 'mock://' }).then(() => {
+    const isDev = process.env.NODE_ENV !== 'production';
+    const shouldUseMockData = isDev && (enableMockData ?? false);
+
+    if (shouldUseMockData) {
+      setupDashboardMock();
+    }
+
+    DashboardBootstrap.initialize({}).then(() => {
       if (!cancelled) {
         setFacade(DashboardContainer.getFacade());
       }
@@ -38,7 +45,6 @@ export function DashboardModule({ userId }: DashboardModuleProps) {
     );
   }
 
-  return <View />;
+  return <DashboardScreen userId={userId} facade={facade} />;
 }
-
 

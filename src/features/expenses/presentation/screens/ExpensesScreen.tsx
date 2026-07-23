@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { View, StyleSheet, Text, Modal, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import { Screen, Loading, Button } from '../../../../shared/components';
 import { useTheme } from '../../../../shared/theme';
@@ -13,19 +13,30 @@ import {
 } from '../hooks';
 import { ExpenseVisibility } from '../../application/repositories/ExpenseFilter';
 
-// We need categories for the Expense form
-import { useCategories } from '../../../categories/presentation/hooks';
-import { CategoriesModule } from '../../../categories/composition';
+import { CategoriesModule, Category } from '../../../categories';
 const categoriesModule = new CategoriesModule();
 
 export function ExpensesScreen() {
   const { colors, spacing, typography } = useTheme();
 
-  // Load Categories (including archived for display purposes in forms/lists)
-  const { categories, isLoading: isCategoriesLoading } = useCategories(
-    categoriesModule.listCategoriesUseCase,
-    true
-  );
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isCategoriesLoading, setIsCategoriesLoading] = useState(false);
+
+  const fetchCategories = useCallback(async () => {
+    setIsCategoriesLoading(true);
+    try {
+      const result = await categoriesModule.listCategoriesUseCase.execute({ includeArchived: true });
+      if (result.success) {
+        setCategories(result.data);
+      }
+    } finally {
+      setIsCategoriesLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
   
   const categoryOptions: CategoryOption[] = useMemo(() => {
     return categories.map(cat => ({

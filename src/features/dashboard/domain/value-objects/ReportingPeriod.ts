@@ -1,14 +1,27 @@
 export type PeriodType = 'CurrentMonth' | 'LastMonth' | 'CurrentYear' | 'CustomRange';
 
 export class ReportingPeriod {
+  private readonly _startDate: Date;
+  private readonly _endDate: Date;
+
   constructor(
     public readonly type: PeriodType,
-    public readonly startDate: Date,
-    public readonly endDate: Date
+    startDate: Date,
+    endDate: Date
   ) {
     if (startDate.getTime() > endDate.getTime()) {
       throw new Error('Start date must be before or equal to end date');
     }
+    this._startDate = new Date(startDate.getTime());
+    this._endDate = new Date(endDate.getTime());
+  }
+
+  get startDate(): Date {
+    return new Date(this._startDate.getTime());
+  }
+
+  get endDate(): Date {
+    return new Date(this._endDate.getTime());
   }
 
   equals(other: ReportingPeriod): boolean {

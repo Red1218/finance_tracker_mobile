@@ -8,8 +8,23 @@ describe('ReportingPeriod', () => {
     const period = new ReportingPeriod('CurrentMonth', start, end);
     
     expect(period.type).toBe('CurrentMonth');
-    expect(period.startDate).toBe(start);
-    expect(period.endDate).toBe(end);
+    expect(period.startDate).toEqual(start);
+    expect(period.endDate).toEqual(end);
+  });
+
+  it('should be immutable against external Date mutations', () => {
+    const start = new Date('2026-07-01T00:00:00Z');
+    const end = new Date('2026-07-31T23:59:59Z');
+    const period = new ReportingPeriod('CurrentMonth', start, end);
+
+    // Mutate constructor input date
+    start.setFullYear(2020);
+    expect(period.startDate.getFullYear()).toBe(2026);
+
+    // Mutate getter date
+    const getterDate = period.startDate;
+    getterDate.setFullYear(2020);
+    expect(period.startDate.getFullYear()).toBe(2026);
   });
 
   it('should throw an error if start date is after end date', () => {

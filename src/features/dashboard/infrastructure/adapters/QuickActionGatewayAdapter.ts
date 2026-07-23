@@ -18,19 +18,30 @@ export class QuickActionGatewayAdapter implements QuickActionGateway {
       let endpoint = '';
       if (actionType === 'AddTransaction') {
         endpoint = '/api/transactions';
-      } else if (actionType === 'UpdateBudget') {
+      } else if (actionType === 'UpdateBudget' || actionType === 'AdjustBudget') {
         endpoint = '/api/budgets';
       } else {
         throw new Error(`Unsupported action type: ${actionType}`);
       }
 
-      const response = await fetch(`${this.baseUrl}${endpoint}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      });
+      const targetUrl = `${this.baseUrl}${endpoint}`;
+      
+      let response: Response;
+      if (targetUrl.startsWith('mock://')) {
+        // Safe mock response when running locally without a remote backend server
+        response = new Response(JSON.stringify({ success: true }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      } else {
+        response = await fetch(targetUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+      }
 
       if (!response.ok) {
         throw new Error(`Quick action failed with status ${response.status}`);

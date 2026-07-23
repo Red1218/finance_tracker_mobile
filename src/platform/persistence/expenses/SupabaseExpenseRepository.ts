@@ -10,7 +10,7 @@ import { supabase } from '../../../database';
 
 export class SupabaseExpenseRepository extends BaseRepository implements IExpenseRepository {
   private static readonly TABLE = 'expenses';
-  private static readonly COLUMNS = 'id,amount,currency_code,date,note,merchant,payment_method,category_id,created_at,updated_at,deleted_at';
+  private static readonly COLUMNS = 'id,amount,currency,expense_date,note,merchant,payment_method,category_id,created_at,updated_at,deleted_at';
 
   constructor(client: SupabaseClient = supabase) {
     super(client);
@@ -47,7 +47,7 @@ export class SupabaseExpenseRepository extends BaseRepository implements IExpens
       let query = this.client
         .from(SupabaseExpenseRepository.TABLE)
         .select(SupabaseExpenseRepository.COLUMNS)
-        .order('date', { ascending: false });
+        .order('expense_date', { ascending: false });
 
       const visibility = filter?.visibility || 'active';
       if (visibility === 'active') {
@@ -64,10 +64,10 @@ export class SupabaseExpenseRepository extends BaseRepository implements IExpens
           query = query.eq('payment_method', filter.paymentMethod);
         }
         if (filter.startDate !== undefined) {
-          query = query.gte('date', ExpenseMapper.toDbDate(filter.startDate));
+          query = query.gte('expense_date', ExpenseMapper.toDbDate(filter.startDate));
         }
         if (filter.endDate !== undefined) {
-          query = query.lte('date', ExpenseMapper.toDbDate(filter.endDate));
+          query = query.lte('expense_date', ExpenseMapper.toDbDate(filter.endDate));
         }
       }
 

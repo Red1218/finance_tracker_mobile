@@ -12,8 +12,8 @@ describe('ExpenseMapper', () => {
       id: '550e8400-e29b-41d4-a716-446655440000',
       category_id: '550e8400-e29b-41d4-a716-446655440000',
       amount: 1500,
-      currency_code: 'INR',
-      date: new Date(1672531200000).toISOString(),
+      currency: 'INR',
+      expense_date: new Date(1672531200000).toISOString(),
       payment_method: PaymentMethodType.UPI,
       note: 'Test note',
       merchant: 'Test merchant',
@@ -50,8 +50,8 @@ describe('ExpenseMapper', () => {
     expect(persistence.id).toBe('550e8400-e29b-41d4-a716-446655440000');
     expect(persistence.category_id).toBe('550e8400-e29b-41d4-a716-446655440000');
     expect(persistence.amount).toBe(2500);
-    expect(persistence.currency_code).toBe('INR');
-    expect(persistence.date).toBe('2023-01-01T00:00:00.000Z');
+    expect(persistence.currency).toBe('INR');
+    expect(persistence.expense_date).toBe('2023-01-01T00:00:00.000Z');
     expect(persistence.payment_method).toBe(PaymentMethodType.UPI);
     expect(persistence.note).toBeNull();
     expect(persistence.merchant).toBeNull();

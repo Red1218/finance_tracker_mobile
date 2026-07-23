@@ -14,8 +14,16 @@ describe('Dashboard Feature End-to-End Integration', () => {
       subscribe: vi.fn().mockReturnValue(vi.fn())
     };
 
+    const mockSupabase: any = {
+      from: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({ data: [], error: null })
+        })
+      })
+    };
+
     await DashboardBootstrap.initialize({
-      apiBaseUrl: 'http://localhost:3000',
+      supabaseClient: mockSupabase,
       globalEventBus: mockEventBus
     });
 
@@ -23,39 +31,15 @@ describe('Dashboard Feature End-to-End Integration', () => {
     const facade = DashboardContainer.getFacade();
     expect(facade).toBeDefined();
 
-    // 3. Execute the core Use Case (Load Dashboard)
-    // Since we're using a RemoteDashboardRepository without a real network mock,
-    // this will attempt to fetch and fail, falling back to cache or throwing.
-    // However, the resilience policies will catch it.
-    // For a strict E2E test, we'd mock the global fetch. Let's do that.
-    const originalFetch = global.fetch;
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        activeReportingPeriodId: 'CurrentMonth',
-        startDate: new Date('2023-01-01').toISOString(),
-        endDate: new Date('2023-01-31').toISOString(),
-        budgets: [],
-        categories: [],
-        transactions: []
-      })
+    const snapshot = await facade.loadDashboard({
+      userId: 'user-123',
+      reportingPeriodId: 'CurrentMonth',
+      correlationId: 'test-corr-id'
     });
 
-    try {
-      const snapshot = await facade.loadDashboard({
-        userId: 'user-123',
-        reportingPeriodId: 'CurrentMonth',
-        correlationId: 'test-corr-id'
-      });
-
-      // The repository resolves an empty snapshot correctly
-      expect(snapshot).toBeDefined();
-      expect(snapshot.overallStatus).toBe('Loaded');
-      expect(snapshot.activeReportingPeriodLabel).toContain('2023-01-01');
-    } finally {
-      // Cleanup
-      global.fetch = originalFetch;
-    }
+    // The repository resolves an empty snapshot correctly
+    expect(snapshot).toBeDefined();
+    expect(snapshot.overallStatus).toBe('Loaded');
   });
 
   it('should propagate cross-feature events to the dashboard facade', async () => {
@@ -68,7 +52,6 @@ describe('Dashboard Feature End-to-End Integration', () => {
     };
 
     await DashboardBootstrap.initialize({
-      apiBaseUrl: 'http://localhost:3000',
       globalEventBus: mockEventBus
     });
 

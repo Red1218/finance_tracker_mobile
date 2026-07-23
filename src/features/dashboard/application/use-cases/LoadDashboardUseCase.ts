@@ -34,7 +34,8 @@ export class LoadDashboardUseCase {
       const snapshot = await this.repository.getDashboardData(command.userId, command.reportingPeriodId);
 
       // Reconstruct core domain objects needed for orchestration
-      const period = new ReportingPeriod('CurrentMonth', snapshot.startDate, snapshot.endDate);
+      const periodType = (command.reportingPeriodId || snapshot.activeReportingPeriodId || 'CurrentMonth') as any;
+      const period = new ReportingPeriod(periodType, snapshot.startDate, snapshot.endDate);
       const dashboard = new Dashboard(command.userId, period);
 
       // We run all section domain services concurrently

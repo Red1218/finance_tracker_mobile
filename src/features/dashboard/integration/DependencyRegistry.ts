@@ -5,7 +5,8 @@ import { FakePersistentCacheProvider } from '../infrastructure/cache/PersistentC
 import { CacheCoordinator } from '../infrastructure/cache/CacheCoordinator';
 import { RetryPolicy } from '../infrastructure/policies/RetryPolicy';
 import { CircuitBreakerPolicy } from '../infrastructure/policies/CircuitBreakerPolicy';
-import { RemoteDashboardRepository } from '../infrastructure/repositories/RemoteDashboardRepository';
+import { SupabaseDashboardRepository } from '../infrastructure/repositories/SupabaseDashboardRepository';
+import { SupabaseClient } from '@supabase/supabase-js';
 import { ResilientRepositoryDecorator } from '../infrastructure/repositories/ResilientRepositoryDecorator';
 import { CachedRepositoryDecorator } from '../infrastructure/repositories/CachedRepositoryDecorator';
 import { EventDispatcherAdapter } from '../infrastructure/adapters/EventDispatcherAdapter';
@@ -24,7 +25,8 @@ import { ExecuteQuickActionUseCase } from '../application/use-cases/ExecuteQuick
 import { DashboardFacade } from '../application/facade/DashboardFacade';
 
 export interface DashboardConfiguration {
-  apiBaseUrl: string;
+  apiBaseUrl?: string;
+  supabaseClient?: SupabaseClient;
 }
 
 export class DependencyRegistry {
@@ -52,8 +54,8 @@ export class DependencyRegistry {
     const cbPolicy = new CircuitBreakerPolicy({ failureThreshold: 5, resetTimeoutMs: 30000 }, logger);
 
     // 4. Infrastructure - Repository Decorator Chain
-    const remoteRepo = new RemoteDashboardRepository(config.apiBaseUrl, logger, telemetry);
-    const resilientRepo = new ResilientRepositoryDecorator(remoteRepo, retryPolicy, cbPolicy, logger);
+    const supabaseRepo = new SupabaseDashboardRepository(config?.supabaseClient, logger, telemetry);
+    const resilientRepo = new ResilientRepositoryDecorator(supabaseRepo, retryPolicy, cbPolicy, logger);
     const dashboardRepository = new CachedRepositoryDecorator(resilientRepo, cacheCoordinator, logger, 900);
 
     // 5. Domain Services
@@ -77,7 +79,7 @@ export class DependencyRegistry {
     
     // 8. Infrastructure - Adapters (dependent on App Services)
     const eventDispatcher = new EventDispatcherAdapter(dashboardRefreshService, logger);
-    const quickActionGateway = new QuickActionGatewayAdapter(config.apiBaseUrl, logger, telemetry);
+    const quickActionGateway = new QuickActionGatewayAdapter(config?.apiBaseUrl || 'mock://', logger, telemetry);
 
     // 9. Application - Use Cases (Part 2)
     const loadDashboardUseCase = new LoadDashboardUseCase(

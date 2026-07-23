@@ -1,7 +1,7 @@
 export function setupDashboardMock() {
   const originalFetch = global.fetch;
 
-  global.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+  global.fetch = async (input: any, init?: any) => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
     
     if (url.includes('mock://api/dashboard')) {
@@ -78,6 +78,14 @@ export function setupDashboardMock() {
       };
 
       return new Response(JSON.stringify(mockResponse), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    if (url.includes('mock://api/transactions') || url.includes('mock://api/budgets') || url.startsWith('mock://')) {
+      await new Promise(resolve => setTimeout(resolve, 200));
+      return new Response(JSON.stringify({ success: true }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' }
       });

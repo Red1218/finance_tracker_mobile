@@ -1,19 +1,10 @@
-import { DashboardModule } from './DashboardModule';
-
-/**
- * Defines the parameters expected by the Dashboard route.
- */
 export type DashboardRouteParams = {
   userId: string;
 };
 
-/**
- * Route Configuration for React Navigation (or similar router).
- * Ties the route name to the entry-point component.
- */
 export const DashboardRouteConfig = {
   name: 'Dashboard',
-  component: DashboardModule,
+  getComponent: () => require('./DashboardModule').DashboardModule,
   options: {
     // Hide standard headers if the feature provides its own (e.g., DashboardHeader)
     headerShown: false,

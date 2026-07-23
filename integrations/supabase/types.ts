@@ -7,222 +7,118 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "13.0.5"
   }
   public: {
     Tables: {
-      borrowings: {
+      budgets: {
         Row: {
-          amount: number
-          created_at: string
           id: string
-          note: string | null
-          source: string
-          type: string
           user_id: string
-        }
-        Insert: {
+          category_id: string | null
           amount: number
-          created_at?: string
-          id?: string
-          note?: string | null
-          source: string
-          type: string
-          user_id: string
-        }
-        Update: {
-          amount?: number
-          created_at?: string
-          id?: string
-          note?: string | null
-          source?: string
-          type?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      budget_settings: {
-        Row: {
-          budget_limit: number
+          period: string
+          start_date: string
+          end_date: string
+          is_active: boolean
           created_at: string
-          id: string
-          month: string
           updated_at: string
-          user_id: string
+          deleted_at: string | null
         }
         Insert: {
-          budget_limit?: number
-          created_at?: string
           id?: string
-          month: string
-          updated_at?: string
           user_id: string
+          category_id?: string | null
+          amount: number
+          period: string
+          start_date: string
+          end_date: string
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
         }
         Update: {
-          budget_limit?: number
-          created_at?: string
           id?: string
-          month?: string
-          updated_at?: string
           user_id?: string
+          category_id?: string | null
+          amount?: number
+          period?: string
+          start_date?: string
+          end_date?: string
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
         }
         Relationships: []
       }
       categories: {
         Row: {
-          created_at: string
           id: string
-          name: string
           user_id: string
+          name: string
+          created_at: string
         }
         Insert: {
-          created_at?: string
           id?: string
-          name: string
           user_id: string
+          name: string
+          created_at?: string
         }
         Update: {
-          created_at?: string
           id?: string
+          user_id?: string
           name?: string
-          user_id?: string
+          created_at?: string
         }
         Relationships: []
       }
-      credit_cards: {
+      expenses: {
         Row: {
-          created_at: string
-          credit_limit: number
           id: string
-          is_default: boolean
-          last_four: string | null
-          name: string
           user_id: string
-        }
-        Insert: {
-          created_at?: string
-          credit_limit?: number
-          id?: string
-          is_default?: boolean
-          last_four?: string | null
-          name: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          credit_limit?: number
-          id?: string
-          is_default?: boolean
-          last_four?: string | null
-          name?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      profiles: {
-        Row: {
-          avatar_url: string | null
-          created_at: string
-          display_name: string | null
-          id: string
-          updated_at: string
-        }
-        Insert: {
-          avatar_url?: string | null
-          created_at?: string
-          display_name?: string | null
-          id: string
-          updated_at?: string
-        }
-        Update: {
-          avatar_url?: string | null
-          created_at?: string
-          display_name?: string | null
-          id?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      savings: {
-        Row: {
-          amount: number
-          created_at: string
-          id: string
-          note: string | null
-          savings_date: string
-          user_id: string
-        }
-        Insert: {
-          amount: number
-          created_at?: string
-          id?: string
-          note?: string | null
-          savings_date?: string
-          user_id: string
-        }
-        Update: {
-          amount?: number
-          created_at?: string
-          id?: string
-          note?: string | null
-          savings_date?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      spends: {
-        Row: {
-          amount: number
           category_id: string | null
-          created_at: string
-          credit_card_id: string | null
-          id: string
-          note: string | null
+          amount: number
+          currency: string
           payment_method: string
-          spend_date: string
-          user_id: string
+          merchant: string | null
+          note: string | null
+          expense_date: string
+          created_at: string
+          updated_at: string
+          deleted_at: string | null
         }
         Insert: {
-          amount: number
-          category_id?: string | null
-          created_at?: string
-          credit_card_id?: string | null
           id?: string
-          note?: string | null
-          payment_method?: string
-          spend_date?: string
           user_id: string
+          category_id?: string | null
+          amount: number
+          currency?: string
+          payment_method: string
+          merchant?: string | null
+          note?: string | null
+          expense_date: string
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
         }
         Update: {
-          amount?: number
-          category_id?: string | null
-          created_at?: string
-          credit_card_id?: string | null
           id?: string
-          note?: string | null
-          payment_method?: string
-          spend_date?: string
           user_id?: string
+          category_id?: string | null
+          amount?: number
+          currency?: string
+          payment_method?: string
+          merchant?: string | null
+          note?: string | null
+          expense_date?: string
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "spends_category_id_fkey"
-            columns: ["category_id"]
-            isOneToOne: false
-            referencedRelation: "categories"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "spends_credit_card_id_fkey"
-            columns: ["credit_card_id"]
-            isOneToOne: false
-            referencedRelation: "credit_cards"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Views: {

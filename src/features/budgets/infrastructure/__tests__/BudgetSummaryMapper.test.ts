@@ -7,7 +7,6 @@ describe('BudgetSummaryMapper', () => {
       id: '123e4567-e89b-12d3-a456-426614174000',
       category_id: null,
       amount: 5000,
-      currency: 'INR',
       period: 'Monthly',
       start_date: '2026-08-01T00:00:00.000Z',
       end_date: '2026-08-31T23:59:59.000Z',

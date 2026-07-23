@@ -50,7 +50,7 @@ export function DashboardView({
           title="Dashboard"
           selector={
           <ReportingPeriodSelector
-              currentPeriodId={'CurrentMonth'} // TODO: Should add this to view model if needed
+              currentPeriodId={viewModel.activeReportingPeriodId}
               isOpen={isPeriodSelectorOpen}
               onToggle={onTogglePeriodSelector}
               onSelect={onChangePeriod}

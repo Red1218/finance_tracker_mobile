@@ -8,8 +8,7 @@ interface QuickActionsSectionProps {
 export function QuickActionsSection({ onAction }: QuickActionsSectionProps) {
   const actions = [
     { id: 'AddTransaction', label: 'Add Transaction', icon: '+$' },
-    { id: 'Transfer', label: 'Transfer', icon: '⇄' },
-    { id: 'ScanReceipt', label: 'Scan Receipt', icon: '📷' }
+    { id: 'AdjustBudget', label: 'Adjust Budget', icon: '📊' }
   ];
 
   return (

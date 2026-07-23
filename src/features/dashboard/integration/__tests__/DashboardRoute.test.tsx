@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { canActivateDashboard } from '../DashboardRoute.tsx';
-import { setupDashboardMock } from '../development/DashboardMockAPI';
+import { canActivateDashboard } from '../DashboardRoute';
 
 describe('DashboardRoute', () => {
   it('should prevent activation if userId is missing', () => {

@@ -4,8 +4,8 @@ import { PaymentMethodType } from '../domain/value-objects/PaymentMethod';
 export interface ExpenseRow {
   id: string;
   amount: number;
-  currency_code: SupportedCurrency;
-  date: string;
+  currency: SupportedCurrency;
+  expense_date: string;
   note: string | null;
   merchant: string | null;
   payment_method: PaymentMethodType;

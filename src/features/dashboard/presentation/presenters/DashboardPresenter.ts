@@ -20,14 +20,13 @@ export class DashboardPresenter {
     this.onStateChange(this.state);
   }
 
-  async loadDashboard(userId: string) {
+  async loadDashboard(userId: string, periodId?: string) {
     this.updateState({ isRefreshing: true });
     
-    // We start with the 'CurrentMonth' as default, but a real app might restore from preferences.
     const command: LoadDashboardCommand = {
       correlationId: generateUUID(),
       userId,
-      reportingPeriodId: 'CurrentMonth'
+      reportingPeriodId: periodId || this.state.viewModel?.activeReportingPeriodId || 'CurrentMonth'
     };
 
     try {
@@ -135,8 +134,7 @@ export class DashboardPresenter {
     
     // Quick actions typically mutate external state, so we should refresh the dashboard.
     if (this.state.viewModel) {
-      // Assuming 'CurrentMonth' as a fallback since activeReportingPeriodId isn't on viewModel
-      await this.refreshDashboard(userId, 'CurrentMonth');
+      await this.refreshDashboard(userId, this.state.viewModel.activeReportingPeriodId || 'CurrentMonth');
     }
   }
 
