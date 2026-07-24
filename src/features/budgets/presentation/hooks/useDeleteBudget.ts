@@ -27,5 +27,7 @@ export function useDeleteBudget(deleteBudgetUseCase: DeleteBudgetUseCase = budge
       }
     },
     isLoading: mutation.isPending,
+    error: mutation.error?.message || null,
   };
 }
+

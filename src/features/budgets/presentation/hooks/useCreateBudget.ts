@@ -26,5 +26,7 @@ export function useCreateBudget(createBudgetUseCase: CreateBudgetUseCase = budge
       }
     },
     isLoading: mutation.isPending,
+    error: mutation.error?.message || null,
   };
 }
+
