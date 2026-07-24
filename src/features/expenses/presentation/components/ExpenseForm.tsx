@@ -1,8 +1,18 @@
 import React, { useState } from 'react';
-import { View, TextInput, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, TextInput, Text, StyleSheet, ScrollView, Platform, TouchableOpacity } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { Button } from '../../../../shared/components';
 import { useTheme } from '../../../../shared/theme';
 import { CategoryOption } from '../models';
+import { PaymentMethodType } from '../../domain';
+
+const PAYMENT_METHODS: { id: PaymentMethodType; label: string }[] = [
+  { id: PaymentMethodType.CASH, label: 'Cash' },
+  { id: PaymentMethodType.UPI, label: 'UPI' },
+  { id: PaymentMethodType.CREDIT_CARD, label: 'Credit Card' },
+  { id: PaymentMethodType.DEBIT_CARD, label: 'Debit Card' },
+  { id: PaymentMethodType.BANK_TRANSFER, label: 'Bank Transfer' },
+];
 
 interface ExpenseFormProps {
   initialData?: {
@@ -47,10 +57,14 @@ export function ExpenseForm({
   const [categoryId, setCategoryId] = useState(initialData?.categoryId || categories[0]?.id || '');
   const [merchant, setMerchant] = useState(initialData?.merchant || '');
   const [note, setNote] = useState(initialData?.note || '');
-  // For simplicity, hardcoding default values for required fields that aren't inputs here
-  // A real app would have date pickers and payment method dropdowns
-  const [paymentMethod, setPaymentMethod] = useState(initialData?.paymentMethod || 'CASH');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethodType>(
+    (initialData?.paymentMethod as PaymentMethodType) || PaymentMethodType.CASH
+  );
   const [currency, setCurrency] = useState(initialData?.currency || 'INR');
+  const [date, setDate] = useState<Date>(
+    initialData?.date ? new Date(initialData.date) : new Date()
+  );
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const handleSubmit = () => {
     const amountNum = parseFloat(amountStr);
@@ -60,11 +74,20 @@ export function ExpenseForm({
       categoryId,
       amount: Math.round(amountNum * 100), // convert back to integer cents
       currency,
-      date: initialData?.date || Date.now(),
+      date: date.getTime(),
       paymentMethod,
       note: note.trim() || undefined,
       merchant: merchant.trim() || undefined,
     });
+  };
+
+  const handleDateChange = (event: any, selectedDate?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+    }
+    if (selectedDate) {
+      setDate(selectedDate);
+    }
   };
 
   const isValid = !isNaN(parseFloat(amountStr)) && parseFloat(amountStr) > 0 && categoryId;
@@ -72,7 +95,9 @@ export function ExpenseForm({
   return (
     <ScrollView style={[styles.container, { padding: spacing.space16, backgroundColor: colors.surfacePrimary, borderRadius: radius.medium }]}>
       {error ? (
-        <Text style={{ color: colors.error, marginBottom: spacing.space8 }}>{error}</Text>
+        <View style={{ backgroundColor: colors.error + '20', padding: spacing.space12, borderRadius: radius.small, marginBottom: spacing.space16 }}>
+          <Text style={[{ color: colors.error }, typography.body]}>{error}</Text>
+        </View>
       ) : null}
       
       <Text style={[styles.label, { ...typography.label, color: colors.textSecondary, marginBottom: spacing.space8 }]}>
@@ -98,7 +123,6 @@ export function ExpenseForm({
           const isSelected = categoryId === cat.id;
           const isArchived = cat.isArchived;
           
-          // Business Rule: Archived categories are hidden from pickers unless already selected
           if (isArchived && !isSelected) return null;
           
           const isDisabled = disabled || isLoading || isArchived;
@@ -122,6 +146,64 @@ export function ExpenseForm({
           );
         })}
       </View>
+
+      <Text style={[styles.label, { ...typography.label, color: colors.textSecondary, marginBottom: spacing.space8 }]}>
+        Payment Method
+      </Text>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: spacing.space16 }}>
+        {PAYMENT_METHODS.map((pm) => {
+          const isSelected = paymentMethod === pm.id;
+          const bgColor = isSelected ? colors.brandPrimary : colors.surfaceSecondary;
+
+          return (
+            <Button
+              key={pm.id}
+              title={pm.label}
+              onPress={() => setPaymentMethod(pm.id)}
+              disabled={disabled || isLoading}
+              style={{
+                marginRight: spacing.space8,
+                marginBottom: spacing.space8,
+                backgroundColor: bgColor,
+              }}
+            />
+          );
+        })}
+      </View>
+
+      <Text style={[styles.label, { ...typography.label, color: colors.textSecondary, marginBottom: spacing.space8 }]}>
+        Date
+      </Text>
+      <TouchableOpacity
+        style={[
+          styles.input,
+          {
+            backgroundColor: colors.backgroundPrimary,
+            padding: spacing.space12,
+            borderRadius: radius.small,
+            marginBottom: spacing.space16,
+            borderColor: colors.border,
+            borderWidth: 1,
+          }
+        ]}
+        onPress={() => setShowDatePicker(true)}
+        disabled={disabled || isLoading}
+        accessibilityRole="button"
+        accessibilityLabel="Select date"
+      >
+        <Text style={[{ color: colors.textPrimary }, typography.body]}>
+          {date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+        </Text>
+      </TouchableOpacity>
+
+      {showDatePicker && (
+        <DateTimePicker
+          value={date}
+          mode="date"
+          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          onChange={handleDateChange}
+        />
+      )}
 
       <Text style={[styles.label, { ...typography.label, color: colors.textSecondary, marginBottom: spacing.space8 }]}>
         Merchant (Optional)
@@ -178,7 +260,6 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   label: {
-    // dynamically styled
   },
   input: {
     borderWidth: 1,
@@ -190,3 +271,4 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   }
 });
+

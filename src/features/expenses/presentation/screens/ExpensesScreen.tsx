@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { View, StyleSheet, Text, Modal, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import { Screen, Loading, Button } from '../../../../shared/components';
 import { useTheme } from '../../../../shared/theme';
+import { toast } from '@/hooks/use-toast';
 import { ExpenseItemModel, CategoryOption } from '../models';
 import { ExpenseList, ExpenseForm, DeleteExpenseDialog } from '../components';
 import {
@@ -81,9 +82,9 @@ export function ExpensesScreen() {
     categories,
     searchQuery
   );
-  const { createExpense, isLoading: isCreating } = useCreateExpense();
-  const { updateExpense, isLoading: isUpdating } = useUpdateExpense();
-  const { deleteExpense, isLoading: isDeleting } = useDeleteExpense();
+  const { createExpense, isLoading: isCreating, error: createError } = useCreateExpense();
+  const { updateExpense, isLoading: isUpdating, error: updateError } = useUpdateExpense();
+  const { deleteExpense, isLoading: isDeleting, error: deleteError } = useDeleteExpense();
   const { restoreExpense } = useRestoreExpense();
 
   // UI State for Forms/Dialogs
@@ -108,6 +109,10 @@ export function ExpensesScreen() {
   const handleRestoreRequest = async (expense: ExpenseItemModel) => {
     const success = await restoreExpense({ id: expense.id });
     if (success) {
+      toast({
+        title: 'Expense restored',
+        description: 'The expense was restored successfully.',
+      });
       refresh();
     }
   };
@@ -133,6 +138,12 @@ export function ExpensesScreen() {
         note: data.note || null,
         merchant: data.merchant || null,
       });
+      if (success) {
+        toast({
+          title: 'Expense updated',
+          description: 'The expense was updated successfully.',
+        });
+      }
     } else {
       success = await createExpense({
         categoryId: data.categoryId,
@@ -143,6 +154,12 @@ export function ExpensesScreen() {
         note: data.note,
         merchant: data.merchant,
       });
+      if (success) {
+        toast({
+          title: 'Expense created',
+          description: 'The expense was added successfully.',
+        });
+      }
     }
 
     if (success) {
@@ -155,6 +172,10 @@ export function ExpensesScreen() {
     if (!expenseToDelete) return;
     const success = await deleteExpense({ id: expenseToDelete.id });
     if (success) {
+      toast({
+        title: 'Expense deleted',
+        description: 'The expense was deleted successfully.',
+      });
       setExpenseToDelete(undefined);
       refresh();
     }
@@ -281,6 +302,7 @@ export function ExpensesScreen() {
             onSubmit={handleFormSubmit}
             onCancel={() => setIsFormVisible(false)}
             isLoading={isCreating || isUpdating}
+            error={selectedExpense ? (updateError || undefined) : (createError || undefined)}
           />
         )}
       </Modal>

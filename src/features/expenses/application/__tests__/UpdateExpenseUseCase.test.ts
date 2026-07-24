@@ -97,4 +97,41 @@ describe('UpdateExpenseUseCase', () => {
       expect((result.error as any).code).toBe('INVALID_IDENTIFIER');
     }
   });
+
+  it('should update payment method and preserve date when date is not updated', async () => {
+    const original = await repository.getById(new ExpenseId(existingExpenseId));
+    expect(original.success).toBe(true);
+    const originalDate = original.success ? original.data?.date.value : 0;
+
+    const result = await useCase.execute({
+      id: existingExpenseId,
+      paymentMethod: 'CREDIT_CARD' as any,
+    });
+
+    expect(result.success).toBe(true);
+    
+    const saved = await repository.getById(new ExpenseId(existingExpenseId));
+    expect(saved.success).toBe(true);
+    if (saved.success) {
+      expect(saved.data?.paymentMethod.value).toBe('CREDIT_CARD');
+      expect(saved.data?.date.value).toBe(originalDate);
+    }
+  });
+
+  it('should update date when date is provided', async () => {
+    const newDate = 1700000000000;
+    const result = await useCase.execute({
+      id: existingExpenseId,
+      date: newDate,
+    });
+
+    expect(result.success).toBe(true);
+
+    const saved = await repository.getById(new ExpenseId(existingExpenseId));
+    expect(saved.success).toBe(true);
+    if (saved.success) {
+      expect(saved.data?.date.value).toBe(newDate);
+    }
+  });
 });
+
