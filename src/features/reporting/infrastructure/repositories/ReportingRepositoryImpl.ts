@@ -22,10 +22,11 @@ export class ReportingRepositoryImpl implements IReportingRepository {
   public async getDashboardSummary(
     period: ReportingPeriod,
     startDate?: Date,
-    endDate?: Date
+    endDate?: Date,
+    categoryId?: string | null
   ): Promise<RepositoryResult<DashboardSummary, RepositoryError>> {
     try {
-      const raw = await this.dataSource.fetchDashboardSummary(period, startDate, endDate);
+      const raw = await this.dataSource.fetchDashboardSummary(period, startDate, endDate, categoryId);
       return Result.success(DashboardSummaryInfraMapper.toDomain(raw));
     } catch (err) {
       return Result.failure(new RepositoryError('UNKNOWN_PERSISTENCE_ERROR', 'Failed to fetch dashboard summary', undefined, err as Error));
@@ -35,10 +36,11 @@ export class ReportingRepositoryImpl implements IReportingRepository {
   public async getCategoryBreakdown(
     period: ReportingPeriod,
     startDate?: Date,
-    endDate?: Date
+    endDate?: Date,
+    categoryId?: string | null
   ): Promise<RepositoryResult<CategoryBreakdown[], RepositoryError>> {
     try {
-      const raw = await this.dataSource.fetchCategoryBreakdown(period, startDate, endDate);
+      const raw = await this.dataSource.fetchCategoryBreakdown(period, startDate, endDate, categoryId);
       return Result.success(CategoryBreakdownInfraMapper.toDomain(raw as (RawCategoryBreakdown & { _grand_total?: number })[]));
     } catch (err) {
       return Result.failure(new RepositoryError('UNKNOWN_PERSISTENCE_ERROR', 'Failed to fetch category breakdown', undefined, err as Error));
@@ -48,10 +50,11 @@ export class ReportingRepositoryImpl implements IReportingRepository {
   public async getMonthlyTrend(
     period: ReportingPeriod,
     startDate?: Date,
-    endDate?: Date
-  ): Promise<RepositoryResult<MonthlyTrendPoint[], RepositoryError>> {
+    endDate?: Date,
+    categoryId?: string | null
+  ): Promise<RepositoryResult<{ points: MonthlyTrendPoint[]; previousPeriodTotal?: number }, RepositoryError>> {
     try {
-      const raw = await this.dataSource.fetchMonthlyTrend(period, startDate, endDate);
+      const raw = await this.dataSource.fetchMonthlyTrend(period, startDate, endDate, categoryId);
       return Result.success(MonthlyTrendInfraMapper.toDomain(raw));
     } catch (err) {
       return Result.failure(new RepositoryError('UNKNOWN_PERSISTENCE_ERROR', 'Failed to fetch monthly trend', undefined, err as Error));
@@ -61,10 +64,11 @@ export class ReportingRepositoryImpl implements IReportingRepository {
   public async getBudgetPerformance(
     period: ReportingPeriod,
     startDate?: Date,
-    endDate?: Date
+    endDate?: Date,
+    categoryId?: string | null
   ): Promise<RepositoryResult<BudgetPerformance[], RepositoryError>> {
     try {
-      const raw = await this.dataSource.fetchBudgetPerformance(period, startDate, endDate);
+      const raw = await this.dataSource.fetchBudgetPerformance(period, startDate, endDate, categoryId);
       return Result.success(BudgetPerformanceInfraMapper.toDomain(raw));
     } catch (err) {
       return Result.failure(new RepositoryError('UNKNOWN_PERSISTENCE_ERROR', 'Failed to fetch budget performance', undefined, err as Error));
@@ -74,10 +78,11 @@ export class ReportingRepositoryImpl implements IReportingRepository {
   public async getLargestTransactions(
     period: ReportingPeriod,
     startDate?: Date,
-    endDate?: Date
+    endDate?: Date,
+    categoryId?: string | null
   ): Promise<RepositoryResult<LargestTransaction[], RepositoryError>> {
     try {
-      const raw = await this.dataSource.fetchLargestTransactions(period, startDate, endDate);
+      const raw = await this.dataSource.fetchLargestTransactions(period, startDate, endDate, categoryId);
       return Result.success(LargestTransactionInfraMapper.toDomain(raw));
     } catch (err) {
       return Result.failure(new RepositoryError('UNKNOWN_PERSISTENCE_ERROR', 'Failed to fetch largest transactions', undefined, err as Error));

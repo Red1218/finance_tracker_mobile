@@ -1,0 +1,13 @@
+export enum SyncStatus {
+  PENDING = 'PENDING',
+  IN_PROGRESS = 'IN_PROGRESS',
+  SYNCED = 'SYNCED',
+  FAILED = 'FAILED',
+  CONFLICT = 'CONFLICT',
+}
+
+export enum SyncConflictStrategy {
+  SERVER_WINS = 'SERVER_WINS',
+  CLIENT_WINS = 'CLIENT_WINS',
+  LAST_WRITE_WINS = 'LAST_WRITE_WINS',
+}

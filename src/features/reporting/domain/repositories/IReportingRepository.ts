@@ -10,30 +10,35 @@ export interface IReportingRepository {
   getDashboardSummary(
     period: ReportingPeriod,
     startDate?: Date,
-    endDate?: Date
+    endDate?: Date,
+    categoryId?: string | null
   ): Promise<RepositoryResult<DashboardSummary, RepositoryError>>;
 
   getCategoryBreakdown(
     period: ReportingPeriod,
     startDate?: Date,
-    endDate?: Date
+    endDate?: Date,
+    categoryId?: string | null
   ): Promise<RepositoryResult<CategoryBreakdown[], RepositoryError>>;
 
   getMonthlyTrend(
     period: ReportingPeriod,
     startDate?: Date,
-    endDate?: Date
-  ): Promise<RepositoryResult<MonthlyTrendPoint[], RepositoryError>>;
+    endDate?: Date,
+    categoryId?: string | null
+  ): Promise<RepositoryResult<{ points: MonthlyTrendPoint[]; previousPeriodTotal?: number }, RepositoryError>>;
 
   getBudgetPerformance(
     period: ReportingPeriod,
     startDate?: Date,
-    endDate?: Date
+    endDate?: Date,
+    categoryId?: string | null
   ): Promise<RepositoryResult<BudgetPerformance[], RepositoryError>>;
 
   getLargestTransactions(
     period: ReportingPeriod,
     startDate?: Date,
-    endDate?: Date
+    endDate?: Date,
+    categoryId?: string | null
   ): Promise<RepositoryResult<LargestTransaction[], RepositoryError>>;
 }

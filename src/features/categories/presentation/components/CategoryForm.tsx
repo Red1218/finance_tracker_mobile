@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { View, TextInput, Text, StyleSheet } from 'react-native';
+import { View, TextInput, Text, StyleSheet, Pressable } from 'react-native';
 import { Button } from '../../../../shared/components';
 import { useTheme } from '../../../../shared/theme';
-import { CategoryType } from '../../domain';
+import { CategoryKind } from '../../domain';
 
 interface CategoryFormProps {
   initialName?: string;
-  initialType?: CategoryType;
-  onSubmit: (data: { name: string; type: CategoryType }) => void;
+  initialKind?: CategoryKind;
+  onSubmit: (data: { name: string; kind: CategoryKind }) => void;
   onCancel: () => void;
   isLoading?: boolean;
   disabled?: boolean;
@@ -16,7 +16,7 @@ interface CategoryFormProps {
 
 export function CategoryForm({
   initialName = '',
-  initialType = CategoryType.Custom,
+  initialKind = CategoryKind.Expense,
   onSubmit,
   onCancel,
   isLoading,
@@ -25,10 +25,11 @@ export function CategoryForm({
 }: CategoryFormProps) {
   const { colors, spacing, typography, radius } = useTheme();
   const [name, setName] = useState(initialName);
+  const [kind, setKind] = useState<CategoryKind>(initialKind);
 
   const handleSubmit = () => {
     if (!name.trim()) return;
-    onSubmit({ name: name.trim(), type: initialType });
+    onSubmit({ name: name.trim(), kind });
   };
 
   const isValid = name.trim().length > 0;
@@ -59,6 +60,48 @@ export function CategoryForm({
         editable={!isLoading && !disabled}
         autoFocus
       />
+
+      <Text style={[styles.label, { ...typography.label, color: colors.textSecondary, marginBottom: spacing.space8 }]}>
+        Category Kind
+      </Text>
+
+      <View style={[styles.segmentedContainer, { backgroundColor: colors.backgroundPrimary, borderRadius: radius.small, marginBottom: spacing.space16 }]}>
+        <Pressable
+          style={[
+            styles.segmentButton,
+            kind === CategoryKind.Expense && { backgroundColor: colors.surfacePrimary, borderRadius: radius.small },
+          ]}
+          onPress={() => setKind(CategoryKind.Expense)}
+          disabled={isLoading || disabled}
+        >
+          <Text
+            style={[
+              typography.label,
+              { color: kind === CategoryKind.Expense ? colors.textPrimary : colors.textSecondary },
+            ]}
+          >
+            Expense
+          </Text>
+        </Pressable>
+
+        <Pressable
+          style={[
+            styles.segmentButton,
+            kind === CategoryKind.Income && { backgroundColor: colors.surfacePrimary, borderRadius: radius.small },
+          ]}
+          onPress={() => setKind(CategoryKind.Income)}
+          disabled={isLoading || disabled}
+        >
+          <Text
+            style={[
+              typography.label,
+              { color: kind === CategoryKind.Income ? colors.textPrimary : colors.textSecondary },
+            ]}
+          >
+            Income
+          </Text>
+        </Pressable>
+      </View>
       
       {error && (
         <Text style={[styles.error, { ...typography.caption, color: colors.error, marginBottom: spacing.space16 }]}>
@@ -93,6 +136,16 @@ const styles = StyleSheet.create({
   label: {},
   input: {
     borderWidth: 1,
+  },
+  segmentedContainer: {
+    flexDirection: 'row',
+    padding: 4,
+  },
+  segmentButton: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   error: {},
   actions: {

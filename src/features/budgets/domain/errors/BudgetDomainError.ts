@@ -8,9 +8,13 @@ export type BudgetErrorCode =
   | 'INVALID_PERIOD_FORMAT'
   | 'INVALID_DATE_RANGE'
   | 'DUPLICATE_BUDGET'
+  | 'OVERLAPPING_BUDGET'
   | 'CATEGORY_INACTIVE'
   | 'CATEGORY_MISMATCH'
-  | 'HISTORICAL_BUDGET_IMMUTABLE';
+  | 'HISTORICAL_BUDGET_IMMUTABLE'
+  | 'BUDGET_ALREADY_ARCHIVED'
+  | 'BUDGET_NOT_ARCHIVED'
+  | 'BUDGET_NOT_FOUND';
 
 const BUDGET_ERROR_MAP: Record<BudgetErrorCode, ErrorCategory> = {
   INVALID_IDENTIFIER: ErrorCategory.Validation,
@@ -18,10 +22,14 @@ const BUDGET_ERROR_MAP: Record<BudgetErrorCode, ErrorCategory> = {
   INVALID_CURRENCY: ErrorCategory.Validation,
   INVALID_PERIOD_FORMAT: ErrorCategory.Validation,
   INVALID_DATE_RANGE: ErrorCategory.Validation,
-  DUPLICATE_BUDGET: ErrorCategory.Conflict,
-  CATEGORY_INACTIVE: ErrorCategory.Validation,
-  CATEGORY_MISMATCH: ErrorCategory.Validation,
-  HISTORICAL_BUDGET_IMMUTABLE: ErrorCategory.Validation,
+  DUPLICATE_BUDGET: ErrorCategory.BusinessRule,
+  OVERLAPPING_BUDGET: ErrorCategory.BusinessRule,
+  CATEGORY_INACTIVE: ErrorCategory.BusinessRule,
+  CATEGORY_MISMATCH: ErrorCategory.BusinessRule,
+  HISTORICAL_BUDGET_IMMUTABLE: ErrorCategory.BusinessRule,
+  BUDGET_ALREADY_ARCHIVED: ErrorCategory.BusinessRule,
+  BUDGET_NOT_ARCHIVED: ErrorCategory.BusinessRule,
+  BUDGET_NOT_FOUND: ErrorCategory.BusinessRule,
 };
 
 export class BudgetDomainError extends AppError {

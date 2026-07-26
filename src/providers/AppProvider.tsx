@@ -1,6 +1,7 @@
 import type { ComponentType, ReactNode } from 'react';
 import { ReactQueryProvider } from './ReactQueryProvider';
 import { AuthProvider } from '../platform/authentication';
+import { ThemeProvider } from '../shared/theme';
 
 /**
  * Ordered list of providers wrapping the application.
@@ -8,6 +9,7 @@ import { AuthProvider } from '../platform/authentication';
  * This makes it easy to insert new providers (e.g., ThemeProvider, AuthProvider) without refactoring.
  */
 const providers: readonly ComponentType<{ children: ReactNode }>[] = Object.freeze([
+  ThemeProvider,
   ReactQueryProvider,
   AuthProvider,
 ]);

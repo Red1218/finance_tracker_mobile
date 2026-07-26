@@ -1,40 +1,52 @@
 import { ICategoryRepository } from '../repositories/ICategoryRepository';
-import { Category, CategoryId, CategoryName, CategoryDomainError } from '../../domain';
+import { Category, CategoryId, CategoryName, CategoryKind, CategoryDomainError } from '../../domain';
 import { Result } from '../../../../platform/persistence';
 import { generateUUID } from '../../../../core/utils/uuid';
-import { CreateCategoryRequest } from './CreateCategoryRequest';
-import { UseCaseResult } from './UseCaseTypes';
-import { executeUseCase } from './UseCaseHelpers';
+
+export interface CreateCategoryCommand {
+  id?: string;
+  name: string;
+  kind: CategoryKind;
+  colorHex?: string | null;
+  iconName?: string | null;
+}
 
 export class CreateCategoryUseCase {
   constructor(private readonly categoryRepository: ICategoryRepository) {
     Object.freeze(this);
   }
 
-  public async execute(request: CreateCategoryRequest): Promise<UseCaseResult> {
-    return executeUseCase(async () => {
-      const categoryId = new CategoryId(generateUUID());
-      const categoryName = new CategoryName(request.name);
+  public async execute(command: CreateCategoryCommand): Promise<Category> {
+    const categoryId = new CategoryId(command.id ?? generateUUID());
+    const categoryName = new CategoryName(command.name);
 
-      const existsResult = await this.categoryRepository.existsByName(categoryName);
-      if (!existsResult.success) {
-        return existsResult;
-      }
+    const existsResult = await this.categoryRepository.existsByNameAndKind(categoryName.value, command.kind);
+    if (!existsResult.success) {
+      throw existsResult.error;
+    }
 
-      if (existsResult.data) {
-        return Result.failure(
-          new CategoryDomainError('INVALID_NAME', 'Category name already exists.')
-        );
-      }
+    if (existsResult.data) {
+      throw new CategoryDomainError(
+        'DUPLICATE_CATEGORY_NAME',
+        `A category named "${command.name}" already exists for ${command.kind}.`
+      );
+    }
 
-      const category = new Category({
-        id: categoryId,
-        name: categoryName,
-        type: request.type,
-        isArchived: false,
-      });
-
-      return await this.categoryRepository.create(category);
+    const category = new Category({
+      id: categoryId,
+      name: categoryName,
+      kind: command.kind,
+      isSystem: false,
+      archivedAt: null,
+      colorHex: command.colorHex,
+      iconName: command.iconName,
     });
+
+    const saveResult = await this.categoryRepository.save(category);
+    if (!saveResult.success) {
+      throw saveResult.error;
+    }
+
+    return category;
   }
 }

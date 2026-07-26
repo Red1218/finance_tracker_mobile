@@ -1,23 +1,29 @@
 import { ExpenseDomainError } from '../errors/ExpenseDomainError';
 
-export type SupportedCurrency = 'INR';
+export type SupportedCurrency = string;
 
 export class CurrencyCode {
-  public readonly value: SupportedCurrency;
-  
-  private static readonly SUPPORTED_CURRENCIES = new Set<string>(['INR']);
+  private static readonly ISO_4217_REGEX = /^[A-Z]{3}$/;
+  public readonly value: string;
 
-  constructor(value: string = 'INR') {
-    const code = value.trim().toUpperCase();
-
-    if (!CurrencyCode.SUPPORTED_CURRENCIES.has(code)) {
+  constructor(code: string = 'INR') {
+    if (!code || typeof code !== 'string') {
       throw new ExpenseDomainError(
         'INVALID_CURRENCY',
-        `Currency code '${code}' is not supported. Supported currencies: ${Array.from(CurrencyCode.SUPPORTED_CURRENCIES).join(', ')}.`
+        'Currency code is required.'
       );
     }
 
-    this.value = code as SupportedCurrency;
+    const formatted = code.trim().toUpperCase();
+
+    if (!CurrencyCode.ISO_4217_REGEX.test(formatted)) {
+      throw new ExpenseDomainError(
+        'INVALID_CURRENCY',
+        `Invalid ISO-4217 currency code: "${code}". Must be 3 uppercase letters (e.g. INR, USD, EUR).`
+      );
+    }
+
+    this.value = formatted;
     Object.freeze(this);
   }
 
@@ -25,3 +31,4 @@ export class CurrencyCode {
     return this.value === other.value;
   }
 }
+

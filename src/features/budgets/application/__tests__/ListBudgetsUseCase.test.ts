@@ -1,45 +1,48 @@
-import { describe, it, expect, vi, beforeEach, Mocked } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { ListBudgetsUseCase } from '../use-cases/ListBudgetsUseCase';
-import { IBudgetRepository } from '../repositories/IBudgetRepository';
-import { Result } from '../../../../platform/persistence';
-import { Budget, BudgetId, BudgetAmount, BudgetPeriod } from '../../domain';
+import { InMemoryBudgetRepository } from './InMemoryBudgetRepository';
+import { Budget, BudgetId, BudgetAmount, BudgetPeriod, BudgetPeriodType } from '../../domain';
 import { CurrencyCode } from '../../../expenses/domain/value-objects/CurrencyCode';
 
 describe('ListBudgetsUseCase', () => {
-  let budgetRepository: Mocked<IBudgetRepository>;
+  let repository: InMemoryBudgetRepository;
   let useCase: ListBudgetsUseCase;
 
-  const mockBudget = Budget.restore({
-    id: new BudgetId('123e4567-e89b-12d3-a456-426614174000'),
-    categoryId: null,
-    amount: new BudgetAmount(5000),
-    currency: new CurrencyCode('INR'),
-    period: BudgetPeriod.Monthly,
-    startDate: new Date('2026-06-01T00:00:00Z'), endDate: new Date('2026-06-30T23:59:59Z'),
-  });
+  const id1 = '123e4567-e89b-12d3-a456-426614174001';
+  const id2 = '123e4567-e89b-12d3-a456-426614174002';
 
   beforeEach(() => {
-    budgetRepository = {
-      create: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-      findById: vi.fn(),
-      list: vi.fn(),
-      findOverlappingBudget: vi.fn(),
-      getBudgetSummary: vi.fn(),
-    };
-    useCase = new ListBudgetsUseCase(budgetRepository);
+    repository = new InMemoryBudgetRepository();
+    useCase = new ListBudgetsUseCase(repository);
+
+    const b1 = Budget.create({
+      id: new BudgetId(id1),
+      categoryId: null,
+      amount: new BudgetAmount(10000),
+      currency: new CurrencyCode('INR'),
+      period: new BudgetPeriod(BudgetPeriodType.Monthly, new Date('2026-06-01'), new Date('2026-06-30')),
+    });
+
+    const b2 = Budget.create({
+      id: new BudgetId(id2),
+      categoryId: null,
+      amount: new BudgetAmount(20000),
+      currency: new CurrencyCode('INR'),
+      period: new BudgetPeriod(BudgetPeriodType.Monthly, new Date('2026-07-01'), new Date('2026-07-31')),
+    });
+
+    repository.seed(b1);
+    repository.seed(b2.archive());
   });
 
-  it('✓ list budgets', async () => {
-    budgetRepository.list.mockResolvedValue(Result.success([mockBudget]));
+  it('lists active budgets by default', async () => {
+    const list = await useCase.execute();
+    expect(list).toHaveLength(1);
+    expect(list[0].id.value).toBe(id1);
+  });
 
-    const result = await useCase.execute({});
-
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.data.length).toBe(1);
-      expect(result.data[0]).toBe(mockBudget);
-    }
+  it('includes archived budgets when includeArchived = true', async () => {
+    const list = await useCase.execute({ includeArchived: true });
+    expect(list).toHaveLength(2);
   });
 });

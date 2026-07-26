@@ -4,11 +4,12 @@ import {
   RawDashboardSummary,
   RawCategoryBreakdown,
   RawMonthlyTrendPoint,
+  RawMonthlyTrendResult,
   RawBudgetPerformance,
   RawLargestTransaction,
 } from './ReportingDataSource';
 import { ReportingPeriod } from '../../domain';
-import { resolveDateRange } from '../utils/dateRangeUtils';
+import { resolveDateRange, resolvePreviousDateRange, resolveAggregationGranularity } from '../utils/dateRangeUtils';
 
 const EXPENSES_TABLE = 'expenses';
 const BUDGETS_TABLE = 'budgets';
@@ -20,15 +21,22 @@ export class SupabaseReportingDataSource implements ReportingDataSource {
   public async fetchDashboardSummary(
     period: ReportingPeriod,
     startDate?: Date,
-    endDate?: Date
+    endDate?: Date,
+    categoryId?: string | null
   ): Promise<RawDashboardSummary> {
     const { start, end } = resolveDateRange(period, startDate, endDate);
 
-    const { data, error } = await this.supabase
+    let query = this.supabase
       .from(EXPENSES_TABLE)
       .select('amount, type')
       .gte('date', start.toISOString())
       .lte('date', end.toISOString());
+
+    if (categoryId) {
+      query = query.eq('category_id', categoryId);
+    }
+
+    const { data, error } = await query;
 
     if (error) throw new Error(`fetchDashboardSummary failed: ${error.message}`);
 
@@ -54,16 +62,23 @@ export class SupabaseReportingDataSource implements ReportingDataSource {
   public async fetchCategoryBreakdown(
     period: ReportingPeriod,
     startDate?: Date,
-    endDate?: Date
+    endDate?: Date,
+    categoryId?: string | null
   ): Promise<RawCategoryBreakdown[]> {
     const { start, end } = resolveDateRange(period, startDate, endDate);
 
-    const { data, error } = await this.supabase
+    let query = this.supabase
       .from(EXPENSES_TABLE)
       .select(`amount, category_id, ${CATEGORIES_TABLE}(name)`)
       .gte('date', start.toISOString())
       .lte('date', end.toISOString())
       .eq('type', 'expense');
+
+    if (categoryId) {
+      query = query.eq('category_id', categoryId);
+    }
+
+    const { data, error } = await query;
 
     if (error) throw new Error(`fetchCategoryBreakdown failed: ${error.message}`);
 
@@ -86,9 +101,6 @@ export class SupabaseReportingDataSource implements ReportingDataSource {
       category_name: v.name,
       total_amount: v.total,
       transaction_count: v.count,
-      // percentage computed by infra mapper, not here — mapper receives grandTotal separately
-      // We attach it via a convention: store grandTotal in a side-channel field.
-      // Infrastructure mapper will divide to produce percentage.
       _grand_total: grandTotal,
     } as RawCategoryBreakdown & { _grand_total: number }));
   }
@@ -96,63 +108,103 @@ export class SupabaseReportingDataSource implements ReportingDataSource {
   public async fetchMonthlyTrend(
     period: ReportingPeriod,
     startDate?: Date,
-    endDate?: Date
-  ): Promise<RawMonthlyTrendPoint[]> {
+    endDate?: Date,
+    categoryId?: string | null
+  ): Promise<RawMonthlyTrendResult> {
     const { start, end } = resolveDateRange(period, startDate, endDate);
+    const granularity = resolveAggregationGranularity(period, startDate, endDate);
 
-    const { data, error } = await this.supabase
+    let query = this.supabase
       .from(EXPENSES_TABLE)
       .select('amount, type, date')
       .gte('date', start.toISOString())
       .lte('date', end.toISOString());
 
+    if (categoryId) {
+      query = query.eq('category_id', categoryId);
+    }
+
+    const { data, error } = await query;
+
     if (error) throw new Error(`fetchMonthlyTrend failed: ${error.message}`);
 
     const rows = data ?? [];
     const map = new Map<string, { income: number; expenses: number }>();
+    const sliceLen = granularity === 'DAILY' ? 10 : 7;
 
     for (const row of rows) {
-      const period = row.date.slice(0, 7); // 'YYYY-MM'
-      const entry = map.get(period) ?? { income: 0, expenses: 0 };
+      const periodKey = row.date.slice(0, sliceLen);
+      const entry = map.get(periodKey) ?? { income: 0, expenses: 0 };
       if (row.type === 'income') {
         entry.income += Number(row.amount);
       } else {
         entry.expenses += Number(row.amount);
       }
-      map.set(period, entry);
+      map.set(periodKey, entry);
     }
 
-    return [...map.entries()]
+    const items = [...map.entries()]
       .sort(([a], [b]) => a.localeCompare(b))
-      .map(([period, v]) => ({
-        period,
+      .map(([periodKey, v]) => ({
+        period: periodKey,
         total_income: v.income,
         total_expenses: v.expenses,
       }));
+
+    // Fetch previous period total
+    const prevRange = resolvePreviousDateRange(period, startDate, endDate);
+    let prevQuery = this.supabase
+      .from(EXPENSES_TABLE)
+      .select('amount')
+      .gte('date', prevRange.start.toISOString())
+      .lte('date', prevRange.end.toISOString())
+      .eq('type', 'expense');
+
+    if (categoryId) {
+      prevQuery = prevQuery.eq('category_id', categoryId);
+    }
+
+    const { data: prevData } = await prevQuery;
+    const previousPeriodTotal = (prevData ?? []).reduce((sum, r) => sum + Number(r.amount), 0);
+
+    return { items, previousPeriodTotal };
   }
 
   public async fetchBudgetPerformance(
     period: ReportingPeriod,
     startDate?: Date,
-    endDate?: Date
+    endDate?: Date,
+    categoryId?: string | null
   ): Promise<RawBudgetPerformance[]> {
     const { start, end } = resolveDateRange(period, startDate, endDate);
 
-    const { data: budgets, error: budgetError } = await this.supabase
+    let budgetQuery = this.supabase
       .from(BUDGETS_TABLE)
       .select(`id, category_id, amount, ${CATEGORIES_TABLE}(name)`)
       .gte('start_date', start.toISOString())
       .lte('end_date', end.toISOString());
 
+    if (categoryId) {
+      budgetQuery = budgetQuery.eq('category_id', categoryId);
+    }
+
+    const { data: budgets, error: budgetError } = await budgetQuery;
+
     if (budgetError) throw new Error(`fetchBudgetPerformance (budgets) failed: ${budgetError.message}`);
     if (!budgets || budgets.length === 0) return [];
 
-    const { data: expenses, error: expenseError } = await this.supabase
+    let expenseQuery = this.supabase
       .from(EXPENSES_TABLE)
       .select('amount, category_id')
       .gte('date', start.toISOString())
       .lte('date', end.toISOString())
       .eq('type', 'expense');
+
+    if (categoryId) {
+      expenseQuery = expenseQuery.eq('category_id', categoryId);
+    }
+
+    const { data: expenses, error: expenseError } = await expenseQuery;
 
     if (expenseError) throw new Error(`fetchBudgetPerformance (expenses) failed: ${expenseError.message}`);
 
@@ -174,18 +226,25 @@ export class SupabaseReportingDataSource implements ReportingDataSource {
   public async fetchLargestTransactions(
     period: ReportingPeriod,
     startDate?: Date,
-    endDate?: Date
+    endDate?: Date,
+    categoryId?: string | null
   ): Promise<RawLargestTransaction[]> {
     const { start, end } = resolveDateRange(period, startDate, endDate);
 
-    const { data, error } = await this.supabase
+    let query = this.supabase
       .from(EXPENSES_TABLE)
       .select(`id, merchant, amount, date, ${CATEGORIES_TABLE}(name)`)
       .gte('date', start.toISOString())
       .lte('date', end.toISOString())
-      .eq('type', 'expense')
-      .order('amount', { ascending: false })
-      .limit(10);
+      .eq('type', 'expense');
+
+    if (categoryId) {
+      query = query.eq('category_id', categoryId);
+    }
+
+    query = query.order('amount', { ascending: false }).limit(10);
+
+    const { data, error } = await query;
 
     if (error) throw new Error(`fetchLargestTransactions failed: ${error.message}`);
 

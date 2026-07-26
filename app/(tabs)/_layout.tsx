@@ -1,6 +1,6 @@
 import { useAuth } from '@/src/platform/authentication';
 import { Redirect, Tabs } from 'expo-router';
-import { Home, Receipt, Tags, Wallet, Target } from 'lucide-react-native';
+import { Home, Receipt, Tags, Wallet, Target, Landmark, Settings as SettingsIcon } from 'lucide-react-native';
 import { usePaymentListener } from '@/hooks/usePaymentListener';
 
 export default function TabLayout() {
@@ -59,6 +59,20 @@ export default function TabLayout() {
         options={{
           title: 'Budgets',
           tabBarIcon: ({ color }) => <Target size={24} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="accounts"
+        options={{
+          title: 'Accounts',
+          tabBarIcon: ({ color }) => <Landmark size={24} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Settings',
+          tabBarIcon: ({ color }) => <SettingsIcon size={24} color={color} />,
         }}
       />
     </Tabs>

@@ -7,12 +7,11 @@ import { CurrencyCode } from '../../../expenses/domain/value-objects/CurrencyCod
 
 export interface BudgetProps {
   id: BudgetId;
-  categoryId: CategoryId | null; // null means overall budget
+  categoryId: CategoryId | null; // null represents Overall Budget
   amount: BudgetAmount;
   currency: CurrencyCode;
   period: BudgetPeriod;
-  startDate: Date;
-  endDate: Date;
+  archivedAt?: Date | null;
 }
 
 export class Budget {
@@ -21,36 +20,36 @@ export class Budget {
   public readonly amount: BudgetAmount;
   public readonly currency: CurrencyCode;
   public readonly period: BudgetPeriod;
-  public readonly startDate: Date;
-  public readonly endDate: Date;
+  public readonly archivedAt: Date | null;
 
-  private constructor(props: BudgetProps) {
-    this.validate(props);
-
+  constructor(props: BudgetProps) {
     this.id = props.id;
     this.categoryId = props.categoryId;
     this.amount = props.amount;
     this.currency = props.currency;
     this.period = props.period;
-    this.startDate = props.startDate;
-    this.endDate = props.endDate;
+    this.archivedAt = props.archivedAt ?? null;
 
     Object.freeze(this);
   }
 
-  private validate(props: BudgetProps): void {
-    if (props.startDate >= props.endDate) {
-      throw new BudgetDomainError(
-        'INVALID_DATE_RANGE', 
-        'Budget start date must be before end date.'
-      );
-    }
+  public get isArchived(): boolean {
+    return this.archivedAt !== null;
   }
 
-  public static create(
-    props: BudgetProps, 
-    categoryIsActive: boolean = true
-  ): Budget {
+  public get isOverall(): boolean {
+    return this.categoryId === null;
+  }
+
+  public get startDate(): Date {
+    return this.period.startDate;
+  }
+
+  public get endDate(): Date {
+    return this.period.endDate;
+  }
+
+  public static create(props: BudgetProps, categoryIsActive: boolean = true): Budget {
     if (props.categoryId && !categoryIsActive) {
       throw new BudgetDomainError(
         'CATEGORY_INACTIVE',
@@ -61,14 +60,17 @@ export class Budget {
     return new Budget(props);
   }
 
-  public static restore(props: BudgetProps): Budget {
-    return new Budget(props);
-  }
-
   public updateAmount(newAmount: BudgetAmount, currentDate: Date = new Date()): Budget {
+    if (this.isArchived) {
+      throw new BudgetDomainError(
+        'BUDGET_ALREADY_ARCHIVED',
+        'Archived budgets cannot be updated.'
+      );
+    }
+
     if (this.isHistorical(currentDate)) {
       throw new BudgetDomainError(
-        'HISTORICAL_BUDGET_IMMUTABLE', 
+        'HISTORICAL_BUDGET_IMMUTABLE',
         'Historical budgets remain immutable.',
         { budgetId: this.id.value, currentDate: currentDate.toISOString(), endDate: this.endDate.toISOString() }
       );
@@ -80,13 +82,48 @@ export class Budget {
       amount: newAmount,
       currency: this.currency,
       period: this.period,
-      startDate: this.startDate,
-      endDate: this.endDate,
+      archivedAt: this.archivedAt,
+    });
+  }
+
+  public archive(archivedAt: Date = new Date()): Budget {
+    if (this.isArchived) {
+      throw new BudgetDomainError(
+        'BUDGET_ALREADY_ARCHIVED',
+        'Budget is already archived.'
+      );
+    }
+
+    return new Budget({
+      id: this.id,
+      categoryId: this.categoryId,
+      amount: this.amount,
+      currency: this.currency,
+      period: this.period,
+      archivedAt,
+    });
+  }
+
+  public restore(): Budget {
+    if (!this.isArchived) {
+      throw new BudgetDomainError(
+        'BUDGET_NOT_ARCHIVED',
+        'Budget is not archived.'
+      );
+    }
+
+    return new Budget({
+      id: this.id,
+      categoryId: this.categoryId,
+      amount: this.amount,
+      currency: this.currency,
+      period: this.period,
+      archivedAt: null,
     });
   }
 
   public isHistorical(currentDate: Date = new Date()): boolean {
-    return this.endDate < currentDate;
+    return this.period.endDate < currentDate;
   }
 
   public equals(other: Budget): boolean {

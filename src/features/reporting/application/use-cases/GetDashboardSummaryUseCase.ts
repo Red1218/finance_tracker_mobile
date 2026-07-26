@@ -18,7 +18,8 @@ export class GetDashboardSummaryUseCase {
       const result = await this.reportingRepository.getDashboardSummary(
         request.reportingPeriod,
         validation.data.startDate,
-        validation.data.endDate
+        validation.data.endDate,
+        request.categoryId
       );
       if (!result.success) return result;
 

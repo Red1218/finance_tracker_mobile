@@ -18,7 +18,8 @@ export class GetLargestTransactionsUseCase {
       const result = await this.reportingRepository.getLargestTransactions(
         request.reportingPeriod,
         validation.data.startDate,
-        validation.data.endDate
+        validation.data.endDate,
+        request.categoryId
       );
       if (!result.success) return result;
 

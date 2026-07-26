@@ -1,14 +1,19 @@
 import { IBudgetRepository } from '../repositories/IBudgetRepository';
 import { ICategoryRepository } from '../../../categories/application/repositories/ICategoryRepository';
-import { CreateBudgetRequest } from '../requests/CreateBudgetRequest';
-import { UseCaseResult } from './UseCaseTypes';
-import { executeUseCase } from './UseCaseHelpers';
-import { Budget, BudgetId, BudgetAmount, BudgetPeriod, BudgetDomainError } from '../../domain';
-
+import { Budget, BudgetId, BudgetAmount, BudgetPeriod, BudgetPeriodType, BudgetDomainError } from '../../domain';
 import { generateUUID } from '../../../../core/utils/uuid';
 import { CategoryId } from '../../../categories/domain';
 import { CurrencyCode } from '../../../expenses/domain/value-objects/CurrencyCode';
-import { Result } from '../../../../platform/persistence';
+
+export interface CreateBudgetCommand {
+  id?: string;
+  categoryId?: string | null; // null = Overall Budget
+  amount: number;
+  currencyCode: string;
+  periodKind: BudgetPeriodType;
+  startDate: Date;
+  endDate: Date;
+}
 
 export class CreateBudgetUseCase {
   constructor(
@@ -18,63 +23,53 @@ export class CreateBudgetUseCase {
     Object.freeze(this);
   }
 
-  public async execute(request: CreateBudgetRequest): Promise<UseCaseResult<Budget>> {
-    return executeUseCase(async () => {
-      let categoryIsActive = true;
-      let categoryIdObj: CategoryId | null = null;
+  public async execute(command: CreateBudgetCommand): Promise<Budget> {
+    let categoryIsActive = true;
+    let categoryIdObj: CategoryId | null = null;
 
-      if (request.categoryId) {
-        categoryIdObj = new CategoryId(request.categoryId);
-        
-        const catResult = await this.categoryRepository.getById(categoryIdObj);
-        if (!catResult.success) {
-          return catResult;
-        }
-        
-        if (!catResult.data) {
-          return Result.failure(
-            new BudgetDomainError('CATEGORY_MISMATCH', 'The specified category does not exist.')
-          );
-        }
-        
-        categoryIsActive = !catResult.data.isArchived;
+    if (command.categoryId) {
+      categoryIdObj = new CategoryId(command.categoryId);
+      const catResult = await this.categoryRepository.getById(categoryIdObj);
+      if (!catResult.success) {
+        throw catResult.error;
       }
+      if (!catResult.data) {
+        throw new BudgetDomainError('CATEGORY_MISMATCH', `Category "${command.categoryId}" not found.`);
+      }
+      categoryIsActive = !catResult.data.isArchived;
+    }
 
-      const period = request.period as BudgetPeriod;
+    const period = new BudgetPeriod(command.periodKind, command.startDate, command.endDate);
 
-      const overlapResult = await this.budgetRepository.findOverlappingBudget(
-        categoryIdObj,
-        period,
-        request.startDate,
-        request.endDate
+    const overlapResult = await this.budgetRepository.findOverlappingBudget(categoryIdObj, period);
+    if (!overlapResult.success) {
+      throw overlapResult.error;
+    }
+
+    if (overlapResult.data) {
+      throw new BudgetDomainError(
+        'OVERLAPPING_BUDGET',
+        'An active budget of the same scope already intersects with this date range.'
       );
+    }
 
-      if (!overlapResult.success) {
-        return overlapResult;
-      }
-
-      if (overlapResult.data) {
-        return Result.failure(
-          new BudgetDomainError('DUPLICATE_BUDGET', 'A budget for this category and period already exists.')
-        );
-      }
-
-      const budget = Budget.create({
-        id: new BudgetId(generateUUID()),
+    const budget = Budget.create(
+      {
+        id: new BudgetId(command.id ?? generateUUID()),
         categoryId: categoryIdObj,
-        amount: new BudgetAmount(request.amount),
-        currency: new CurrencyCode(request.currencyCode),
+        amount: new BudgetAmount(command.amount),
+        currency: new CurrencyCode(command.currencyCode),
         period,
-        startDate: request.startDate,
-        endDate: request.endDate
-      }, categoryIsActive);
+        archivedAt: null,
+      },
+      categoryIsActive
+    );
 
-      const createResult = await this.budgetRepository.create(budget);
-      if (!createResult.success) {
-        return createResult;
-      }
+    const saveResult = await this.budgetRepository.save(budget);
+    if (!saveResult.success) {
+      throw saveResult.error;
+    }
 
-      return Result.success(budget);
-    });
+    return budget;
   }
 }

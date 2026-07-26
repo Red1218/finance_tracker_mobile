@@ -11,3 +11,7 @@ export { useCategoryBreakdown } from './hooks/useCategoryBreakdown';
 export { useMonthlyTrend } from './hooks/useMonthlyTrend';
 export { useBudgetPerformance } from './hooks/useBudgetPerformance';
 export { useLargestTransactions } from './hooks/useLargestTransactions';
+export { CategoryFilterSelector } from './components/CategoryFilterSelector';
+export { useReportingFilters } from './hooks/useReportingFilters';
+export { useCategoryOptions } from './hooks/useCategoryOptions';
+export * from './types/types';

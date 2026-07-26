@@ -1,3 +1,5 @@
+import { TrendComparison } from '../../domain';
+
 export interface MonthlyTrendPointItem {
   readonly period: string;
   readonly income: number;
@@ -7,4 +9,5 @@ export interface MonthlyTrendPointItem {
 
 export interface MonthlyTrendResponse {
   readonly items: readonly MonthlyTrendPointItem[];
+  readonly comparison?: TrendComparison;
 }

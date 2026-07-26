@@ -1,98 +1,133 @@
 import { describe, it, expect } from 'vitest';
 import { CategoryMapper } from '../CategoryMapper';
-import { Category, CategoryId, CategoryName, CategoryType } from '../../../../features/categories/domain';
-import { CategoryRow } from '../../../../features/categories/contracts';
+import { Category, CategoryId, CategoryName, CategoryKind } from '../../../../features/categories/domain';
+import { CategoryRow } from '../../../../features/categories/contracts/CategoryRow';
 
 describe('CategoryMapper', () => {
-  it('should map from Row to Entity correctly (active)', () => {
+  it('should map from Row (expense) to Domain entity correctly', () => {
     const row: CategoryRow = {
-      id: 'test-id-123',
+      id: 'cat-123',
       name: 'Groceries',
-      type: CategoryType.Custom,
-      is_archived: false,
+      type: 'expense',
+      is_system: false,
+      archived_at: null,
+      color_hex: '#EF4444',
+      icon_name: 'cart',
     };
 
     const entity = CategoryMapper.toDomain(row);
 
     expect(entity).toBeInstanceOf(Category);
-    expect(entity.id.value).toBe('test-id-123');
+    expect(entity.id.value).toBe('cat-123');
     expect(entity.name.value).toBe('Groceries');
-    expect(entity.type).toBe(CategoryType.Custom);
+    expect(entity.kind).toBe(CategoryKind.Expense);
+    expect(entity.isSystem).toBe(false);
     expect(entity.isArchived).toBe(false);
+    expect(entity.archivedAt).toBeNull();
+    expect(entity.colorHex).toBe('#EF4444');
+    expect(entity.iconName).toBe('cart');
   });
 
-  it('should map from Row to Entity correctly (archived)', () => {
+  it('should map from Row (income, system) to Domain entity correctly', () => {
     const row: CategoryRow = {
-      id: 'test-id-archived',
-      name: 'Old Transport',
-      type: CategoryType.Custom,
-      is_archived: true,
+      id: 'cat-456',
+      name: 'Salary',
+      type: 'income',
+      is_system: true,
+      archived_at: null,
     };
 
     const entity = CategoryMapper.toDomain(row);
 
-    expect(entity.isArchived).toBe(true);
+    expect(entity.kind).toBe(CategoryKind.Income);
+    expect(entity.isSystem).toBe(true);
+    expect(entity.isArchived).toBe(false);
   });
 
-  it('should map from Entity to Row correctly (active)', () => {
+  it('should map from Domain entity (expense) to Row correctly', () => {
     const entity = new Category({
-      id: new CategoryId('test-id-123'),
+      id: new CategoryId('cat-123'),
       name: new CategoryName('Groceries'),
-      type: CategoryType.Custom,
-      isArchived: false,
+      kind: CategoryKind.Expense,
+      isSystem: false,
+      archivedAt: null,
+      colorHex: '#EF4444',
+      iconName: 'cart',
     });
 
     const row = CategoryMapper.toPersistence(entity);
 
     expect(row).toEqual({
-      id: 'test-id-123',
+      id: 'cat-123',
       name: 'Groceries',
-      type: CategoryType.Custom,
-      is_archived: false,
+      type: 'expense',
+      is_system: false,
+      archived_at: null,
+      color_hex: '#EF4444',
+      icon_name: 'cart',
     });
   });
 
-  it('should map from Entity to Row correctly (archived)', () => {
+  it('should map from Domain entity (income, system, archived) to Row correctly', () => {
+    const freezeTime = new Date('2026-07-25T12:00:00.000Z');
     const entity = new Category({
-      id: new CategoryId('test-id-archived'),
-      name: new CategoryName('Old Transport'),
-      type: CategoryType.Custom,
-      isArchived: true,
+      id: new CategoryId('cat-system'),
+      name: new CategoryName('System Income'),
+      kind: CategoryKind.Income,
+      isSystem: true,
+      archivedAt: freezeTime,
     });
 
     const row = CategoryMapper.toPersistence(entity);
 
-    expect(row.is_archived).toBe(true);
+    expect(row).toEqual({
+      id: 'cat-system',
+      name: 'System Income',
+      type: 'income',
+      is_system: true,
+      archived_at: '2026-07-25T12:00:00.000Z',
+      color_hex: null,
+      icon_name: null,
+    });
   });
 
-  it('should map Protected categories correctly', () => {
-    const row: CategoryRow = {
-      id: 'test-id-protected',
-      name: 'Transfer',
-      type: CategoryType.Protected,
-      is_archived: false,
-    };
+  describe('Round-trip Symmetry', () => {
+    it('should maintain round-trip symmetry: Row -> Domain -> Row (Expense)', () => {
+      const originalRow: CategoryRow = {
+        id: 'cat-rt-1',
+        name: 'Dining Out',
+        type: 'expense',
+        is_system: false,
+        archived_at: null,
+        color_hex: null,
+        icon_name: null,
+      };
 
-    const entity = CategoryMapper.toDomain(row);
+      const entity = CategoryMapper.toDomain(originalRow);
+      const mappedRow = CategoryMapper.toPersistence(entity);
 
-    expect(entity.type).toBe(CategoryType.Protected);
-    expect(entity.isArchived).toBe(false);
-  });
-
-  it('should maintain symmetry (Entity → Row → Entity)', () => {
-    const originalEntity = new Category({
-      id: new CategoryId('symmetric-id'),
-      name: new CategoryName('Symmetric Name'),
-      type: CategoryType.Custom,
-      isArchived: false,
+      expect(mappedRow).toEqual(originalRow);
     });
 
-    const row = CategoryMapper.toPersistence(originalEntity);
-    const restoredEntity = CategoryMapper.toDomain(row);
+    it('should maintain round-trip symmetry: Domain -> Row -> Domain', () => {
+      const freezeTime = new Date('2026-07-25T10:00:00.000Z');
+      const originalEntity = new Category({
+        id: new CategoryId('cat-rt-3'),
+        name: new CategoryName('Investment Income'),
+        kind: CategoryKind.Income,
+        isSystem: false,
+        archivedAt: freezeTime,
+      });
 
-    expect(restoredEntity.id.value).toBe(originalEntity.id.value);
-    expect(restoredEntity.name.value).toBe(originalEntity.name.value);
-    expect(restoredEntity.type).toBe(originalEntity.type);
-    expect(restoredEntity.isArchived).toBe(originalEntity.isArchived);
+      const row = CategoryMapper.toPersistence(originalEntity);
+      const restoredEntity = CategoryMapper.toDomain(row);
+
+      expect(restoredEntity.id.value).toBe(originalEntity.id.value);
+      expect(restoredEntity.name.value).toBe(originalEntity.name.value);
+      expect(restoredEntity.kind).toBe(originalEntity.kind);
+      expect(restoredEntity.isSystem).toBe(originalEntity.isSystem);
+      expect(restoredEntity.isArchived).toBe(true);
+      expect(restoredEntity.archivedAt?.toISOString()).toBe(freezeTime.toISOString());
+    });
   });
 });

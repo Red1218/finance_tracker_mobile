@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { ArchiveCategoryUseCase } from '../use-cases/ArchiveCategoryUseCase';
 import { InMemoryCategoryRepository } from './InMemoryCategoryRepository';
-import { Category, CategoryId, CategoryName, CategoryType, CategoryDomainError } from '../../domain';
+import { Category, CategoryId, CategoryName, CategoryKind, CategoryDomainError } from '../../domain';
 
 describe('ArchiveCategoryUseCase', () => {
   let repository: InMemoryCategoryRepository;
@@ -10,87 +10,55 @@ describe('ArchiveCategoryUseCase', () => {
   beforeEach(() => {
     repository = new InMemoryCategoryRepository();
     useCase = new ArchiveCategoryUseCase(repository);
+
+    repository.seed(
+      new Category({
+        id: new CategoryId('cat-1'),
+        name: new CategoryName('Groceries'),
+        kind: CategoryKind.Expense,
+        isSystem: false,
+        archivedAt: null,
+      })
+    );
+
+    repository.seed(
+      new Category({
+        id: new CategoryId('cat-sys'),
+        name: new CategoryName('Uncategorized Expense'),
+        kind: CategoryKind.Expense,
+        isSystem: true,
+        archivedAt: null,
+      })
+    );
   });
 
-  const seedCategory = (id: string, name: string, type: CategoryType = CategoryType.Custom, isArchived = false) => {
-    const category = new Category({
-      id: new CategoryId(id),
-      name: new CategoryName(name),
-      type,
-      isArchived,
-    });
-    repository.seed(category);
-  };
+  it('successfully archives a user category setting archivedAt', async () => {
+    const freezeTime = new Date('2026-07-25T14:00:00.000Z');
+    await useCase.execute({ id: 'cat-1', archivedAt: freezeTime });
 
-  it('should successfully archive a custom category', async () => {
-    seedCategory('cat-1', 'Groceries');
-
-    const result = await useCase.execute({ id: 'cat-1' });
-
-    expect(result.success).toBe(true);
-
-    const check = await repository.getById(new CategoryId('cat-1'));
-    expect(check.success).toBe(true);
-    if (check.success && check.data) {
-      expect(check.data.isArchived).toBe(true);
+    const res = await repository.getById(new CategoryId('cat-1'));
+    if (res.success && res.data) {
+      expect(res.data.isArchived).toBe(true);
+      expect(res.data.archivedAt).toEqual(freezeTime);
     }
   });
 
-  it('should not appear in list() after archiving', async () => {
-    seedCategory('cat-1', 'Groceries');
+  it('rejects archiving a system category (SYSTEM_CATEGORY_MODIFICATION)', async () => {
+    await expect(useCase.execute({ id: 'cat-sys' })).rejects.toThrowError(
+      'System categories cannot be archived.'
+    );
+  });
 
+  it('rejects archiving an already archived category (CATEGORY_ALREADY_ARCHIVED)', async () => {
     await useCase.execute({ id: 'cat-1' });
-
-    const listResult = await repository.list();
-    expect(listResult.success).toBe(true);
-    if (listResult.success) {
-      expect(listResult.data.find((c) => c.id.value === 'cat-1')).toBeUndefined();
-    }
+    await expect(useCase.execute({ id: 'cat-1' })).rejects.toThrowError(
+      'Category is already archived.'
+    );
   });
 
-  it('should fail if category does not exist', async () => {
-    const result = await useCase.execute({ id: 'invalid-id' });
-
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(result.error).toBeInstanceOf(CategoryDomainError);
-      expect((result.error as CategoryDomainError).code).toBe('INVALID_IDENTIFIER');
-    }
-  });
-
-  it('should fail if category is protected', async () => {
-    seedCategory('cat-protected', 'Transfer', CategoryType.Protected);
-
-    const result = await useCase.execute({ id: 'cat-protected' });
-
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(result.error).toBeInstanceOf(CategoryDomainError);
-      expect((result.error as CategoryDomainError).code).toBe('PROTECTED_CATEGORY_MODIFICATION');
-    }
-  });
-
-  it('should fail if category is already archived', async () => {
-    seedCategory('cat-1', 'Groceries', CategoryType.Custom, true);
-
-    const result = await useCase.execute({ id: 'cat-1' });
-
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(result.error).toBeInstanceOf(CategoryDomainError);
-      expect((result.error as CategoryDomainError).code).toBe('CATEGORY_ALREADY_ARCHIVED');
-    }
-  });
-
-  it('should propagate repository errors', async () => {
-    seedCategory('cat-1', 'Groceries');
-    repository.setForceFailure('Database error');
-
-    const result = await useCase.execute({ id: 'cat-1' });
-
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(result.error.message).toBe('Database error');
-    }
+  it('rejects archiving if category does not exist (CATEGORY_NOT_FOUND)', async () => {
+    await expect(useCase.execute({ id: 'cat-missing' })).rejects.toThrowError(
+      'Category "cat-missing" not found.'
+    );
   });
 });

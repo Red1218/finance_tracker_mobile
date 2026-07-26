@@ -1,25 +1,18 @@
 import { useState } from 'react';
-import { budgetsModule } from './module';
-import { CloneBudgetPeriodRequest } from '../../application/use-cases';
+import { CloneBudgetPeriodUseCase, CloneBudgetPeriodCommand } from '../../application/use-cases/CloneBudgetPeriodUseCase';
 
-export function useCloneBudgetPeriod() {
+export function useCloneBudgetPeriod(cloneUseCase: CloneBudgetPeriodUseCase) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const cloneBudgetPeriod = async (request: CloneBudgetPeriodRequest): Promise<boolean> => {
+  const cloneBudgetPeriod = async (command: CloneBudgetPeriodCommand): Promise<boolean> => {
     setIsLoading(true);
     setError(null);
-    
     try {
-      const result = await budgetsModule.cloneBudgetPeriodUseCase.execute(request);
-      if (result.success) {
-        return true;
-      } else {
-        setError(result.error.message);
-        return false;
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to clone budget period');
+      await cloneUseCase.execute(command);
+      return true;
+    } catch (e: any) {
+      setError(e.message || 'Failed to clone budget period');
       return false;
     } finally {
       setIsLoading(false);

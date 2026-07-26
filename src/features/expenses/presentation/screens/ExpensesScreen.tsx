@@ -26,10 +26,10 @@ export function ExpensesScreen() {
   const fetchCategories = useCallback(async () => {
     setIsCategoriesLoading(true);
     try {
-      const result = await categoriesModule.listCategoriesUseCase.execute({ includeArchived: true });
-      if (result.success) {
-        setCategories(result.data);
-      }
+      const data = await categoriesModule.listCategoriesUseCase.execute({ includeArchived: true });
+      setCategories(data);
+    } catch {
+      // ignore
     } finally {
       setIsCategoriesLoading(false);
     }

@@ -1,39 +1,50 @@
 import { ICategoryRepository } from '../repositories/ICategoryRepository';
-import { CategoryId, CategoryName, CategoryDomainError } from '../../domain';
-import { Result } from '../../../../platform/persistence';
-import { RenameCategoryRequest } from './RenameCategoryRequest';
-import { UseCaseResult } from './UseCaseTypes';
-import { executeUseCase, fetchCategoryOrError } from './UseCaseHelpers';
+import { Category, CategoryId, CategoryName, CategoryDomainError } from '../../domain';
+
+export interface RenameCategoryCommand {
+  id: string;
+  newName: string;
+}
 
 export class RenameCategoryUseCase {
   constructor(private readonly categoryRepository: ICategoryRepository) {
     Object.freeze(this);
   }
 
-  public async execute(request: RenameCategoryRequest): Promise<UseCaseResult> {
-    return executeUseCase(async () => {
-      const categoryId = new CategoryId(request.id);
-      const newCategoryName = new CategoryName(request.newName);
+  public async execute(command: RenameCategoryCommand): Promise<Category> {
+    const categoryId = new CategoryId(command.id);
+    const newName = new CategoryName(command.newName);
 
-      const categoryResult = await fetchCategoryOrError(this.categoryRepository, categoryId);
-      if (!categoryResult.success) {
-        return categoryResult;
-      }
-      const category = categoryResult.data;
+    const getResult = await this.categoryRepository.getById(categoryId);
+    if (!getResult.success || !getResult.data) {
+      throw new CategoryDomainError('CATEGORY_NOT_FOUND', `Category "${command.id}" not found.`);
+    }
 
-      const existsResult = await this.categoryRepository.existsByName(newCategoryName);
-      if (!existsResult.success) {
-        return existsResult;
-      }
+    const category = getResult.data;
 
-      if (existsResult.data) {
-        return Result.failure(
-          new CategoryDomainError('INVALID_NAME', 'Category name already exists.')
-        );
-      }
+    const existsResult = await this.categoryRepository.existsByNameAndKind(
+      newName.value,
+      category.kind,
+      category.id.value
+    );
 
-      const updatedCategory = category.rename(newCategoryName);
-      return await this.categoryRepository.update(updatedCategory);
-    });
+    if (!existsResult.success) {
+      throw existsResult.error;
+    }
+
+    if (existsResult.data) {
+      throw new CategoryDomainError(
+        'DUPLICATE_CATEGORY_NAME',
+        `A category named "${command.newName}" already exists for ${category.kind}.`
+      );
+    }
+
+    const updatedCategory = category.rename(newName);
+    const saveResult = await this.categoryRepository.save(updatedCategory);
+    if (!saveResult.success) {
+      throw saveResult.error;
+    }
+
+    return updatedCategory;
   }
 }

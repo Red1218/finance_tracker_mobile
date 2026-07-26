@@ -1,51 +1,67 @@
 import { CategoryId } from '../value-objects/CategoryId';
 import { CategoryName } from '../value-objects/CategoryName';
-import { CategoryType } from '../value-objects/CategoryType';
+import { CategoryKind } from '../value-objects/CategoryKind';
 import { CategoryDomainError } from '../errors/CategoryDomainError';
 
 export interface CategoryProps {
   id: CategoryId;
   name: CategoryName;
-  type: CategoryType;
-  isArchived: boolean;
+  kind: CategoryKind;
+  isSystem: boolean;
+  archivedAt?: Date | null;
+  colorHex?: string | null;
+  iconName?: string | null;
 }
 
 export class Category {
   public readonly id: CategoryId;
   public readonly name: CategoryName;
-  public readonly type: CategoryType;
-  public readonly isArchived: boolean;
+  public readonly kind: CategoryKind;
+  public readonly isSystem: boolean;
+  public readonly archivedAt: Date | null;
+  public readonly colorHex: string | null;
+  public readonly iconName: string | null;
 
   constructor(props: CategoryProps) {
     this.id = props.id;
     this.name = props.name;
-    this.type = props.type;
-    this.isArchived = props.isArchived;
+    this.kind = props.kind;
+    this.isSystem = props.isSystem;
+    this.archivedAt = props.archivedAt ?? null;
+    this.colorHex = props.colorHex ?? null;
+    this.iconName = props.iconName ?? null;
 
     Object.freeze(this);
   }
 
+  public get isArchived(): boolean {
+    return this.archivedAt !== null;
+  }
+
   public rename(newName: CategoryName): Category {
-    if (this.type === CategoryType.Protected) {
+    if (this.isSystem) {
       throw new CategoryDomainError(
-        'PROTECTED_CATEGORY_MODIFICATION',
-        'Protected categories cannot be renamed.'
+        'SYSTEM_CATEGORY_MODIFICATION',
+        'System categories cannot be renamed.'
       );
     }
 
     return new Category({
       id: this.id,
       name: newName,
-      type: this.type,
-      isArchived: this.isArchived,
+      kind: this.kind,
+      isSystem: this.isSystem,
+      archivedAt: this.archivedAt,
+      colorHex: this.colorHex,
+      iconName: this.iconName,
     });
   }
 
-  public archive(): Category {
-    if (this.type === CategoryType.Protected) {
+  public archive(archivedAt: Date = new Date()): Category {
+    if (this.isSystem) {
       throw new CategoryDomainError(
-        'PROTECTED_CATEGORY_MODIFICATION',
-        'Protected categories cannot be archived.'
+        'SYSTEM_CATEGORY_MODIFICATION',
+        'System categories cannot be archived.'
       );
     }
 
@@ -59,12 +75,22 @@ export class Category {
     return new Category({
       id: this.id,
       name: this.name,
-      type: this.type,
-      isArchived: true,
+      kind: this.kind,
+      isSystem: this.isSystem,
+      archivedAt,
+      colorHex: this.colorHex,
+      iconName: this.iconName,
     });
   }
 
   public restore(): Category {
+    if (this.isSystem) {
+      throw new CategoryDomainError(
+        'SYSTEM_CATEGORY_MODIFICATION',
+        'System categories cannot be mutated.'
+      );
+    }
+
     if (!this.isArchived) {
       throw new CategoryDomainError(
         'CATEGORY_NOT_ARCHIVED',
@@ -75,8 +101,11 @@ export class Category {
     return new Category({
       id: this.id,
       name: this.name,
-      type: this.type,
-      isArchived: false,
+      kind: this.kind,
+      isSystem: this.isSystem,
+      archivedAt: null,
+      colorHex: this.colorHex,
+      iconName: this.iconName,
     });
   }
 }

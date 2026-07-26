@@ -16,7 +16,7 @@ export interface ReportingPeriodState {
  * Child components receive this state as immutable props — they never mutate it.
  */
 export function useReportingPeriod(
-  initial: ReportingPeriod = ReportingPeriod.CURRENT_MONTH
+  initial: ReportingPeriod = ReportingPeriod.MONTH
 ): ReportingPeriodState {
   const [reportingPeriod, setReportingPeriodState] = useState<ReportingPeriod>(initial);
   const [customStartDate, setCustomStartDate] = useState<Date | undefined>(undefined);

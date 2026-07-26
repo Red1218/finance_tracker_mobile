@@ -1,24 +1,34 @@
-import { useQuery } from '@tanstack/react-query';
-import { ListBudgetsUseCase } from '../../application';
+import { useState, useEffect, useCallback } from 'react';
+import { ListBudgetsUseCase, ListBudgetsQuery } from '../../application';
 import { BudgetViewModelMapper } from '../mappers/BudgetViewModelMapper';
-import { budgetKeys } from './queryKeys';
-import { budgetsModule } from './module';
+import { BudgetViewModel } from '../models/BudgetViewModel';
 
-export function useBudgets(listBudgetsUseCase: ListBudgetsUseCase = budgetsModule.listBudgetsUseCase) {
-  const query = useQuery({
-    queryKey: budgetKeys.lists(),
-    queryFn: async () => {
-      const result = await listBudgetsUseCase.execute({});
-      if (!result.success) throw result.error;
-      
-      return result.data.map(budget => BudgetViewModelMapper.toViewModel(budget));
-    },
-  });
+export function useBudgets(listBudgetsUseCase: ListBudgetsUseCase, queryFilter?: ListBudgetsQuery) {
+  const [budgets, setBudgets] = useState<BudgetViewModel[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchBudgets = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await listBudgetsUseCase.execute(queryFilter);
+      setBudgets(data.map((b) => BudgetViewModelMapper.toViewModel(b)));
+    } catch (e: any) {
+      setError(e.message || 'Failed to load budgets.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [listBudgetsUseCase, queryFilter]);
+
+  useEffect(() => {
+    fetchBudgets();
+  }, [fetchBudgets]);
 
   return {
-    budgets: query.data || [],
-    isLoading: query.isLoading,
-    error: query.error?.message || null,
-    refresh: query.refetch,
+    budgets,
+    isLoading,
+    error,
+    refresh: fetchBudgets,
   };
 }

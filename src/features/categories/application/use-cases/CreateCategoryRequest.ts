@@ -1,6 +1,6 @@
-import { CategoryType } from '../../domain';
+import { CategoryKind } from '../../domain';
 
 export interface CreateCategoryRequest {
   name: string;
-  type: CategoryType;
+  kind: CategoryKind;
 }

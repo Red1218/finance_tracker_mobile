@@ -18,11 +18,14 @@ export class GetMonthlyTrendUseCase {
       const result = await this.reportingRepository.getMonthlyTrend(
         request.reportingPeriod,
         validation.data.startDate,
-        validation.data.endDate
+        validation.data.endDate,
+        request.categoryId
       );
       if (!result.success) return result;
 
-      return Result.success(MonthlyTrendMapper.toResponse(result.data));
+      return Result.success(
+        MonthlyTrendMapper.toResponse(result.data.points, result.data.previousPeriodTotal)
+      );
     });
   }
 }

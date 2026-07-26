@@ -1,8 +1,9 @@
-import { CategoryType } from '../domain';
-
 export interface CategoryRow {
   id: string;
   name: string;
-  type: CategoryType;
-  is_archived: boolean;
+  type: 'income' | 'expense';
+  is_system: boolean;
+  archived_at: string | null;
+  color_hex?: string | null;
+  icon_name?: string | null;
 }

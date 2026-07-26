@@ -1,10 +1,13 @@
 export interface BudgetRow {
   id: string;
+  user_id?: string;
   category_id: string | null;
   amount: number;
-  period: string;
-  status: string;
+  currency_code: string;
+  period_type: string;
+  start_date: string;
+  end_date: string;
   created_at?: string;
   updated_at?: string;
-  deleted_at?: string | null;
+  archived_at?: string | null;
 }

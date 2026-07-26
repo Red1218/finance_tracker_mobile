@@ -2,88 +2,99 @@ import { describe, it, expect } from 'vitest';
 import { Category } from '../entities/Category';
 import { CategoryId } from '../value-objects/CategoryId';
 import { CategoryName } from '../value-objects/CategoryName';
-import { CategoryType } from '../value-objects/CategoryType';
+import { CategoryKind } from '../value-objects/CategoryKind';
 import { CategoryDomainError } from '../errors/CategoryDomainError';
 
-describe('Category', () => {
-  const createCategory = (type: CategoryType, isArchived = false) => {
+describe('Category Aggregate', () => {
+  const createCategory = (
+    kind: CategoryKind = CategoryKind.Expense,
+    isSystem = false,
+    archivedAt: Date | null = null,
+    colorHex: string | null = '#EF4444',
+    iconName: string | null = 'fast-food'
+  ) => {
     return new Category({
-      id: new CategoryId('test-id'),
+      id: new CategoryId('test-cat-id'),
       name: new CategoryName('Groceries'),
-      type,
-      isArchived,
+      kind,
+      isSystem,
+      archivedAt,
+      colorHex,
+      iconName,
     });
   };
 
-  describe('archive', () => {
-    it('should return a new archived Category instance for a custom category', () => {
-      const category = createCategory(CategoryType.Custom, false);
+  it('instantiates active Category with derived isArchived getter returning false', () => {
+    const category = createCategory();
+    expect(category.isArchived).toBe(false);
+    expect(category.archivedAt).toBeNull();
+    expect(category.colorHex).toBe('#EF4444');
+    expect(category.iconName).toBe('fast-food');
+  });
 
-      const archived = category.archive();
+  describe('archive', () => {
+    it('returns a new archived Category instance with archivedAt set and derived isArchived true', () => {
+      const category = createCategory(CategoryKind.Expense, false, null);
+      const freezeTime = new Date('2026-07-25T15:00:00.000Z');
+
+      const archived = category.archive(freezeTime);
 
       expect(archived).not.toBe(category);
       expect(archived.isArchived).toBe(true);
-      expect(archived.id).toBe(category.id);
-      expect(archived.name).toBe(category.name);
-      expect(archived.type).toBe(category.type);
+      expect(archived.archivedAt).toEqual(freezeTime);
+      expect(archived.id.value).toBe(category.id.value);
     });
 
-    it('should throw PROTECTED_CATEGORY_MODIFICATION if category is protected', () => {
-      const category = createCategory(CategoryType.Protected);
-
-      expect(() => category.archive()).toThrowError(CategoryDomainError);
-      expect(() => category.archive()).toThrowError('Protected categories cannot be archived.');
+    it('throws SYSTEM_CATEGORY_MODIFICATION if attempting to archive a system category', () => {
+      const category = createCategory(CategoryKind.Expense, true, null);
+      expect(() => category.archive()).toThrowError('System categories cannot be archived.');
     });
 
-    it('should throw CATEGORY_ALREADY_ARCHIVED if category is already archived', () => {
-      const category = createCategory(CategoryType.Custom, true);
-
-      expect(() => category.archive()).toThrowError(CategoryDomainError);
+    it('throws CATEGORY_ALREADY_ARCHIVED if category is already archived', () => {
+      const category = createCategory(CategoryKind.Expense, false, new Date());
       expect(() => category.archive()).toThrowError('Category is already archived.');
     });
   });
 
   describe('restore', () => {
-    it('should return a new active Category instance from an archived category', () => {
-      const category = createCategory(CategoryType.Custom, true);
+    it('returns a new active Category instance from an archived category with archivedAt set to null', () => {
+      const category = createCategory(CategoryKind.Expense, false, new Date());
 
       const restored = category.restore();
 
       expect(restored).not.toBe(category);
       expect(restored.isArchived).toBe(false);
-      expect(restored.id).toBe(category.id);
-      expect(restored.name).toBe(category.name);
-      expect(restored.type).toBe(category.type);
+      expect(restored.archivedAt).toBeNull();
     });
 
-    it('should throw CATEGORY_NOT_ARCHIVED if category is not archived', () => {
-      const category = createCategory(CategoryType.Custom, false);
+    it('throws SYSTEM_CATEGORY_MODIFICATION if attempting to restore a system category', () => {
+      const category = createCategory(CategoryKind.Expense, true, new Date());
+      expect(() => category.restore()).toThrowError('System categories cannot be mutated.');
+    });
 
-      expect(() => category.restore()).toThrowError(CategoryDomainError);
+    it('throws CATEGORY_NOT_ARCHIVED if category is not archived', () => {
+      const category = createCategory(CategoryKind.Expense, false, null);
       expect(() => category.restore()).toThrowError('Category is not archived.');
     });
   });
 
   describe('rename', () => {
-    it('should throw PROTECTED_CATEGORY_MODIFICATION if category is protected', () => {
-      const category = createCategory(CategoryType.Protected);
+    it('throws SYSTEM_CATEGORY_MODIFICATION if category is a system category', () => {
+      const category = createCategory(CategoryKind.Expense, true, null);
       const newName = new CategoryName('New Name');
-
-      expect(() => category.rename(newName)).toThrowError(CategoryDomainError);
-      expect(() => category.rename(newName)).toThrowError('Protected categories cannot be renamed.');
+      expect(() => category.rename(newName)).toThrowError('System categories cannot be renamed.');
     });
 
-    it('should return a new Category instance with the updated name', () => {
-      const category = createCategory(CategoryType.Custom);
-      const newName = new CategoryName('New Name');
+    it('returns a new Category instance with the updated name', () => {
+      const category = createCategory(CategoryKind.Income, false, null);
+      const newName = new CategoryName('Salary');
 
       const updatedCategory = category.rename(newName);
 
       expect(updatedCategory).not.toBe(category);
-      expect(updatedCategory.name.value).toBe('New Name');
-      expect(updatedCategory.id).toBe(category.id);
-      expect(updatedCategory.type).toBe(category.type);
-      expect(updatedCategory.isArchived).toBe(category.isArchived);
+      expect(updatedCategory.name.value).toBe('Salary');
+      expect(updatedCategory.kind).toBe(CategoryKind.Income);
+      expect(updatedCategory.isArchived).toBe(false);
     });
   });
 });

@@ -19,6 +19,7 @@ export abstract class BaseRepository {
     }
 
     // A real implementation would map Supabase PostgREST errors to RepositoryErrorCode
+    console.error('Raw database error:', error);
     const repositoryError = new RepositoryError(
       'UNKNOWN_PERSISTENCE_ERROR',
       'An unexpected database error occurred.',

@@ -1,148 +1,153 @@
-import React, { useCallback } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
-import {
-  GetDashboardSummaryUseCase,
-  GetCategoryBreakdownUseCase,
-  GetMonthlyTrendUseCase,
-  GetBudgetPerformanceUseCase,
-  GetLargestTransactionsUseCase,
-} from '../../application';
-import { useReportingPeriod } from '../hooks/useReportingPeriod';
-import { useDashboardSummary } from '../hooks/useDashboardSummary';
-import { useCategoryBreakdown } from '../hooks/useCategoryBreakdown';
-import { useMonthlyTrend } from '../hooks/useMonthlyTrend';
-import { useBudgetPerformance } from '../hooks/useBudgetPerformance';
-import { useLargestTransactions } from '../hooks/useLargestTransactions';
-import { ReportingPeriodSelector } from '../components/ReportingPeriodSelector';
-import { DashboardSummaryCard } from '../components/DashboardSummaryCard';
-import { CategoryBreakdownCard } from '../components/CategoryBreakdownCard';
-import { MonthlyTrendCard } from '../components/MonthlyTrendCard';
-import { BudgetPerformanceCard } from '../components/BudgetPerformanceCard';
-import { LargestTransactionsCard } from '../components/LargestTransactionsCard';
+import React from 'react';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { useReporting } from '../hooks/useReporting';
+import { reportingModule } from '../../composition/ReportingModule';
+import { ReportingPeriod } from '../../domain';
 
-interface Props {
-  readonly getDashboardSummaryUseCase: GetDashboardSummaryUseCase;
-  readonly getCategoryBreakdownUseCase: GetCategoryBreakdownUseCase;
-  readonly getMonthlyTrendUseCase: GetMonthlyTrendUseCase;
-  readonly getBudgetPerformanceUseCase: GetBudgetPerformanceUseCase;
-  readonly getLargestTransactionsUseCase: GetLargestTransactionsUseCase;
-}
+const PERIOD_OPTIONS: { id: ReportingPeriod; label: string }[] = [
+  { id: ReportingPeriod.MONTH, label: 'Month' },
+  { id: ReportingPeriod.QUARTER, label: 'Quarter' },
+  { id: ReportingPeriod.YEAR, label: 'Year' },
+  { id: ReportingPeriod.CUSTOM, label: 'Custom' },
+];
 
-/**
- * ReportingScreen
- *
- * - Owns page-level UI state (period selection via useReportingPeriod).
- * - Delegates async data state to individual presentation hooks.
- * - Passes immutable data down as props to stateless child components.
- * - Handles: Initial Loading, Pull-to-Refresh, Empty, Error, Loaded states.
- */
-export const ReportingScreen: React.FC<Props> = ({
-  getDashboardSummaryUseCase,
-  getCategoryBreakdownUseCase,
-  getMonthlyTrendUseCase,
-  getBudgetPerformanceUseCase,
-  getLargestTransactionsUseCase,
-}) => {
-  const { reportingPeriod, customStartDate, customEndDate, setReportingPeriod } = useReportingPeriod();
+export const ReportingScreen: React.FC = () => {
+  const { selectedPeriod, viewModel, isLoading, error, changePeriod, refresh } = useReporting(
+    reportingModule.reportingController
+  );
 
-  const dashboardQuery = useDashboardSummary(getDashboardSummaryUseCase, reportingPeriod, customStartDate, customEndDate);
-  const categoryQuery = useCategoryBreakdown(getCategoryBreakdownUseCase, reportingPeriod, customStartDate, customEndDate);
-  const trendQuery = useMonthlyTrend(getMonthlyTrendUseCase, reportingPeriod, customStartDate, customEndDate);
-  const budgetQuery = useBudgetPerformance(getBudgetPerformanceUseCase, reportingPeriod, customStartDate, customEndDate);
-  const transactionQuery = useLargestTransactions(getLargestTransactionsUseCase, reportingPeriod, customStartDate, customEndDate);
-
-  const isLoading =
-    dashboardQuery.isLoading ||
-    categoryQuery.isLoading ||
-    trendQuery.isLoading ||
-    budgetQuery.isLoading ||
-    transactionQuery.isLoading;
-
-  const isError =
-    dashboardQuery.isError ||
-    categoryQuery.isError ||
-    trendQuery.isError ||
-    budgetQuery.isError ||
-    transactionQuery.isError;
-
-  const isRefreshing =
-    dashboardQuery.isFetching ||
-    categoryQuery.isFetching ||
-    trendQuery.isFetching ||
-    budgetQuery.isFetching ||
-    transactionQuery.isFetching;
-
-  const handleRefresh = useCallback(() => {
-    dashboardQuery.refetch();
-    categoryQuery.refetch();
-    trendQuery.refetch();
-    budgetQuery.refetch();
-    transactionQuery.refetch();
-  }, [dashboardQuery, categoryQuery, trendQuery, budgetQuery, transactionQuery]);
-
-  // ── Initial Loading State ──────────────────────────────────────────────
-  if (isLoading) {
-    return (
-      <View className="flex-1 justify-center items-center bg-gray-50">
-        <ActivityIndicator size="large" color="#2563EB" />
-        <Text className="mt-3 text-sm text-gray-400">Loading reports…</Text>
-      </View>
-    );
-  }
-
-  // ── Error State ────────────────────────────────────────────────────────
-  if (isError) {
-    return (
-      <View className="flex-1 justify-center items-center bg-gray-50 px-8">
-        <Text className="text-base font-semibold text-red-600 text-center mb-2">
-          Unable to load reports
-        </Text>
-        <Text className="text-sm text-gray-400 text-center mb-6">
-          Pull down to retry or tap the button below.
-        </Text>
-        <View
-          className="bg-blue-600 px-6 py-3 rounded-full"
-          onTouchEnd={handleRefresh}
-        >
-          <Text className="text-white font-semibold">Retry</Text>
-        </View>
-      </View>
-    );
-  }
-
-  // ── Empty State ────────────────────────────────────────────────────────
-  const isEmpty =
-    dashboardQuery.data?.transactionCount === 0 &&
-    (categoryQuery.data?.items.length ?? 0) === 0;
-
-  if (isEmpty) {
-    return (
-      <View className="flex-1 bg-gray-50">
-        <ReportingPeriodSelector selected={reportingPeriod} onSelect={setReportingPeriod} />
-        <View className="flex-1 justify-center items-center px-8">
-          <Text className="text-base font-semibold text-gray-500 text-center">
-            No financial data for this period.
-          </Text>
-        </View>
-      </View>
-    );
-  }
-
-  // ── Loaded State ───────────────────────────────────────────────────────
   return (
-    <View className="flex-1 bg-gray-50">
-      <ReportingPeriodSelector selected={reportingPeriod} onSelect={setReportingPeriod} />
+    <View className="flex-1 bg-gray-950">
+      {/* Header & Period Selector */}
+      <View className="p-4 bg-gray-900 border-b border-gray-800">
+        <View className="flex-row justify-between items-center mb-3">
+          <Text className="text-2xl font-bold text-white tracking-tight">Reports & Analytics</Text>
+          <TouchableOpacity onPress={refresh} className="bg-gray-800 px-3 py-1.5 rounded-lg border border-gray-700">
+            <Text className="text-xs font-semibold text-gray-300">Refresh</Text>
+          </TouchableOpacity>
+        </View>
 
-      <ScrollView
-        refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
-        }
-      >
-        {dashboardQuery.data && <DashboardSummaryCard data={dashboardQuery.data} />}
-        {categoryQuery.data && <CategoryBreakdownCard data={categoryQuery.data} />}
-        {trendQuery.data && <MonthlyTrendCard data={trendQuery.data} />}
-        {budgetQuery.data && <BudgetPerformanceCard data={budgetQuery.data} />}
-        {transactionQuery.data && <LargestTransactionsCard data={transactionQuery.data} />}
+        <View className="flex-row gap-2">
+          {PERIOD_OPTIONS.map((p) => {
+            const isSelected = selectedPeriod === p.id;
+            return (
+              <TouchableOpacity
+                key={p.id}
+                onPress={() => changePeriod(p.id)}
+                className={`px-3 py-1.5 rounded-lg border ${
+                  isSelected ? 'bg-red-600 border-red-500' : 'bg-gray-800 border-gray-700'
+                }`}
+                accessibilityLabel={`Select ${p.label} period`}
+              >
+                <Text className={`text-xs font-semibold ${isSelected ? 'text-white' : 'text-gray-400'}`}>
+                  {p.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </View>
+
+      {/* Main Content ScrollView */}
+      <ScrollView className="flex-1 p-4">
+        {error ? (
+          <View className="bg-red-950/80 border border-red-800 p-4 rounded-xl mb-4">
+            <Text className="text-red-300 text-sm font-semibold">{error}</Text>
+          </View>
+        ) : null}
+
+        {isLoading ? (
+          <View className="py-12 items-center">
+            <ActivityIndicator size="large" color="#EF4444" />
+          </View>
+        ) : (
+          <>
+            {/* Financial Summary Cards */}
+            {viewModel.financialSummary && (
+              <View className="mb-6">
+                <Text className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                  Financial Performance Summary
+                </Text>
+                <View className="bg-gray-900 border border-gray-800 p-5 rounded-2xl shadow-sm mb-3">
+                  <View className="flex-row justify-between items-center mb-3">
+                    <Text className="text-gray-400 text-sm">Net Savings</Text>
+                    <View className="bg-red-950/60 border border-red-800/60 px-2.5 py-0.5 rounded-full">
+                      <Text className="text-red-400 text-xs font-bold">
+                        {viewModel.financialSummary.savingsRatePercentage}% Savings Rate
+                      </Text>
+                    </View>
+                  </View>
+                  <Text className={`text-3xl font-extrabold ${viewModel.financialSummary.isPositiveSavings ? 'text-emerald-400' : 'text-red-400'}`}>
+                    {viewModel.financialSummary.formattedNetSavings}
+                  </Text>
+                </View>
+
+                <View className="flex-row gap-3">
+                  <View className="flex-1 bg-gray-900 border border-gray-800 p-4 rounded-xl">
+                    <Text className="text-xs text-gray-400 mb-1">Total Income</Text>
+                    <Text className="text-lg font-bold text-emerald-400">
+                      {viewModel.financialSummary.formattedIncome}
+                    </Text>
+                  </View>
+
+                  <View className="flex-row-1 flex-1 bg-gray-900 border border-gray-800 p-4 rounded-xl">
+                    <Text className="text-xs text-gray-400 mb-1">Total Expenses</Text>
+                    <Text className="text-lg font-bold text-red-400">
+                      {viewModel.financialSummary.formattedExpense}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            )}
+
+            {/* Category Breakdown */}
+            <View className="mb-6">
+              <Text className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                Category Spend Breakdown
+              </Text>
+              {viewModel.categoryBreakdown.length === 0 ? (
+                <View className="bg-gray-900 p-4 rounded-xl border border-gray-800">
+                  <Text className="text-gray-500 text-xs">No category expenses found for this period.</Text>
+                </View>
+              ) : (
+                viewModel.categoryBreakdown.map((cat) => (
+                  <View key={cat.categoryId} className="bg-gray-900 border border-gray-800 p-3.5 rounded-xl mb-2">
+                    <View className="flex-row justify-between items-center mb-1.5">
+                      <Text className="text-white text-sm font-semibold">{cat.categoryName}</Text>
+                      <Text className="text-gray-300 text-sm font-bold">{cat.formattedAmount}</Text>
+                    </View>
+                    <View className="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
+                      <View className="bg-red-500 h-full rounded-full" style={{ width: `${Math.min(cat.percentage, 100)}%` }} />
+                    </View>
+                    <Text className="text-right text-[10px] text-gray-400 mt-1">{cat.percentage}% of total spend</Text>
+                  </View>
+                ))
+              )}
+            </View>
+
+            {/* Monthly Trend */}
+            <View className="mb-6">
+              <Text className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                Monthly Trend Analysis
+              </Text>
+              {viewModel.monthlyTrend.length === 0 ? (
+                <View className="bg-gray-900 p-4 rounded-xl border border-gray-800">
+                  <Text className="text-gray-500 text-xs">No monthly trend data available.</Text>
+                </View>
+              ) : (
+                viewModel.monthlyTrend.map((p) => (
+                  <View key={p.periodLabel} className="bg-gray-900 border border-gray-800 p-3.5 rounded-xl mb-2 flex-row justify-between items-center">
+                    <Text className="text-gray-300 font-bold text-sm">{p.periodLabel}</Text>
+                    <View className="items-end">
+                      <Text className="text-emerald-400 text-xs font-semibold">Income: {p.formattedIncome}</Text>
+                      <Text className="text-red-400 text-xs font-semibold">Expenses: {p.formattedExpense}</Text>
+                    </View>
+                  </View>
+                ))
+              )}
+            </View>
+          </>
+        )}
       </ScrollView>
     </View>
   );

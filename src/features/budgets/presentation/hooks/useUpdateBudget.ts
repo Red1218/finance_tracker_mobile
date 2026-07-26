@@ -1,33 +1,29 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { UpdateBudgetUseCase, UpdateBudgetRequest } from '../../application';
-import { budgetsModule } from './module';
+import { useState } from 'react';
+import { UpdateBudgetUseCase, UpdateBudgetCommand } from '../../application';
+import { BudgetViewModelMapper } from '../mappers/BudgetViewModelMapper';
+import { BudgetViewModel } from '../models/BudgetViewModel';
 
-export function useUpdateBudget(updateBudgetUseCase: UpdateBudgetUseCase = budgetsModule.updateBudgetUseCase) {
-  const queryClient = useQueryClient();
+export function useUpdateBudget(updateBudgetUseCase: UpdateBudgetUseCase) {
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const mutation = useMutation({
-    mutationFn: async (request: UpdateBudgetRequest) => {
-      const result = await updateBudgetUseCase.execute(request);
-      if (!result.success) throw result.error;
-      return result.data;
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['budgets'] });
-      queryClient.invalidateQueries({ queryKey: ['budgetSummary', variables.id] });
-    },
-  });
+  const updateBudget = async (command: UpdateBudgetCommand): Promise<BudgetViewModel | null> => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const budget = await updateBudgetUseCase.execute(command);
+      return BudgetViewModelMapper.toViewModel(budget);
+    } catch (e: any) {
+      setError(e.message || 'Failed to update budget.');
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return {
-    updateBudget: async (request: UpdateBudgetRequest) => {
-      try {
-        await mutation.mutateAsync(request);
-        return true;
-      } catch (e) {
-        return false;
-      }
-    },
-    isLoading: mutation.isPending,
-    error: mutation.error?.message || null,
+    updateBudget,
+    isLoading,
+    error,
   };
 }
-

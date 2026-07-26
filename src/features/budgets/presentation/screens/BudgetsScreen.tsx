@@ -1,106 +1,75 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { View, Text, ActivityIndicator, Modal, TouchableOpacity, ScrollView } from 'react-native';
-import { toast } from '@/hooks/use-toast';
 import { useBudgets } from '../hooks/useBudgets';
 import { useCreateBudget } from '../hooks/useCreateBudget';
 import { useUpdateBudget } from '../hooks/useUpdateBudget';
-import { useDeleteBudget } from '../hooks/useDeleteBudget';
-import { useCategoryOptions } from '../hooks/useCategoryOptions';
-import { EmptyBudgetState } from '../components/EmptyBudgetState';
-import { CategoryBudgetList } from '../components/CategoryBudgetList';
-import { BudgetSummaryLoader } from '../components/BudgetSummaryLoader';
-import { DeleteBudgetDialog } from '../components/DeleteBudgetDialog';
+import { useArchiveBudget } from '../hooks/useArchiveBudget';
 import { BudgetForm } from '../components/BudgetForm';
-import { BudgetSummaryViewModel } from '../types/BudgetViewModel';
+import { BudgetViewModel } from '../models/BudgetViewModel';
 import { CreateBudgetFormData } from '../validation/budgetSchema';
-import { budgetsModule } from '../hooks/module';
+import { BudgetsModule } from '../../composition/BudgetsModule';
+
+const budgetsModule = new BudgetsModule();
 
 export const BudgetsScreen: React.FC = () => {
   const { budgets, isLoading, error, refresh } = useBudgets(budgetsModule.listBudgetsUseCase);
-  const { createBudget, isLoading: isCreating, error: createError } = useCreateBudget();
-  const { updateBudget, isLoading: isUpdating, error: updateError } = useUpdateBudget();
-  const { deleteBudget, isLoading: isDeleting, error: deleteError } = useDeleteBudget();
-  const { categoryOptions } = useCategoryOptions();
+  const { createBudget, isLoading: isCreating, error: createError } = useCreateBudget(budgetsModule.createBudgetUseCase);
+  const { updateBudget, isLoading: isUpdating, error: updateError } = useUpdateBudget(budgetsModule.updateBudgetUseCase);
+  const { archiveBudget, isLoading: isArchiving } = useArchiveBudget(budgetsModule.archiveBudgetUseCase);
 
   const [isFormVisible, setIsFormVisible] = useState(false);
-  const [selectedBudget, setSelectedBudget] = useState<BudgetSummaryViewModel | null>(null);
-  const [editingBudgetSummary, setEditingBudgetSummary] = useState<BudgetSummaryViewModel | null>(null);
-  const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
-
-  const categoryMap = useMemo(() => {
-    return new Map(categoryOptions.map(c => [c.id, c.name]));
-  }, [categoryOptions]);
-
-  const formCategories = useMemo(() => {
-    return categoryOptions.map(c => ({ id: c.id, label: c.name }));
-  }, [categoryOptions]);
+  const [editingBudget, setEditingBudget] = useState<BudgetViewModel | null>(null);
+  const [budgetToArchive, setBudgetToArchive] = useState<BudgetViewModel | null>(null);
 
   const handleAddBudget = () => {
-    setEditingBudgetSummary(null);
+    setEditingBudget(null);
     setIsFormVisible(true);
   };
 
-  const handleEditBudget = (summary: BudgetSummaryViewModel) => {
-    setEditingBudgetSummary(summary);
+  const handleEditBudget = (budget: BudgetViewModel) => {
+    setEditingBudget(budget);
     setIsFormVisible(true);
   };
 
-  const handleDeleteRequest = (summary: BudgetSummaryViewModel) => {
-    setSelectedBudget(summary);
-    setDeleteDialogOpen(true);
+  const handleArchiveRequest = (budget: BudgetViewModel) => {
+    setBudgetToArchive(budget);
   };
 
   const handleFormSubmit = async (formData: CreateBudgetFormData) => {
-    let success = false;
-
-    if (editingBudgetSummary) {
-      success = await updateBudget({
-        id: editingBudgetSummary.budget.id,
-        amount: formData.amount,
+    if (editingBudget) {
+      const res = await updateBudget({
+        id: editingBudget.id,
+        newAmount: formData.amount,
       });
 
-      if (success) {
-        toast({
-          title: 'Budget updated',
-          description: 'The budget has been updated successfully.',
-        });
+      if (res) {
+        setIsFormVisible(false);
+        setEditingBudget(null);
+        refresh();
       }
-      success = await createBudget({
+    } else {
+      const res = await createBudget({
         categoryId: formData.categoryId ?? null,
         amount: formData.amount,
         currencyCode: formData.currencyCode,
-        period: formData.period,
+        periodKind: formData.period,
         startDate: formData.startDate,
         endDate: formData.endDate,
       });
 
-      if (success) {
-        toast({
-          title: 'Budget created',
-          description: 'The budget has been created successfully.',
-        });
+      if (res) {
+        setIsFormVisible(false);
+        refresh();
       }
-    }
-
-    if (success) {
-      setIsFormVisible(false);
-      setEditingBudgetSummary(null);
-      refresh();
     }
   };
 
-  const handleConfirmDelete = async () => {
-    if (!selectedBudget) return;
-
-    const success = await deleteBudget({ id: selectedBudget.budget.id });
+  const handleConfirmArchive = async () => {
+    if (!budgetToArchive) return;
+    const success = await archiveBudget({ id: budgetToArchive.id });
 
     if (success) {
-      toast({
-        title: 'Budget deleted',
-        description: 'The budget has been deleted successfully.',
-      });
-      setDeleteDialogOpen(false);
-      setSelectedBudget(null);
+      setBudgetToArchive(null);
       refresh();
     }
   };
@@ -116,13 +85,10 @@ export const BudgetsScreen: React.FC = () => {
   if (error) {
     return (
       <View className="flex-1 justify-center items-center bg-gray-50">
-        <Text className="text-red-500 font-semibold">Failed to load budgets. Please try again.</Text>
+        <Text className="text-red-500 font-semibold">{error}</Text>
       </View>
     );
   }
-
-  const overallBudget = budgets?.find(b => !b.categoryId);
-  const categoryBudgets = budgets?.filter(b => b.categoryId) || [];
 
   return (
     <View className="flex-1 bg-gray-50">
@@ -138,27 +104,35 @@ export const BudgetsScreen: React.FC = () => {
         </TouchableOpacity>
       </View>
 
-      <ScrollView className="flex-1">
-        {overallBudget && (
-          <View className="p-4">
-            <BudgetSummaryLoader 
-              budgetId={overallBudget.id} 
-              onEdit={handleEditBudget}
-              onDelete={handleDeleteRequest}
-            />
-          </View>
-        )}
-
+      <ScrollView className="flex-1 p-4">
         {budgets.length === 0 ? (
-          <EmptyBudgetState />
+          <View className="p-6 items-center">
+            <Text className="text-gray-500">No active budgets found. Tap "Add Budget" to create one.</Text>
+          </View>
         ) : (
-          <CategoryBudgetList 
-            budgets={categoryBudgets} 
-            categoryMap={categoryMap}
-            onBudgetPress={(b) => setSelectedBudget(b)} 
-            onEditBudget={handleEditBudget}
-            onDeleteBudget={handleDeleteRequest}
-          />
+          budgets.map((b) => (
+            <View key={b.id} className="bg-white p-4 rounded-xl border border-gray-200 mb-3 shadow-sm">
+              <View className="flex-row justify-between items-center mb-2">
+                <Text className="font-bold text-lg text-gray-900">
+                  {b.isOverall ? 'Overall Budget' : `Category Budget (${b.categoryId})`}
+                </Text>
+                <Text className="text-blue-600 font-semibold text-base">{b.amount} {b.currency}</Text>
+              </View>
+
+              <Text className="text-xs text-gray-500 mb-3">
+                Period: {b.periodKind} ({new Date(b.startDate).toLocaleDateString()} - {new Date(b.endDate).toLocaleDateString()})
+              </Text>
+
+              <View className="flex-row justify-end space-x-3">
+                <TouchableOpacity onPress={() => handleEditBudget(b)} className="px-3 py-1 bg-gray-100 rounded">
+                  <Text className="text-xs font-semibold text-gray-700">Edit</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => handleArchiveRequest(b)} className="px-3 py-1 bg-red-50 rounded">
+                  <Text className="text-xs font-semibold text-red-600">Archive</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ))
         )}
       </ScrollView>
 
@@ -171,7 +145,7 @@ export const BudgetsScreen: React.FC = () => {
       >
         <View className="flex-row justify-between items-center p-4 border-b border-gray-200 bg-white">
           <Text className="text-lg font-bold text-gray-900">
-            {editingBudgetSummary ? 'Edit Budget' : 'New Budget'}
+            {editingBudget ? 'Edit Budget' : 'New Budget'}
           </Text>
           <TouchableOpacity onPress={() => setIsFormVisible(false)}>
             <Text className="text-blue-600 font-medium">Close</Text>
@@ -179,30 +153,39 @@ export const BudgetsScreen: React.FC = () => {
         </View>
 
         <BudgetForm
-          initialValues={editingBudgetSummary ? {
-            amount: editingBudgetSummary.budget.amount,
-            currencyCode: editingBudgetSummary.budget.currency,
-            period: editingBudgetSummary.budget.period,
-            startDate: new Date(editingBudgetSummary.budget.startDate),
-            endDate: new Date(editingBudgetSummary.budget.endDate),
-            categoryId: editingBudgetSummary.budget.categoryId,
+          initialValues={editingBudget ? {
+            amount: editingBudget.amount,
+            currencyCode: editingBudget.currency,
+            startDate: new Date(editingBudget.startDate),
+            endDate: new Date(editingBudget.endDate),
+            categoryId: editingBudget.categoryId,
           } : undefined}
-          categories={formCategories}
           onSubmit={handleFormSubmit}
           onCancel={() => setIsFormVisible(false)}
           isSubmitting={isCreating || isUpdating}
-          error={editingBudgetSummary ? (updateError || undefined) : (createError || undefined)}
+          error={editingBudget ? (updateError || undefined) : (createError || undefined)}
         />
       </Modal>
 
-      {/* Delete Confirmation Dialog */}
-      <DeleteBudgetDialog 
-        visible={isDeleteDialogOpen}
-        onCancel={() => setDeleteDialogOpen(false)}
-        onConfirm={handleConfirmDelete}
-        isDeleting={isDeleting}
-      />
+      {/* Archive Confirmation Modal */}
+      <Modal visible={!!budgetToArchive} transparent animationType="fade">
+        <View className="flex-1 bg-black/50 justify-center items-center p-4">
+          <View className="bg-white p-6 rounded-xl w-full max-w-sm">
+            <Text className="text-lg font-bold text-gray-900 mb-2">Archive Budget?</Text>
+            <Text className="text-gray-600 text-sm mb-6">
+              This budget will be hidden from active budgets but remains in history.
+            </Text>
+            <View className="flex-row justify-end space-x-3">
+              <TouchableOpacity onPress={() => setBudgetToArchive(null)} className="px-4 py-2 bg-gray-200 rounded-lg">
+                <Text className="font-semibold text-gray-700">Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleConfirmArchive} disabled={isArchiving} className="px-4 py-2 bg-red-600 rounded-lg">
+                <Text className="font-semibold text-white">{isArchiving ? 'Archiving...' : 'Archive'}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
-

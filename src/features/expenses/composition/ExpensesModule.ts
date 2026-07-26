@@ -1,4 +1,6 @@
 import { SupabaseExpenseRepository } from '../../../platform/persistence/expenses';
+import { SupabaseCategoryRepository } from '../../../platform/persistence/categories';
+import { ICategoryRepository } from '../../categories';
 import {
   CreateExpenseUseCase,
   UpdateExpenseUseCase,
@@ -6,7 +8,6 @@ import {
   RestoreExpenseUseCase,
   ListExpensesUseCase,
 } from '../application';
-import { SupabaseCategoryRepository } from '../../../platform/persistence/categories';
 
 export class ExpensesModule {
   public readonly createExpenseUseCase: CreateExpenseUseCase;
@@ -17,7 +18,7 @@ export class ExpensesModule {
 
   constructor(
     expenseRepository: SupabaseExpenseRepository = new SupabaseExpenseRepository(),
-    categoryRepository: SupabaseCategoryRepository = new SupabaseCategoryRepository()
+    categoryRepository: ICategoryRepository = new SupabaseCategoryRepository()
   ) {
     this.createExpenseUseCase = new CreateExpenseUseCase(expenseRepository, categoryRepository);
     this.updateExpenseUseCase = new UpdateExpenseUseCase(expenseRepository, categoryRepository);

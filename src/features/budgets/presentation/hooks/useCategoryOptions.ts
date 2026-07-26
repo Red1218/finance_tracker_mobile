@@ -1,8 +1,12 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { CategoriesModule, Category } from '../../../categories';
-import { CategoryBudgetOption } from '../models';
 
 const categoriesModule = new CategoriesModule();
+
+export interface CategoryOptionItem {
+  id: string;
+  name: string;
+}
 
 export function useCategoryOptions() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -13,14 +17,10 @@ export function useCategoryOptions() {
     setIsLoading(true);
     setError(null);
     try {
-      const result = await categoriesModule.listCategoriesUseCase.execute({ includeArchived: false });
-      if (result.success) {
-        setCategories(result.data);
-      } else {
-        setError(result.error.message);
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to fetch categories');
+      const data = await categoriesModule.listCategoriesUseCase.execute({ includeArchived: false });
+      setCategories(data);
+    } catch (e: any) {
+      setError(e?.message || 'Failed to fetch categories');
     } finally {
       setIsLoading(false);
     }
@@ -30,8 +30,8 @@ export function useCategoryOptions() {
     fetchCategories();
   }, [fetchCategories]);
 
-  const categoryOptions: CategoryBudgetOption[] = useMemo(() => {
-    return categories.map(cat => ({
+  const categoryOptions: CategoryOptionItem[] = useMemo(() => {
+    return categories.map((cat) => ({
       id: cat.id.value,
       name: cat.name.value,
     }));
@@ -42,6 +42,6 @@ export function useCategoryOptions() {
     categories,
     isLoading,
     error,
-    refresh: fetchCategories
+    refresh: fetchCategories,
   };
 }

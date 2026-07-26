@@ -1,27 +1,29 @@
 import { ICategoryRepository } from '../repositories/ICategoryRepository';
-import { CategoryId } from '../../domain';
-import { RestoreCategoryRequest } from './RestoreCategoryRequest';
-import { UseCaseResult } from './UseCaseTypes';
-import { executeUseCase, fetchCategoryOrError } from './UseCaseHelpers';
+import { CategoryId, CategoryDomainError } from '../../domain';
+
+export interface RestoreCategoryCommand {
+  id: string;
+}
 
 export class RestoreCategoryUseCase {
   constructor(private readonly categoryRepository: ICategoryRepository) {
     Object.freeze(this);
   }
 
-  public async execute(request: RestoreCategoryRequest): Promise<UseCaseResult> {
-    return executeUseCase(async () => {
-      const categoryId = new CategoryId(request.id);
+  public async execute(command: RestoreCategoryCommand): Promise<void> {
+    const categoryId = new CategoryId(command.id);
+    const getResult = await this.categoryRepository.getById(categoryId);
 
-      const categoryResult = await fetchCategoryOrError(this.categoryRepository, categoryId);
-      if (!categoryResult.success) {
-        return categoryResult;
-      }
+    if (!getResult.success || !getResult.data) {
+      throw new CategoryDomainError('CATEGORY_NOT_FOUND', `Category "${command.id}" not found.`);
+    }
 
-      // Domain enforces: restoring a non-archived category is a business rule violation.
-      const restored = categoryResult.data.restore();
+    const category = getResult.data;
+    const restoredCategory = category.restore();
 
-      return await this.categoryRepository.restore(restored.id);
-    });
+    const saveResult = await this.categoryRepository.save(restoredCategory);
+    if (!saveResult.success) {
+      throw saveResult.error;
+    }
   }
 }

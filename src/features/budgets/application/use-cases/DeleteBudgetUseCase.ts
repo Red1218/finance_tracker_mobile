@@ -1,27 +1,22 @@
 import { IBudgetRepository } from '../repositories/IBudgetRepository';
-import { DeleteBudgetRequest } from '../requests/DeleteBudgetRequest';
-import { UseCaseResult } from './UseCaseTypes';
-import { executeUseCase } from './UseCaseHelpers';
 import { BudgetId, BudgetDomainError } from '../../domain';
-import { Result } from '../../../../platform/persistence';
 
 export class DeleteBudgetUseCase {
   constructor(private readonly budgetRepository: IBudgetRepository) {
     Object.freeze(this);
   }
 
-  public async execute(request: DeleteBudgetRequest): Promise<UseCaseResult<void>> {
-    return executeUseCase(async () => {
-      const budgetId = new BudgetId(request.id);
-      
-      const budgetResult = await this.budgetRepository.findById(budgetId);
-      if (!budgetResult.success) return budgetResult;
-      
-      if (!budgetResult.data) {
-        return Result.failure(new BudgetDomainError('INVALID_IDENTIFIER', 'Budget not found.'));
-      }
+  public async execute(id: string): Promise<void> {
+    const budgetId = new BudgetId(id);
+    const getResult = await this.budgetRepository.getById(budgetId);
 
-      return await this.budgetRepository.delete(budgetId);
-    });
+    if (!getResult.success || !getResult.data) {
+      throw new BudgetDomainError('BUDGET_NOT_FOUND', `Budget "${id}" not found.`);
+    }
+
+    const archiveResult = await this.budgetRepository.archive(budgetId);
+    if (!archiveResult.success) {
+      throw archiveResult.error;
+    }
   }
 }

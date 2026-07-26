@@ -1,9 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { View, StyleSheet, Text, Modal } from 'react-native';
 import { Screen, Loading, Button } from '../../../../shared/components';
 import { useTheme } from '../../../../shared/theme';
 import { CategoriesModule } from '../../composition';
-import { Category, CategoryType } from '../../domain';
+import { Category, CategoryKind } from '../../domain';
 import { CategoryList, CategoryForm, ArchiveCategoryDialog } from '../components';
 import {
   useCategories,
@@ -51,12 +51,12 @@ export function CategoriesScreen() {
     setCategoryToArchive(category);
   };
 
-  const handleFormSubmit = async (data: { name: string; type: CategoryType }) => {
+  const handleFormSubmit = async (data: { name: string; kind: CategoryKind }) => {
     let success = false;
     if (selectedCategory) {
       success = await renameCategory({ id: selectedCategory.id.value, newName: data.name });
     } else {
-      success = await createCategory({ name: data.name, type: data.type });
+      success = await createCategory({ name: data.name, kind: data.kind });
     }
 
     if (success) {
@@ -74,7 +74,7 @@ export function CategoriesScreen() {
     }
   };
 
-  const isSelectedCategoryProtected = selectedCategory?.type === CategoryType.Protected;
+  const isSelectedCategorySystem = selectedCategory?.isSystem ?? false;
 
   return (
     <Screen style={styles.container}>
@@ -106,12 +106,12 @@ export function CategoriesScreen() {
         <View style={styles.modalOverlay}>
           <CategoryForm
             initialName={selectedCategory?.name.value}
-            initialType={selectedCategory?.type}
+            initialKind={selectedCategory?.kind}
             onSubmit={handleFormSubmit}
             onCancel={() => setIsFormVisible(false)}
             isLoading={isCreating || isRenaming}
-            disabled={isSelectedCategoryProtected}
-            error={isSelectedCategoryProtected ? "Protected categories cannot be modified." : undefined}
+            disabled={isSelectedCategorySystem}
+            error={isSelectedCategorySystem ? "System categories cannot be modified." : undefined}
           />
         </View>
       </Modal>
@@ -143,8 +143,6 @@ const styles = StyleSheet.create({
   },
   center: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   modalOverlay: {
     flex: 1,

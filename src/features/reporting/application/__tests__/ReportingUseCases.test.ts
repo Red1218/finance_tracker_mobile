@@ -20,7 +20,7 @@ function makeMockRepo(): IReportingRepository {
   };
 }
 
-const STANDARD_REQUEST = { reportingPeriod: ReportingPeriod.CURRENT_MONTH };
+const STANDARD_REQUEST = { reportingPeriod: ReportingPeriod.MONTH };
 const CUSTOM_REQUEST_VALID = {
   reportingPeriod: ReportingPeriod.CUSTOM,
   customStartDate: new Date('2026-01-01'),
@@ -87,6 +87,20 @@ describe('GetDashboardSummaryUseCase', () => {
     const result = await useCase.execute(CUSTOM_REQUEST_VALID);
     expect(result.success).toBe(true);
   });
+
+  it('✓ forwards categoryId filter to repository', async () => {
+    (repo.getDashboardSummary as ReturnType<typeof vi.fn>).mockResolvedValue(
+      Result.success({ totalIncome: 500, totalExpenses: 200, netCashFlow: 300, savingsRate: 60, transactionCount: 2 })
+    );
+    const result = await useCase.execute({ ...STANDARD_REQUEST, categoryId: 'cat-123' });
+    expect(result.success).toBe(true);
+    expect(repo.getDashboardSummary).toHaveBeenCalledWith(
+      ReportingPeriod.MONTH,
+      undefined,
+      undefined,
+      'cat-123'
+    );
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -135,9 +149,10 @@ describe('GetMonthlyTrendUseCase', () => {
 
   it('✓ returns collection response on success', async () => {
     (repo.getMonthlyTrend as ReturnType<typeof vi.fn>).mockResolvedValue(
-      Result.success([
-        { period: '2026-01', income: 500, expenses: 300, netCashFlow: 200 },
-      ])
+      Result.success({
+        points: [{ period: '2026-01', income: 500, expenses: 300, netCashFlow: 200 }],
+        previousPeriodTotal: 250,
+      })
     );
     const result = await useCase.execute(STANDARD_REQUEST);
     expect(result.success).toBe(true);

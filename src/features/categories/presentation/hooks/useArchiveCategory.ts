@@ -1,24 +1,18 @@
 import { useState, useCallback } from 'react';
-import { ArchiveCategoryUseCase, ArchiveCategoryRequest } from '../../application';
+import { ArchiveCategoryUseCase, ArchiveCategoryCommand } from '../../application';
 
 export function useArchiveCategory(archiveCategoryUseCase: ArchiveCategoryUseCase) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const archiveCategory = useCallback(
-    async (request: ArchiveCategoryRequest) => {
+    async (command: ArchiveCategoryCommand) => {
       setIsLoading(true);
       setError(null);
 
       try {
-        const result = await archiveCategoryUseCase.execute(request);
-
-        if (result.success) {
-          return true;
-        } else {
-          setError(result.error.message);
-          return false;
-        }
+        await archiveCategoryUseCase.execute(command);
+        return true;
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Failed to archive category');
         return false;

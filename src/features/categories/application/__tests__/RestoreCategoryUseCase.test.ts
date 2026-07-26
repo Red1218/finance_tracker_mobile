@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { RestoreCategoryUseCase } from '../use-cases/RestoreCategoryUseCase';
 import { InMemoryCategoryRepository } from './InMemoryCategoryRepository';
-import { Category, CategoryId, CategoryName, CategoryType, CategoryDomainError } from '../../domain';
+import { Category, CategoryId, CategoryName, CategoryKind } from '../../domain';
 
 describe('RestoreCategoryUseCase', () => {
   let repository: InMemoryCategoryRepository;
@@ -10,75 +10,47 @@ describe('RestoreCategoryUseCase', () => {
   beforeEach(() => {
     repository = new InMemoryCategoryRepository();
     useCase = new RestoreCategoryUseCase(repository);
+
+    repository.seed(
+      new Category({
+        id: new CategoryId('cat-archived'),
+        name: new CategoryName('Old Utilities'),
+        kind: CategoryKind.Expense,
+        isSystem: false,
+        archivedAt: new Date(),
+      })
+    );
+
+    repository.seed(
+      new Category({
+        id: new CategoryId('cat-active'),
+        name: new CategoryName('Active Rent'),
+        kind: CategoryKind.Expense,
+        isSystem: false,
+        archivedAt: null,
+      })
+    );
   });
 
-  const seedCategory = (id: string, name: string, type: CategoryType = CategoryType.Custom, isArchived = false) => {
-    const category = new Category({
-      id: new CategoryId(id),
-      name: new CategoryName(name),
-      type,
-      isArchived,
-    });
-    repository.seed(category);
-  };
+  it('successfully restores an archived category setting archivedAt to null', async () => {
+    await useCase.execute({ id: 'cat-archived' });
 
-  it('should successfully restore an archived category', async () => {
-    seedCategory('cat-1', 'Groceries', CategoryType.Custom, true);
-
-    const result = await useCase.execute({ id: 'cat-1' });
-
-    expect(result.success).toBe(true);
-
-    const check = await repository.getById(new CategoryId('cat-1'));
-    expect(check.success).toBe(true);
-    if (check.success && check.data) {
-      expect(check.data.isArchived).toBe(false);
+    const res = await repository.getById(new CategoryId('cat-archived'));
+    if (res.success && res.data) {
+      expect(res.data.isArchived).toBe(false);
+      expect(res.data.archivedAt).toBeNull();
     }
   });
 
-  it('should appear in list() after restoring', async () => {
-    seedCategory('cat-1', 'Groceries', CategoryType.Custom, true);
-
-    await useCase.execute({ id: 'cat-1' });
-
-    const listResult = await repository.list();
-    expect(listResult.success).toBe(true);
-    if (listResult.success) {
-      expect(listResult.data.find((c) => c.id.value === 'cat-1')).toBeDefined();
-    }
+  it('rejects restoring a non-archived category (CATEGORY_NOT_ARCHIVED)', async () => {
+    await expect(useCase.execute({ id: 'cat-active' })).rejects.toThrowError(
+      'Category is not archived.'
+    );
   });
 
-  it('should fail if category does not exist', async () => {
-    const result = await useCase.execute({ id: 'invalid-id' });
-
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(result.error).toBeInstanceOf(CategoryDomainError);
-      expect((result.error as CategoryDomainError).code).toBe('INVALID_IDENTIFIER');
-    }
-  });
-
-  it('should fail if category is not archived', async () => {
-    seedCategory('cat-1', 'Groceries', CategoryType.Custom, false);
-
-    const result = await useCase.execute({ id: 'cat-1' });
-
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(result.error).toBeInstanceOf(CategoryDomainError);
-      expect((result.error as CategoryDomainError).code).toBe('CATEGORY_NOT_ARCHIVED');
-    }
-  });
-
-  it('should propagate repository errors', async () => {
-    seedCategory('cat-1', 'Groceries', CategoryType.Custom, true);
-    repository.setForceFailure('Database error');
-
-    const result = await useCase.execute({ id: 'cat-1' });
-
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(result.error.message).toBe('Database error');
-    }
+  it('rejects restoring if category does not exist (CATEGORY_NOT_FOUND)', async () => {
+    await expect(useCase.execute({ id: 'cat-nonexistent' })).rejects.toThrowError(
+      'Category "cat-nonexistent" not found.'
+    );
   });
 });

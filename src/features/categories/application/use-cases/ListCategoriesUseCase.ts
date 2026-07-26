@@ -1,18 +1,26 @@
 import { ICategoryRepository } from '../repositories/ICategoryRepository';
-import { Category } from '../../domain';
-import { ListCategoriesRequest } from './ListCategoriesRequest';
-import { UseCaseResult } from './UseCaseTypes';
-import { executeUseCase } from './UseCaseHelpers';
+import { Category, CategoryKind } from '../../domain';
+
+export interface ListCategoriesQuery {
+  kind?: CategoryKind;
+  includeArchived?: boolean;
+}
 
 export class ListCategoriesUseCase {
   constructor(private readonly categoryRepository: ICategoryRepository) {
     Object.freeze(this);
   }
 
-  public async execute(request?: ListCategoriesRequest): Promise<UseCaseResult<Category[]>> {
-    return executeUseCase(async () => {
-      const includeArchived = request?.includeArchived ?? false;
-      return await this.categoryRepository.list(includeArchived);
-    });
+  public async execute(query?: ListCategoriesQuery): Promise<Category[]> {
+    const result = await this.categoryRepository.getAll(
+      query?.kind,
+      query?.includeArchived ?? false
+    );
+
+    if (!result.success) {
+      throw result.error;
+    }
+
+    return result.data;
   }
 }

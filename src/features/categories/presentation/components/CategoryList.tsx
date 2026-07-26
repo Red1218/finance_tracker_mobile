@@ -1,6 +1,6 @@
 import React from 'react';
-import { FlatList, View, StyleSheet } from 'react-native';
-import { Category, CategoryType } from '../../domain';
+import { FlatList, View } from 'react-native';
+import { Category } from '../../domain';
 import { CategoryItem } from './CategoryItem';
 import { EmptyState } from '../../../../shared/components';
 import { useTheme } from '../../../../shared/theme';
@@ -28,14 +28,14 @@ export function CategoryList({ categories, onSelect, onArchive }: CategoryListPr
       data={categories}
       keyExtractor={(item) => item.id.value}
       renderItem={({ item }) => {
-        const isProtected = item.type === CategoryType.Protected;
+        const isSystem = item.isSystem;
         return (
           <CategoryItem
             category={item}
             onPress={onSelect}
             onArchive={onArchive}
-            isReadonly={isProtected}
-            canArchive={!isProtected}
+            isReadonly={isSystem}
+            canArchive={!isSystem}
           />
         );
       }}

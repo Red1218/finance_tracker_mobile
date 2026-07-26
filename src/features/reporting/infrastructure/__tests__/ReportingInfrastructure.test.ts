@@ -22,7 +22,7 @@ describe('ReportingRepositoryImpl', () => {
     repo = new ReportingRepositoryImpl(dataSource);
   });
 
-  const period = ReportingPeriod.CURRENT_MONTH;
+  const period = ReportingPeriod.MONTH;
 
   it('✓ getDashboardSummary — maps raw to domain projection', async () => {
     (dataSource.fetchDashboardSummary as ReturnType<typeof vi.fn>).mockResolvedValue({
@@ -98,15 +98,17 @@ describe('ReportingRepositoryImpl', () => {
   });
 
   it('✓ getMonthlyTrend — computes netCashFlow per period', async () => {
-    (dataSource.fetchMonthlyTrend as ReturnType<typeof vi.fn>).mockResolvedValue([
-      { period: '2026-06', total_income: 800, total_expenses: 500 },
-    ]);
+    (dataSource.fetchMonthlyTrend as ReturnType<typeof vi.fn>).mockResolvedValue({
+      items: [{ period: '2026-06', total_income: 800, total_expenses: 500 }],
+      previousPeriodTotal: 400,
+    });
 
     const result = await repo.getMonthlyTrend(period);
 
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.data[0].netCashFlow).toBe(300);
+      expect(result.data.points[0].netCashFlow).toBe(300);
+      expect(result.data.previousPeriodTotal).toBe(400);
     }
   });
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { Category, CategoryType } from '../../domain';
+import { Category, CategoryKind } from '../../domain';
 import { useTheme } from '../../../../shared/theme';
 
 interface CategoryItemProps {
@@ -13,6 +13,8 @@ interface CategoryItemProps {
 
 export function CategoryItem({ category, onPress, onArchive, isReadonly, canArchive }: CategoryItemProps) {
   const { colors, spacing, typography, radius } = useTheme();
+
+  const isIncome = category.kind === CategoryKind.Income;
 
   return (
     <Pressable
@@ -29,12 +31,19 @@ export function CategoryItem({ category, onPress, onArchive, isReadonly, canArch
       onPress={() => onPress(category)}
     >
       <View style={styles.content}>
-        <Text style={[{ color: colors.textPrimary }, typography.body]}>
-          {category.name.value}
-        </Text>
+        <View style={styles.titleRow}>
+          <Text style={[{ color: colors.textPrimary }, typography.body]}>
+            {category.name.value}
+          </Text>
+          <View style={[styles.badge, { backgroundColor: isIncome ? '#e6f4ea' : '#fce8e6', paddingHorizontal: spacing.space8, borderRadius: radius.small }]}>
+            <Text style={[{ color: isIncome ? '#137333' : '#c5221f' }, typography.caption]}>
+              {isIncome ? 'Income' : 'Expense'}
+            </Text>
+          </View>
+        </View>
         {isReadonly && (
-          <Text style={[{ color: colors.textSecondary }, typography.caption]}>
-            Protected
+          <Text style={[{ color: colors.textSecondary, marginTop: spacing.space4 }, typography.caption]}>
+            System Category
           </Text>
         )}
       </View>
@@ -61,6 +70,14 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  badge: {
+    paddingVertical: 2,
   },
   actionButton: {
     justifyContent: 'center',

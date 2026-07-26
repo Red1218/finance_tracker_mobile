@@ -10,7 +10,7 @@ import { ExpenseDate } from '../../domain/value-objects/ExpenseDate';
 import { PaymentMethod } from '../../domain/value-objects/PaymentMethod';
 import { ExpenseNote } from '../../domain/value-objects/ExpenseNote';
 import { InMemoryCategoryRepository } from '../../../categories/application/__tests__/InMemoryCategoryRepository';
-import { Category, CategoryName, CategoryType } from '../../../categories/domain';
+import { Category, CategoryName, CategoryKind } from '../../../categories/domain';
 import { v4 as uuidv4 } from 'uuid';
 
 describe('UpdateExpenseUseCase', () => {
@@ -30,8 +30,9 @@ describe('UpdateExpenseUseCase', () => {
       new Category({
         id: new CategoryId(validCategoryId),
         name: new CategoryName('Valid Category'),
-        type: 'expense' as CategoryType,
-        isArchived: false,
+        kind: CategoryKind.Expense,
+        isSystem: false,
+        archivedAt: null,
       })
     );
 
@@ -134,4 +135,3 @@ describe('UpdateExpenseUseCase', () => {
     }
   });
 });
-

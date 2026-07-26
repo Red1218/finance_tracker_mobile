@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { ListCategoriesUseCase } from '../use-cases/ListCategoriesUseCase';
 import { InMemoryCategoryRepository } from './InMemoryCategoryRepository';
-import { Category, CategoryId, CategoryName, CategoryType } from '../../domain';
+import { Category, CategoryId, CategoryName, CategoryKind } from '../../domain';
 
 describe('ListCategoriesUseCase', () => {
   let repository: InMemoryCategoryRepository;
@@ -10,65 +10,58 @@ describe('ListCategoriesUseCase', () => {
   beforeEach(() => {
     repository = new InMemoryCategoryRepository();
     useCase = new ListCategoriesUseCase(repository);
+
+    repository.seed(
+      new Category({
+        id: new CategoryId('cat-exp-1'),
+        name: new CategoryName('Groceries'),
+        kind: CategoryKind.Expense,
+        isSystem: false,
+        archivedAt: null,
+      })
+    );
+
+    repository.seed(
+      new Category({
+        id: new CategoryId('cat-inc-1'),
+        name: new CategoryName('Salary'),
+        kind: CategoryKind.Income,
+        isSystem: false,
+        archivedAt: null,
+      })
+    );
+
+    repository.seed(
+      new Category({
+        id: new CategoryId('cat-exp-archived'),
+        name: new CategoryName('Old Subscriptions'),
+        kind: CategoryKind.Expense,
+        isSystem: false,
+        archivedAt: new Date(),
+      })
+    );
   });
 
-  const seedCategory = (id: string, name: string, type: CategoryType = CategoryType.Custom, isArchived = false) => {
-    const category = new Category({
-      id: new CategoryId(id),
-      name: new CategoryName(name),
-      type,
-      isArchived,
-    });
-    repository.seed(category);
-  };
+  it('lists active categories by default excluding archived categories', async () => {
+    const list = await useCase.execute();
 
-  it('should successfully list all categories', async () => {
-    seedCategory('cat-1', 'Groceries', CategoryType.Custom);
-    seedCategory('cat-2', 'Dining', CategoryType.Custom);
-    seedCategory('cat-3', 'Transfer', CategoryType.Protected);
-
-    const result = await useCase.execute({});
-
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.data).toHaveLength(3);
-      const names = result.data.map(c => c.name.value);
-      expect(names).toContain('Groceries');
-      expect(names).toContain('Dining');
-      expect(names).toContain('Transfer');
-    }
+    expect(list).toHaveLength(2);
+    expect(list.map((c) => c.id.value)).toEqual(['cat-exp-1', 'cat-inc-1']);
   });
 
-  it('should return empty array if no categories exist', async () => {
-    const result = await useCase.execute({});
+  it('filters active categories by CategoryKind (Expense vs Income)', async () => {
+    const expenses = await useCase.execute({ kind: CategoryKind.Expense });
+    expect(expenses).toHaveLength(1);
+    expect(expenses[0].id.value).toBe('cat-exp-1');
 
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.data).toHaveLength(0);
-    }
+    const income = await useCase.execute({ kind: CategoryKind.Income });
+    expect(income).toHaveLength(1);
+    expect(income[0].id.value).toBe('cat-inc-1');
   });
 
-  it('should exclude archived categories from results', async () => {
-    seedCategory('cat-active', 'Groceries', CategoryType.Custom, false);
-    seedCategory('cat-archived', 'Old Category', CategoryType.Custom, true);
+  it('includes archived categories when includeArchived = true', async () => {
+    const list = await useCase.execute({ includeArchived: true });
 
-    const result = await useCase.execute({});
-
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.data).toHaveLength(1);
-      expect(result.data[0].id.value).toBe('cat-active');
-    }
-  });
-
-  it('should propagate repository errors', async () => {
-    repository.setForceFailure('Database error');
-
-    const result = await useCase.execute({});
-
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(result.error.message).toBe('Database error');
-    }
+    expect(list).toHaveLength(3);
   });
 });

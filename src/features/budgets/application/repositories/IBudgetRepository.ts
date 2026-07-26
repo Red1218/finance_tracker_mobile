@@ -1,19 +1,20 @@
 import { Budget, BudgetId, BudgetPeriod } from '../../domain';
 import { CategoryId } from '../../../categories/domain';
 import { RepositoryResult, RepositoryError } from '../../../../platform/persistence';
-import { BudgetSummaryData } from '../projections/BudgetSummaryData';
 
 export interface IBudgetRepository {
+  getById(id: BudgetId): Promise<RepositoryResult<Budget | null, RepositoryError>>;
+  findById(id: BudgetId): Promise<RepositoryResult<Budget | null, RepositoryError>>;
+  list(includeArchived?: boolean, categoryId?: string | null): Promise<RepositoryResult<Budget[], RepositoryError>>;
+  save(budget: Budget): Promise<RepositoryResult<void, RepositoryError>>;
   create(budget: Budget): Promise<RepositoryResult<void, RepositoryError>>;
   update(budget: Budget): Promise<RepositoryResult<void, RepositoryError>>;
   delete(id: BudgetId): Promise<RepositoryResult<void, RepositoryError>>;
-  findById(id: BudgetId): Promise<RepositoryResult<Budget | null, RepositoryError>>;
-  list(): Promise<RepositoryResult<Budget[], RepositoryError>>;
+  archive(id: BudgetId, archivedAt?: Date): Promise<RepositoryResult<void, RepositoryError>>;
+  restore(id: BudgetId): Promise<RepositoryResult<void, RepositoryError>>;
   findOverlappingBudget(
     categoryId: CategoryId | null,
     period: BudgetPeriod,
-    startDate: Date,
-    endDate: Date
+    excludeBudgetId?: string
   ): Promise<RepositoryResult<Budget | null, RepositoryError>>;
-  getBudgetSummary(id: BudgetId): Promise<RepositoryResult<BudgetSummaryData | null, RepositoryError>>;
 }

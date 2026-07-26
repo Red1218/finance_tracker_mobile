@@ -1,37 +1,39 @@
-import { supabase } from '../../../database/client';
-import { SupabaseReportingDataSource } from '../infrastructure/datasources/SupabaseReportingDataSource';
-import { ReportingRepositoryImpl } from '../infrastructure/repositories/ReportingRepositoryImpl';
-import {
-  GetDashboardSummaryUseCase,
-  GetCategoryBreakdownUseCase,
+import { IReportingRepository } from '../domain';
+import { SupabaseReportingRepository } from '../../../platform/persistence/reporting/SupabaseReportingRepository';
+import { 
+  GetFinancialSummaryUseCase, 
+  GetCategoryBreakdownUseCase, 
   GetMonthlyTrendUseCase,
+  GetDashboardSummaryUseCase,
   GetBudgetPerformanceUseCase,
-  GetLargestTransactionsUseCase,
+  GetLargestTransactionsUseCase
 } from '../application';
+import { ReportingController } from '../presentation/controllers/ReportingController';
 
-/**
- * ReportingModule
- *
- * Wires the concrete Supabase data source → ReportingRepositoryImpl → all 5 use cases.
- * Single long-lived instance. Object.freeze prevents mutation after construction.
- *
- * Follows the same composition pattern as BudgetsModule.
- */
 export class ReportingModule {
-  public readonly getDashboardSummaryUseCase: GetDashboardSummaryUseCase;
+  public readonly reportingRepository: IReportingRepository;
+  public readonly getFinancialSummaryUseCase: GetFinancialSummaryUseCase;
   public readonly getCategoryBreakdownUseCase: GetCategoryBreakdownUseCase;
   public readonly getMonthlyTrendUseCase: GetMonthlyTrendUseCase;
+  public readonly getDashboardSummaryUseCase: GetDashboardSummaryUseCase;
   public readonly getBudgetPerformanceUseCase: GetBudgetPerformanceUseCase;
   public readonly getLargestTransactionsUseCase: GetLargestTransactionsUseCase;
+  public readonly reportingController: ReportingController;
 
-  constructor(dataSource = new SupabaseReportingDataSource(supabase)) {
-    const repository = new ReportingRepositoryImpl(dataSource);
+  constructor(repository?: IReportingRepository) {
+    this.reportingRepository = repository ?? new SupabaseReportingRepository();
+    this.getFinancialSummaryUseCase = new GetFinancialSummaryUseCase(this.reportingRepository);
+    this.getCategoryBreakdownUseCase = new GetCategoryBreakdownUseCase(this.reportingRepository);
+    this.getMonthlyTrendUseCase = new GetMonthlyTrendUseCase(this.reportingRepository);
+    this.getDashboardSummaryUseCase = new GetDashboardSummaryUseCase(this.reportingRepository);
+    this.getBudgetPerformanceUseCase = new GetBudgetPerformanceUseCase(this.reportingRepository);
+    this.getLargestTransactionsUseCase = new GetLargestTransactionsUseCase(this.reportingRepository);
 
-    this.getDashboardSummaryUseCase = new GetDashboardSummaryUseCase(repository);
-    this.getCategoryBreakdownUseCase = new GetCategoryBreakdownUseCase(repository);
-    this.getMonthlyTrendUseCase = new GetMonthlyTrendUseCase(repository);
-    this.getBudgetPerformanceUseCase = new GetBudgetPerformanceUseCase(repository);
-    this.getLargestTransactionsUseCase = new GetLargestTransactionsUseCase(repository);
+    this.reportingController = new ReportingController(
+      this.getFinancialSummaryUseCase,
+      this.getCategoryBreakdownUseCase,
+      this.getMonthlyTrendUseCase
+    );
 
     Object.freeze(this);
   }

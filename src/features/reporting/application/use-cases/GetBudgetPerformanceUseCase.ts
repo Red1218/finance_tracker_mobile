@@ -18,7 +18,8 @@ export class GetBudgetPerformanceUseCase {
       const result = await this.reportingRepository.getBudgetPerformance(
         request.reportingPeriod,
         validation.data.startDate,
-        validation.data.endDate
+        validation.data.endDate,
+        request.categoryId
       );
       if (!result.success) return result;
 

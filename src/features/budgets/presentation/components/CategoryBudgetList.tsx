@@ -1,14 +1,15 @@
 import React from 'react';
 import { View, Text, FlatList } from 'react-native';
-import { BudgetViewModel, BudgetSummaryViewModel } from '../types/BudgetViewModel';
+import { BudgetViewModel } from '../models/BudgetViewModel';
 import { BudgetCardLoader } from './BudgetCardLoader';
+import { BudgetSummary } from '../../application';
 
 interface CategoryBudgetListProps {
   budgets: BudgetViewModel[];
   categoryMap?: Map<string, string>;
-  onBudgetPress: (summary: BudgetSummaryViewModel) => void;
-  onEditBudget?: (summary: BudgetSummaryViewModel) => void;
-  onDeleteBudget?: (summary: BudgetSummaryViewModel) => void;
+  onBudgetPress?: (summary: BudgetSummary) => void;
+  onEditBudget?: (summary: BudgetSummary) => void;
+  onDeleteBudget?: (summary: BudgetSummary) => void;
 }
 
 export const CategoryBudgetList: React.FC<CategoryBudgetListProps> = ({
@@ -41,4 +42,3 @@ export const CategoryBudgetList: React.FC<CategoryBudgetListProps> = ({
     </View>
   );
 };
-

@@ -4,7 +4,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { createBudgetSchema, CreateBudgetFormData } from '../validation/budgetSchema';
-import { BudgetPeriod } from '../../domain/value-objects/BudgetPeriod';
+import { BudgetPeriodType } from '../../domain/value-objects/BudgetPeriod';
 
 export interface CategoryOption {
   id: string;
@@ -20,12 +20,12 @@ interface BudgetFormProps {
   error?: string | null;
 }
 
-const PERIOD_OPTIONS: { id: BudgetPeriod; label: string }[] = [
-  { id: BudgetPeriod.Monthly, label: 'Monthly' },
-  { id: BudgetPeriod.Weekly, label: 'Weekly' },
-  { id: BudgetPeriod.Quarterly, label: 'Quarterly' },
-  { id: BudgetPeriod.Yearly, label: 'Yearly' },
-  { id: BudgetPeriod.Custom, label: 'Custom' },
+const PERIOD_OPTIONS: { id: BudgetPeriodType; label: string }[] = [
+  { id: BudgetPeriodType.Monthly, label: 'Monthly' },
+  { id: BudgetPeriodType.Weekly, label: 'Weekly' },
+  { id: BudgetPeriodType.Quarterly, label: 'Quarterly' },
+  { id: BudgetPeriodType.Yearly, label: 'Yearly' },
+  { id: BudgetPeriodType.Custom, label: 'Custom' },
 ];
 
 export const BudgetForm: React.FC<BudgetFormProps> = ({
@@ -41,7 +41,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
     defaultValues: {
       amount: initialValues?.amount || 0,
       currencyCode: initialValues?.currencyCode || 'INR',
-      period: initialValues?.period || BudgetPeriod.Monthly,
+      period: initialValues?.period || BudgetPeriodType.Monthly,
       startDate: initialValues?.startDate ? new Date(initialValues.startDate) : new Date(),
       endDate: initialValues?.endDate ? new Date(initialValues.endDate) : new Date(Date.now() + 30 * 86400000),
       categoryId: initialValues?.categoryId !== undefined ? initialValues.categoryId : null,
@@ -221,4 +221,3 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
     </ScrollView>
   );
 };
-

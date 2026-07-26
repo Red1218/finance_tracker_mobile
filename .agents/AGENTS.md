@@ -96,17 +96,21 @@ valid route files.
 
 ---
 
-# Feature Definition of Done (DoD)
+# Feature Definition of Done (DoD) & Merge Checklist
 
-For every feature or major architectural change, ensure all of the following criteria are verified before completing:
+For every feature or bounded context (Accounts, Preferences, Categories, Budgets, Expenses, Analytics, etc.), ensure all of the following criteria are verified before merging:
 
-- [ ] Architecture review complete
-- [ ] Implementation complete & Clean Architecture / DDD boundaries enforced
+- [ ] Architecture Review approved
+- [ ] Domain Layer approved & frozen
+- [ ] Application Layer approved & frozen
+- [ ] Infrastructure Layer approved & frozen
+- [ ] Presentation Layer approved & frozen
+- [ ] Integration Layer approved & frozen
 - [ ] Automated tests pass (`npm test`)
 - [ ] TypeScript type checking passes (`npx tsc --noEmit`)
 - [ ] Expo doctor checked (`npx expo-doctor`)
-- [ ] Database schema verified against live Supabase tables
-- [ ] RLS policies and database permissions verified
-- [ ] Manual smoke test / dev-client runtime verification passed
-- [ ] Documentation updated
+- [ ] Database schema & RLS policies verified against Supabase migrations
+- [ ] ADR created/updated in `docs/adr/` and registered in `docs/adr/INDEX.md`
+- [ ] No TODO/FIXME items remaining in feature codebase
+- [ ] No architectural boundary violations introduced (Clean Architecture & ADR-011 enforced)
 - [ ] Ready to merge

@@ -3,7 +3,7 @@ import { CreateExpenseUseCase } from '../use-cases/CreateExpenseUseCase';
 import { PaymentMethodType } from '../../domain/value-objects/PaymentMethod';
 import { InMemoryExpenseRepository } from './InMemoryExpenseRepository';
 import { InMemoryCategoryRepository } from '../../../categories/application/__tests__/InMemoryCategoryRepository';
-import { Category, CategoryId, CategoryName, CategoryType } from '../../../categories/domain';
+import { Category, CategoryId, CategoryName, CategoryKind } from '../../../categories/domain';
 import { v4 as uuidv4 } from 'uuid';
 
 describe('CreateExpenseUseCase', () => {
@@ -22,8 +22,9 @@ describe('CreateExpenseUseCase', () => {
       new Category({
         id: new CategoryId(validCategoryId),
         name: new CategoryName('Valid Category'),
-        type: 'expense' as any,
-        isArchived: false,
+        kind: CategoryKind.Expense,
+        isSystem: false,
+        archivedAt: null,
       })
     );
   });

@@ -3,14 +3,14 @@ import { BaseRepository } from '../BaseRepository';
 import { RepositoryResult, Result } from '../RepositoryResult';
 import { RepositoryError } from '../RepositoryError';
 import { ICategoryRepository } from '../../../features/categories/application/repositories/ICategoryRepository';
-import { Category, CategoryId, CategoryName } from '../../../features/categories/domain';
+import { Category, CategoryId, CategoryName, CategoryKind } from '../../../features/categories/domain';
 import { CategoryMapper } from './CategoryMapper';
 import { CategoryRow } from '../../../features/categories/contracts';
 import { supabase } from '../../../database';
 
 export class SupabaseCategoryRepository extends BaseRepository implements ICategoryRepository {
   private static readonly TABLE = 'categories';
-  private static readonly COLUMNS = 'id,name,type,is_archived';
+  private static readonly COLUMNS = 'id,name,type,is_system,archived_at,color_hex,icon_name';
 
   constructor(client: SupabaseClient = supabase) {
     super(client);
@@ -21,7 +21,7 @@ export class SupabaseCategoryRepository extends BaseRepository implements ICateg
     try {
       const { data, error } = await this.client
         .from(SupabaseCategoryRepository.TABLE)
-        .select('id,name,type,is_archived')
+        .select(SupabaseCategoryRepository.COLUMNS)
         .eq('id', id.value)
         .single();
 
@@ -36,13 +36,17 @@ export class SupabaseCategoryRepository extends BaseRepository implements ICateg
         return Result.success(null);
       }
 
-      return Result.success(CategoryMapper.toDomain(data as CategoryRow));
+      return Result.success(CategoryMapper.toDomain(data as unknown as CategoryRow));
     } catch (e) {
       return this.handleError(e, { operation: 'getById', id: id.value });
     }
   }
 
-  public async list(includeArchived?: boolean): Promise<RepositoryResult<Category[], RepositoryError>> {
+  public async list(includeArchived?: boolean, kind?: CategoryKind): Promise<RepositoryResult<Category[], RepositoryError>> {
+    return this.getAll(kind, includeArchived);
+  }
+
+  public async getAll(kind?: CategoryKind, includeArchived?: boolean): Promise<RepositoryResult<Category[], RepositoryError>> {
     try {
       let query = this.client
         .from(SupabaseCategoryRepository.TABLE)
@@ -50,62 +54,60 @@ export class SupabaseCategoryRepository extends BaseRepository implements ICateg
         .order('name', { ascending: true });
         
       if (!includeArchived) {
-        query = query.eq('is_archived', false);
+        query = query.is('archived_at', null);
+      }
+
+      if (kind) {
+        query = query.eq('type', kind === CategoryKind.Income ? 'income' : 'expense');
       }
       
       const { data, error } = await query;
 
       if (error) {
-        return this.handleError(error, { operation: 'list' });
+        return this.handleError(error, { operation: 'getAll' });
       }
 
-      const categories = (data as CategoryRow[]).map(CategoryMapper.toDomain);
+      const categories = (data as unknown as CategoryRow[]).map(CategoryMapper.toDomain);
       return Result.success(categories);
     } catch (e) {
-      return this.handleError(e, { operation: 'list' });
+      return this.handleError(e, { operation: 'getAll' });
+    }
+  }
+
+  public async save(category: Category): Promise<RepositoryResult<void, RepositoryError>> {
+    try {
+      const { data: { user } } = await this.client.auth.getUser();
+      const row = {
+        ...CategoryMapper.toPersistence(category),
+        ...(user?.id ? { user_id: user.id } : {}),
+      };
+      const { error } = await this.client
+        .from(SupabaseCategoryRepository.TABLE)
+        .upsert(row);
+
+      if (error) {
+        return this.handleError(error, { operation: 'save', id: category.id.value });
+      }
+
+      return Result.success(undefined);
+    } catch (e) {
+      return this.handleError(e, { operation: 'save', id: category.id.value });
     }
   }
 
   public async create(category: Category): Promise<RepositoryResult<void, RepositoryError>> {
-    try {
-      const row = CategoryMapper.toPersistence(category);
-      const { error } = await this.client
-        .from(SupabaseCategoryRepository.TABLE)
-        .insert(row);
-
-      if (error) {
-        return this.handleError(error, { operation: 'create', id: category.id.value });
-      }
-
-      return Result.success(undefined);
-    } catch (e) {
-      return this.handleError(e, { operation: 'create', id: category.id.value });
-    }
+    return this.save(category);
   }
 
   public async update(category: Category): Promise<RepositoryResult<void, RepositoryError>> {
-    try {
-      const row = CategoryMapper.toPersistence(category);
-      const { error } = await this.client
-        .from(SupabaseCategoryRepository.TABLE)
-        .update(row)
-        .eq('id', row.id);
-
-      if (error) {
-        return this.handleError(error, { operation: 'update', id: category.id.value });
-      }
-
-      return Result.success(undefined);
-    } catch (e) {
-      return this.handleError(e, { operation: 'update', id: category.id.value });
-    }
+    return this.save(category);
   }
 
-  public async archive(id: CategoryId): Promise<RepositoryResult<void, RepositoryError>> {
+  public async archive(id: CategoryId, archivedAt: Date = new Date()): Promise<RepositoryResult<void, RepositoryError>> {
     try {
       const { error } = await this.client
         .from(SupabaseCategoryRepository.TABLE)
-        .update({ is_archived: true })
+        .update({ archived_at: archivedAt.toISOString() })
         .eq('id', id.value);
 
       if (error) {
@@ -122,7 +124,7 @@ export class SupabaseCategoryRepository extends BaseRepository implements ICateg
     try {
       const { error } = await this.client
         .from(SupabaseCategoryRepository.TABLE)
-        .update({ is_archived: false })
+        .update({ archived_at: null })
         .eq('id', id.value);
 
       if (error) {
@@ -141,7 +143,7 @@ export class SupabaseCategoryRepository extends BaseRepository implements ICateg
         .from(SupabaseCategoryRepository.TABLE)
         .select('id', { count: 'exact', head: true })
         .eq('name', name.value)
-        .eq('is_archived', false);
+        .is('archived_at', null);
 
       if (error) {
         return this.handleError(error, { operation: 'existsByName', name: name.value });
@@ -150,6 +152,35 @@ export class SupabaseCategoryRepository extends BaseRepository implements ICateg
       return Result.success((count ?? 0) > 0);
     } catch (e) {
       return this.handleError(e, { operation: 'existsByName', name: name.value });
+    }
+  }
+
+  public async existsByNameAndKind(
+    name: string,
+    kind: CategoryKind,
+    excludeCategoryId?: string
+  ): Promise<RepositoryResult<boolean, RepositoryError>> {
+    try {
+      let query = this.client
+        .from(SupabaseCategoryRepository.TABLE)
+        .select('id', { count: 'exact', head: true })
+        .ilike('name', name.trim())
+        .eq('type', kind === CategoryKind.Income ? 'income' : 'expense')
+        .is('archived_at', null);
+
+      if (excludeCategoryId) {
+        query = query.neq('id', excludeCategoryId);
+      }
+
+      const { error, count } = await query;
+
+      if (error) {
+        return this.handleError(error, { operation: 'existsByNameAndKind', name });
+      }
+
+      return Result.success((count ?? 0) > 0);
+    } catch (e) {
+      return this.handleError(e, { operation: 'existsByNameAndKind', name });
     }
   }
 }

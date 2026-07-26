@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { CreateCategoryUseCase } from '../use-cases/CreateCategoryUseCase';
 import { InMemoryCategoryRepository } from './InMemoryCategoryRepository';
-import { CategoryType, CategoryDomainError } from '../../domain';
+import { CategoryKind, CategoryDomainError } from '../../domain';
 
 describe('CreateCategoryUseCase', () => {
   let repository: InMemoryCategoryRepository;
@@ -12,52 +12,52 @@ describe('CreateCategoryUseCase', () => {
     useCase = new CreateCategoryUseCase(repository);
   });
 
-  it('should successfully create a category', async () => {
-    const result = await useCase.execute({
+  it('successfully creates a category with isSystem = false and archivedAt = null', async () => {
+    const category = await useCase.execute({
       name: 'Groceries',
-      type: CategoryType.Custom,
+      kind: CategoryKind.Expense,
+      colorHex: '#EF4444',
+      iconName: 'cart',
     });
 
-    expect(result.success).toBe(true);
+    expect(category.name.value).toBe('Groceries');
+    expect(category.kind).toBe(CategoryKind.Expense);
+    expect(category.isSystem).toBe(false);
+    expect(category.isArchived).toBe(false);
+    expect(category.colorHex).toBe('#EF4444');
 
-    const savedResult = await repository.list();
-    expect(savedResult.success).toBe(true);
-    if (savedResult.success) {
-      expect(savedResult.data).toHaveLength(1);
-      expect(savedResult.data[0].name.value).toBe('Groceries');
-      expect(savedResult.data[0].type).toBe(CategoryType.Custom);
+    const res = await repository.getAll();
+    if (res.success) {
+      expect(res.data).toHaveLength(1);
     }
   });
 
-  it('should fail if category name already exists', async () => {
-    await useCase.execute({
-      name: 'Groceries',
-      type: CategoryType.Custom,
-    });
+  it('rejects duplicate category name within the same kind (DUPLICATE_CATEGORY_NAME)', async () => {
+    await useCase.execute({ name: 'Investments', kind: CategoryKind.Income });
 
-    const result = await useCase.execute({
-      name: 'Groceries',
-      type: CategoryType.Custom,
-    });
+    await expect(
+      useCase.execute({ name: 'Investments', kind: CategoryKind.Income })
+    ).rejects.toThrowError(CategoryDomainError);
+  });
 
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(result.error).toBeInstanceOf(CategoryDomainError);
-      expect((result.error as CategoryDomainError).code).toBe('INVALID_NAME');
+  it('allows same name across different CategoryKinds (Income vs Expense)', async () => {
+    const expenseCat = await useCase.execute({ name: 'Refund', kind: CategoryKind.Expense });
+    const incomeCat = await useCase.execute({ name: 'Refund', kind: CategoryKind.Income });
+
+    expect(expenseCat.kind).toBe(CategoryKind.Expense);
+    expect(incomeCat.kind).toBe(CategoryKind.Income);
+
+    const res = await repository.getAll();
+    if (res.success) {
+      expect(res.data).toHaveLength(2);
     }
   });
 
-  it('should propagate repository errors (e.g. database failure)', async () => {
-    repository.setForceFailure('Database error');
+  it('propagates repository errors', async () => {
+    repository.setForceFailure('Database insert error');
 
-    const result = await useCase.execute({
-      name: 'Groceries',
-      type: CategoryType.Custom,
-    });
-
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(result.error.message).toBe('Database error');
-    }
+    await expect(
+      useCase.execute({ name: 'Groceries', kind: CategoryKind.Expense })
+    ).rejects.toThrowError('Database insert error');
   });
 });

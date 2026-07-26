@@ -1,24 +1,18 @@
 import { useState, useCallback } from 'react';
-import { RestoreCategoryUseCase, RestoreCategoryRequest } from '../../application';
+import { RestoreCategoryUseCase, RestoreCategoryCommand } from '../../application';
 
 export function useRestoreCategory(restoreCategoryUseCase: RestoreCategoryUseCase) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const restoreCategory = useCallback(
-    async (request: RestoreCategoryRequest) => {
+    async (command: RestoreCategoryCommand) => {
       setIsLoading(true);
       setError(null);
 
       try {
-        const result = await restoreCategoryUseCase.execute(request);
-
-        if (result.success) {
-          return true;
-        } else {
-          setError(result.error.message);
-          return false;
-        }
+        await restoreCategoryUseCase.execute(command);
+        return true;
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Failed to restore category');
         return false;

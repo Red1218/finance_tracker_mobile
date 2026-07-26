@@ -18,7 +18,8 @@ export class GetCategoryBreakdownUseCase {
       const result = await this.reportingRepository.getCategoryBreakdown(
         request.reportingPeriod,
         validation.data.startDate,
-        validation.data.endDate
+        validation.data.endDate,
+        request.categoryId
       );
       if (!result.success) return result;
 

@@ -1,10 +1,11 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Category } from '../../domain';
+import { Category, CategoryKind } from '../../domain';
 import { ListCategoriesUseCase } from '../../application';
 
 export function useCategories(
   listCategoriesUseCase: ListCategoriesUseCase,
-  includeArchived: boolean = false
+  includeArchived: boolean = false,
+  kind?: CategoryKind
 ) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -15,18 +16,14 @@ export function useCategories(
     setError(null);
     
     try {
-      const result = await listCategoriesUseCase.execute({ includeArchived });
-      if (result.success) {
-        setCategories(result.data);
-      } else {
-        setError(result.error.message);
-      }
+      const data = await listCategoriesUseCase.execute({ includeArchived, kind });
+      setCategories(data);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to fetch categories');
     } finally {
       setIsLoading(false);
     }
-  }, [listCategoriesUseCase, includeArchived]);
+  }, [listCategoriesUseCase, includeArchived, kind]);
 
   useEffect(() => {
     fetchCategories();

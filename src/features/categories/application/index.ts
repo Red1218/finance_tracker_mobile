@@ -1,3 +1,2 @@
-export * from './repositories';
-export * from './services';
+export * from './repositories/ICategoryRepository';
 export * from './use-cases';

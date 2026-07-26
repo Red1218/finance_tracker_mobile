@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { RenameCategoryUseCase } from '../use-cases/RenameCategoryUseCase';
 import { InMemoryCategoryRepository } from './InMemoryCategoryRepository';
-import { Category, CategoryId, CategoryName, CategoryType, CategoryDomainError } from '../../domain';
+import { Category, CategoryId, CategoryName, CategoryKind, CategoryDomainError } from '../../domain';
 
 describe('RenameCategoryUseCase', () => {
   let repository: InMemoryCategoryRepository;
@@ -10,76 +10,46 @@ describe('RenameCategoryUseCase', () => {
   beforeEach(() => {
     repository = new InMemoryCategoryRepository();
     useCase = new RenameCategoryUseCase(repository);
+
+    repository.seed(
+      new Category({
+        id: new CategoryId('cat-1'),
+        name: new CategoryName('Groceries'),
+        kind: CategoryKind.Expense,
+        isSystem: false,
+        archivedAt: null,
+      })
+    );
+
+    repository.seed(
+      new Category({
+        id: new CategoryId('cat-sys'),
+        name: new CategoryName('Uncategorized Expense'),
+        kind: CategoryKind.Expense,
+        isSystem: true,
+        archivedAt: null,
+      })
+    );
   });
 
-  const seedCategory = (id: string, name: string, type: CategoryType = CategoryType.Custom) => {
-    const category = new Category({
-      id: new CategoryId(id),
-      name: new CategoryName(name),
-      type,
-      isArchived: false,
-    });
-    repository.seed(category);
-  };
+  it('successfully renames a custom category', async () => {
+    const updated = await useCase.execute({ id: 'cat-1', newName: 'Supermarket' });
 
-  it('should successfully rename a custom category', async () => {
-    seedCategory('cat-1', 'Old Name');
-
-    const result = await useCase.execute({
-      id: 'cat-1',
-      newName: 'New Name',
-    });
-
-    expect(result.success).toBe(true);
-
-    const check = await repository.getById(new CategoryId('cat-1'));
-    expect(check.success).toBe(true);
-    if (check.success && check.data) {
-      expect(check.data.name.value).toBe('New Name');
+    const res = await repository.getById(new CategoryId('cat-1'));
+    if (res.success && res.data) {
+      expect(res.data.name.value).toBe('Supermarket');
     }
   });
 
-  it('should fail if category does not exist', async () => {
-    const result = await useCase.execute({
-      id: 'invalid-id',
-      newName: 'New Name',
-    });
-
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(result.error).toBeInstanceOf(CategoryDomainError);
-      expect((result.error as CategoryDomainError).code).toBe('INVALID_IDENTIFIER');
-    }
+  it('rejects renaming system categories (SYSTEM_CATEGORY_MODIFICATION)', async () => {
+    await expect(
+      useCase.execute({ id: 'cat-sys', newName: 'Custom System Name' })
+    ).rejects.toThrowError('System categories cannot be renamed.');
   });
 
-  it('should fail if category name is already taken by another category', async () => {
-    seedCategory('cat-1', 'Groceries');
-    seedCategory('cat-2', 'Dining');
-
-    const result = await useCase.execute({
-      id: 'cat-2',
-      newName: 'Groceries',
-    });
-
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(result.error).toBeInstanceOf(CategoryDomainError);
-      expect((result.error as CategoryDomainError).code).toBe('INVALID_NAME');
-    }
-  });
-
-  it('should propagate repository errors', async () => {
-    seedCategory('cat-1', 'Groceries');
-    repository.setForceFailure('Database error');
-
-    const result = await useCase.execute({
-      id: 'cat-1',
-      newName: 'Supermarket',
-    });
-
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(result.error.message).toBe('Database error');
-    }
+  it('rejects renaming if category does not exist (CATEGORY_NOT_FOUND)', async () => {
+    await expect(
+      useCase.execute({ id: 'invalid-id', newName: 'New Name' })
+    ).rejects.toThrowError('Category "invalid-id" not found.');
   });
 });

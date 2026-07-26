@@ -1,35 +1,36 @@
 import { IBudgetRepository } from '../repositories/IBudgetRepository';
-import { UpdateBudgetRequest } from '../requests/UpdateBudgetRequest';
-import { UseCaseResult } from './UseCaseTypes';
-import { executeUseCase } from './UseCaseHelpers';
-import { BudgetId, BudgetAmount, BudgetDomainError, Budget } from '../../domain';
-import { Result } from '../../../../platform/persistence';
+import { Budget, BudgetId, BudgetAmount, BudgetDomainError } from '../../domain';
+
+export interface UpdateBudgetCommand {
+  id: string;
+  newAmount: number;
+  currentDate?: Date;
+}
 
 export class UpdateBudgetUseCase {
   constructor(private readonly budgetRepository: IBudgetRepository) {
     Object.freeze(this);
   }
 
-  public async execute(request: UpdateBudgetRequest): Promise<UseCaseResult<Budget>> {
-    return executeUseCase(async () => {
-      const budgetId = new BudgetId(request.id);
-      
-      const budgetResult = await this.budgetRepository.findById(budgetId);
-      if (!budgetResult.success) return budgetResult;
-      
-      const existingBudget = budgetResult.data;
-      if (!existingBudget) {
-        return Result.failure(new BudgetDomainError('INVALID_IDENTIFIER', 'Budget not found.'));
-      }
+  public async execute(command: UpdateBudgetCommand): Promise<Budget> {
+    const budgetId = new BudgetId(command.id);
+    const getResult = await this.budgetRepository.getById(budgetId);
 
-      const updatedBudget = existingBudget.updateAmount(new BudgetAmount(request.amount));
+    if (!getResult.success || !getResult.data) {
+      throw new BudgetDomainError('BUDGET_NOT_FOUND', `Budget "${command.id}" not found.`);
+    }
 
-      const updateResult = await this.budgetRepository.update(updatedBudget);
-      if (!updateResult.success) {
-        return updateResult;
-      }
+    const existingBudget = getResult.data;
+    const updatedBudget = existingBudget.updateAmount(
+      new BudgetAmount(command.newAmount),
+      command.currentDate
+    );
 
-      return Result.success(updatedBudget);
-    });
+    const saveResult = await this.budgetRepository.save(updatedBudget);
+    if (!saveResult.success) {
+      throw saveResult.error;
+    }
+
+    return updatedBudget;
   }
 }

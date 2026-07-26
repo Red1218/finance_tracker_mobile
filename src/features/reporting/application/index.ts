@@ -10,3 +10,5 @@ export { GetCategoryBreakdownUseCase } from './use-cases/GetCategoryBreakdownUse
 export { GetMonthlyTrendUseCase } from './use-cases/GetMonthlyTrendUseCase';
 export { GetBudgetPerformanceUseCase } from './use-cases/GetBudgetPerformanceUseCase';
 export { GetLargestTransactionsUseCase } from './use-cases/GetLargestTransactionsUseCase';
+export { GetFinancialSummaryUseCase } from './use-cases/GetFinancialSummaryUseCase';
+export type { GetFinancialSummaryCommand, FinancialSummaryDTO } from './use-cases/GetFinancialSummaryUseCase';

@@ -1,45 +1,45 @@
 import { useMemo } from 'react';
 import { useBudgets } from './useBudgets';
-import { useCategoryOptions } from './useCategoryOptions';
-import { BudgetProgressViewModel } from '../models';
+import { BudgetsModule } from '../../composition/BudgetsModule';
+import { BudgetViewModel } from '../models/BudgetViewModel';
+
+const budgetsModule = new BudgetsModule();
+
+export interface BudgetProgressItem {
+  budgetId: string;
+  categoryId: string | null;
+  budgetAmount: number;
+  spentAmount: number;
+  remainingAmount: number;
+  percentageUsed: number;
+  isOverBudget: boolean;
+}
 
 export function useBudgetProgress() {
-  const { budgets, isLoading: isFetchingBudgets, error: fetchError, refresh: refreshBudgets } = useBudgets();
-  const { categories, isLoading: isCategoriesLoading, refresh: refreshCategories } = useCategoryOptions();
+  const { budgets, isLoading, error, refresh } = useBudgets(budgetsModule.listBudgetsUseCase);
 
-  const isLoading = isCategoriesLoading || isFetchingBudgets;
+  const progressModels: BudgetProgressItem[] = useMemo(() => {
+    return budgets.map((b: BudgetViewModel) => {
+      const spentAmount = b.spentAmount ?? 0;
+      const remainingAmount = b.remainingAmount ?? b.amount - spentAmount;
+      const percentageUsed = b.percentageUsed ?? (b.amount > 0 ? (spentAmount / b.amount) * 100 : 0);
 
-  const progressModels: BudgetProgressViewModel[] = useMemo(() => {
-    return budgets.map(b => {
-      const cat = categories.find(c => c.id.value === b.categoryId);
-      const spentAmount = 0; // Placeholder until Expenses linkage
-      const rawProgress = b.amount > 0 ? (spentAmount / b.amount) * 100 : 0;
-      const progressPercentage = Math.min(Math.max(rawProgress, 0), 100);
-      
       return {
         budgetId: b.id,
         categoryId: b.categoryId,
-        categoryName: cat ? cat.name.value : 'Overall Budget',
         budgetAmount: b.amount,
         spentAmount,
-        remainingAmount: b.amount - spentAmount,
-        progressPercentage,
+        remainingAmount,
+        percentageUsed,
         isOverBudget: spentAmount > b.amount,
-        formattedBudgetAmount: `${b.currency} ${b.amount.toFixed(2)}`,
-        formattedSpentAmount: `${b.currency} 0.00`,
-        formattedRemainingAmount: `${b.currency} ${(b.amount - spentAmount).toFixed(2)}`,
       };
     });
-  }, [budgets, categories]);
-
-  const refresh = async () => {
-    await Promise.all([refreshBudgets(), refreshCategories()]);
-  };
+  }, [budgets]);
 
   return {
     progressModels,
     isLoading,
-    error: fetchError,
-    refresh
+    error,
+    refresh,
   };
 }

@@ -1,10 +1,5 @@
 import { ReportingPeriod } from '../../domain';
 
-// ---------------------------------------------------------------------------
-// Raw persistence shapes — these are what the database/datasource returns
-// before any domain mapping occurs.
-// ---------------------------------------------------------------------------
-
 export interface RawDashboardSummary {
   total_income: number;
   total_expenses: number;
@@ -19,9 +14,14 @@ export interface RawCategoryBreakdown {
 }
 
 export interface RawMonthlyTrendPoint {
-  period: string; // e.g. '2026-06'
+  period: string; // e.g. '2026-06' or '2026-06-15'
   total_income: number;
   total_expenses: number;
+}
+
+export interface RawMonthlyTrendResult {
+  items: RawMonthlyTrendPoint[];
+  previousPeriodTotal: number;
 }
 
 export interface RawBudgetPerformance {
@@ -40,38 +40,39 @@ export interface RawLargestTransaction {
   transaction_date: string;
 }
 
-/**
- * ReportingDataSource — executes aggregation queries against the database.
- * Returns raw persistence shapes. No mapping, no business rules.
- */
 export interface ReportingDataSource {
   fetchDashboardSummary(
     period: ReportingPeriod,
     startDate?: Date,
-    endDate?: Date
+    endDate?: Date,
+    categoryId?: string | null
   ): Promise<RawDashboardSummary>;
 
   fetchCategoryBreakdown(
     period: ReportingPeriod,
     startDate?: Date,
-    endDate?: Date
+    endDate?: Date,
+    categoryId?: string | null
   ): Promise<RawCategoryBreakdown[]>;
 
   fetchMonthlyTrend(
     period: ReportingPeriod,
     startDate?: Date,
-    endDate?: Date
-  ): Promise<RawMonthlyTrendPoint[]>;
+    endDate?: Date,
+    categoryId?: string | null
+  ): Promise<RawMonthlyTrendResult>;
 
   fetchBudgetPerformance(
     period: ReportingPeriod,
     startDate?: Date,
-    endDate?: Date
+    endDate?: Date,
+    categoryId?: string | null
   ): Promise<RawBudgetPerformance[]>;
 
   fetchLargestTransactions(
     period: ReportingPeriod,
     startDate?: Date,
-    endDate?: Date
+    endDate?: Date,
+    categoryId?: string | null
   ): Promise<RawLargestTransaction[]>;
 }

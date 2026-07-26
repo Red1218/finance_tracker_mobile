@@ -1,32 +1,29 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { CreateBudgetUseCase, CreateBudgetRequest } from '../../application';
-import { budgetsModule } from './module';
+import { useState } from 'react';
+import { CreateBudgetUseCase, CreateBudgetCommand } from '../../application';
+import { BudgetViewModelMapper } from '../mappers/BudgetViewModelMapper';
+import { BudgetViewModel } from '../models/BudgetViewModel';
 
-export function useCreateBudget(createBudgetUseCase: CreateBudgetUseCase = budgetsModule.createBudgetUseCase) {
-  const queryClient = useQueryClient();
+export function useCreateBudget(createBudgetUseCase: CreateBudgetUseCase) {
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const mutation = useMutation({
-    mutationFn: async (request: CreateBudgetRequest) => {
-      const result = await createBudgetUseCase.execute(request);
-      if (!result.success) throw result.error;
-      return result.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['budgets'] });
-    },
-  });
+  const createBudget = async (command: CreateBudgetCommand): Promise<BudgetViewModel | null> => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const budget = await createBudgetUseCase.execute(command);
+      return BudgetViewModelMapper.toViewModel(budget);
+    } catch (e: any) {
+      setError(e.message || 'Failed to create budget.');
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return {
-    createBudget: async (request: CreateBudgetRequest) => {
-      try {
-        await mutation.mutateAsync(request);
-        return true;
-      } catch (e) {
-        return false;
-      }
-    },
-    isLoading: mutation.isPending,
-    error: mutation.error?.message || null,
+    createBudget,
+    isLoading,
+    error,
   };
 }
-

@@ -88,7 +88,11 @@ export class SupabaseExpenseRepository extends BaseRepository implements IExpens
 
   public async create(expense: Expense): Promise<RepositoryResult<void, RepositoryError>> {
     try {
-      const row = ExpenseMapper.toPersistence(expense);
+      const { data: { user } } = await this.client.auth.getUser();
+      const row = {
+        ...ExpenseMapper.toPersistence(expense),
+        ...(user?.id ? { user_id: user.id } : {}),
+      };
       const { error } = await this.client
         .from(SupabaseExpenseRepository.TABLE)
         .insert(row);
