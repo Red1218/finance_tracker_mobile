@@ -36,28 +36,30 @@ Offline-first mobile application architecture.
 Local-first storage with background synchronization to a remote server when online.
 
 ## Database
-SQLite (Local)
+PostgreSQL (Supabase) with Row Level Security (RLS) and single `transactions` ledger as canonical record. See [PERSISTENCE_ARCHITECTURE.md](../PERSISTENCE_ARCHITECTURE.md).
 
 ## Authentication
-Unknown
+Supabase Auth with JWT and `expo-secure-store`.
 
 ## State Management
-React Query / Context / Zustand
+TanStack Query (React Query) / React Context
 
 ## UI Framework
-React Native components (styled)
+React Native + Expo Router
 
-## Major Modules
-- Budgets
-- Expenses
-- Income
-- Analytics/Reports
-- Settings/Sync
+## Major Modules / Bounded Contexts
+- Accounts (Cash, Bank, Credit Card, Wallet)
+- Categories (Typed Income/Expense classification)
+- Transactions (Canonical ledger: Expense, Income, Transfer Out, Transfer In)
+- Budgets (Planning and expense goal calculation)
+- Preferences (User runtime settings)
+- Reporting & Analytics
+- Cloud Sync Engine
 
 ## Future Vision
 To incorporate intelligent categorization, receipt scanning, and end-to-end encrypted cloud backups without compromising user privacy.
 
 ---
-**Last Updated**: 2026-07-21
+**Last Updated**: 2026-07-27
 **Owner**: Development Team
-**Related Documents**: [AI_INDEX.md](file:///d:/Projects/finance_tracker_mobile/docs/AI_INDEX.md)
+**Related Documents**: [AI_INDEX.md](file:///d:/Projects/finance_tracker_mobile/docs/AI_INDEX.md), [PERSISTENCE_ARCHITECTURE.md](file:///d:/Projects/finance_tracker_mobile/docs/PERSISTENCE_ARCHITECTURE.md)

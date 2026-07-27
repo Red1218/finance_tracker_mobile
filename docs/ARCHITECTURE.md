@@ -86,15 +86,18 @@ No component communicates directly with Supabase. The only entry point to the da
 
 ---
 
-### Database Layer
+### Persistence Layer
 
-**Responsibility:** Enforce data integrity, referential integrity, authorization, and consistency.
+**Responsibility:** Enforce data integrity, referential integrity, tenant isolation, and consistency according to the Persistence Architecture specification.
 
 - PostgreSQL hosted on Supabase
-- Row Level Security (RLS) is enabled on all user-owned tables
-- `FORCE ROW LEVEL SECURITY` is set to prevent bypass via elevated roles
-- Schema changes are made exclusively through migrations
-- Applied migrations are immutable
+- Single `transactions` ledger as the canonical financial record
+- Row Level Security (RLS) is enabled on all user-owned tables (`FORCE ROW LEVEL SECURITY`)
+- Schema changes are made exclusively through forward-only migrations
+- Applied migrations are immutable once frozen
+- Lifecycle managed exclusively via `archived_at` timestamp
+
+> See [PERSISTENCE_ARCHITECTURE.md](./PERSISTENCE_ARCHITECTURE.md) for full approved & frozen persistence architecture details.
 
 ---
 
@@ -231,21 +234,21 @@ See [adr/ADR-010-row-level-security-strategy.md](./adr/ADR-010-row-level-securit
 
 ---
 
-## Data Flow Example — Creating a Spend
+## Data Flow Example — Creating a Transaction
 
 ```
-User taps "Save" on the Add Spend form
+User taps "Save" on the Add Transaction form
         ↓
 React Hook Form validates input against the Zod schema
         ↓
-useMutation calls spendService.create(dto)
+useMutation calls transactionService.create(dto)
         ↓
 Service validates business rules
-(e.g., category exists and is not archived)
+(e.g., account & category exist and are not archived)
         ↓
-Service calls spendRepository.insert(row)
+Service calls transactionRepository.insert(row)
         ↓
-Repository calls supabase.from('spends').insert(...)
+Repository calls supabase.from('transactions').insert(...)
         ↓
 PostgREST forwards the JWT to PostgreSQL
         ↓
@@ -257,9 +260,9 @@ Repository maps Row → Domain type
         ↓
 Service returns domain model to the mutation
         ↓
-React Query invalidates ['spends'] cache key
+React Query invalidates ['transactions'] cache key
         ↓
-UI re-renders with the updated spend list
+UI re-renders with the updated transaction list
 ```
 
 ---

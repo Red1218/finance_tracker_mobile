@@ -3,9 +3,9 @@
 ## Navigation Map
 
 ### Architecture
-- **Purpose**: Defines the high-level system design and components.
-- **Location**: `docs/architecture/`
-- **When to update it**: When introducing new major components or changing system interactions.
+- **Purpose**: Defines system design, components, and persistence architecture.
+- **Location**: [ARCHITECTURE.md](file:///d:/Projects/finance_tracker_mobile/docs/ARCHITECTURE.md) & [PERSISTENCE_ARCHITECTURE.md](file:///d:/Projects/finance_tracker_mobile/docs/PERSISTENCE_ARCHITECTURE.md)
+- **When to update it**: When introducing new major components, changing system interactions, or modifying persistence design.
 
 ### Engineering Handbook
 - **Purpose**: Coding standards, Git workflows, and engineering practices.
