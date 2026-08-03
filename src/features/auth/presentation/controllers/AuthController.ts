@@ -28,7 +28,7 @@ export class AuthController {
     error: null,
   };
 
-  private listeners: Set<(state: AuthState) => void> = new Set();
+  private listeners: Set<() => void> = new Set();
 
   constructor(
     private readonly loginUseCase: LoginUseCase,
@@ -38,19 +38,24 @@ export class AuthController {
     private readonly refreshSessionUseCase: RefreshSessionUseCase
   ) {}
 
+  public getSnapshot = (): AuthState => {
+    return this.state;
+  };
+
   public getState(): AuthState {
     return this.state;
   }
 
-  public subscribe(listener: (state: AuthState) => void): () => void {
+  public subscribe = (listener: () => void): (() => void) => {
     this.listeners.add(listener);
-    listener(this.state);
+    // React's useSyncExternalStore expects us to return an unsubscribe function.
+    // It will call getSnapshot immediately after subscribing, so we don't need to call listener() here.
     return () => this.listeners.delete(listener);
-  }
+  };
 
   private updateState(partialState: Partial<AuthState>): void {
     this.state = { ...this.state, ...partialState };
-    this.listeners.forEach((listener) => listener(this.state));
+    this.listeners.forEach((listener) => listener());
   }
 
   public async login(credentials: AuthCredentials): Promise<boolean> {

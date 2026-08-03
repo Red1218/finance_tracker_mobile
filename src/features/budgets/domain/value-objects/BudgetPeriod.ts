@@ -32,6 +32,10 @@ export class BudgetPeriod {
     return this.startDate <= other.endDate && other.startDate <= this.endDate;
   }
 
+  public overlaps(other: BudgetPeriod): boolean {
+    return this.intersects(other);
+  }
+
   public equals(other: BudgetPeriod): boolean {
     return (
       this.kind === other.kind &&

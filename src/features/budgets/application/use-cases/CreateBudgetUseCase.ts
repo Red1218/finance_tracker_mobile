@@ -3,7 +3,7 @@ import { ICategoryRepository } from '../../../categories/application/repositorie
 import { Budget, BudgetId, BudgetAmount, BudgetPeriod, BudgetPeriodType, BudgetDomainError } from '../../domain';
 import { generateUUID } from '../../../../core/utils/uuid';
 import { CategoryId } from '../../../categories/domain';
-import { CurrencyCode } from '../../../expenses/domain/value-objects/CurrencyCode';
+import { CurrencyCode } from '../../../accounts/domain/value-objects/CurrencyCode';
 
 export interface CreateBudgetCommand {
   id?: string;

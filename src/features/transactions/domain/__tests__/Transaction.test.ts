@@ -84,4 +84,31 @@ describe('Transaction Entity', () => {
     expect(unvoided.isVoided).toBe(false);
     expect(unvoided.voidedAt).toBeNull();
   });
+
+  it('should support occurredAt and soft archiving/restoration lifecycle', () => {
+    const occurredDate = new Date('2026-07-27T10:00:00Z');
+    const t = Transaction.createExpense({
+      id: new TransactionId('t-arch-1'),
+      accountId: acc1,
+      amount: new Money(100),
+      currencyCode: inr,
+      description: new TransactionDescription('Lunch'),
+      occurredAt: occurredDate,
+    });
+
+    expect(t.occurredAt.toISOString()).toBe(occurredDate.toISOString());
+    expect(t.isArchived).toBe(false);
+
+    const archived = t.archive();
+    expect(archived.isArchived).toBe(true);
+    expect(archived.archivedAt).toBeInstanceOf(Date);
+
+    expect(() => archived.archive()).toThrow(TransactionDomainError);
+
+    const restored = archived.restore();
+    expect(restored.isArchived).toBe(false);
+    expect(restored.archivedAt).toBeNull();
+
+    expect(() => restored.restore()).toThrow(TransactionDomainError);
+  });
 });

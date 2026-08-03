@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { BudgetMapper } from '../BudgetMapper';
 import { Budget, BudgetId, BudgetAmount, BudgetPeriod, BudgetPeriodType } from '../../../../features/budgets/domain';
 import { CategoryId } from '../../../../features/categories/domain';
-import { CurrencyCode } from '../../../../features/expenses/domain/value-objects/CurrencyCode';
+import { CurrencyCode } from '../../../../features/accounts/domain/value-objects/CurrencyCode';
 import { BudgetRow } from '../../../../features/budgets/contracts/BudgetRow';
 
 describe('BudgetMapper Round-Trip Symmetry', () => {

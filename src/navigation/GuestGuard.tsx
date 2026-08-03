@@ -1,6 +1,6 @@
 import React, { ReactNode } from 'react';
 import { Redirect } from 'expo-router';
-import { useAuth } from '../platform/authentication';
+import { useAppAuth as useAuth } from '../features/auth/presentation/hooks/useAppAuth';
 import { NavigationLoading } from './NavigationLoading';
 import { ROUTES } from './routes';
 

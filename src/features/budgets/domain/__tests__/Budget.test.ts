@@ -5,7 +5,7 @@ import { BudgetAmount } from '../value-objects/BudgetAmount';
 import { BudgetPeriod, BudgetPeriodType } from '../value-objects/BudgetPeriod';
 import { BudgetDomainError } from '../errors/BudgetDomainError';
 import { CategoryId } from '../../../categories/domain/value-objects/CategoryId';
-import { CurrencyCode } from '../../../expenses/domain/value-objects/CurrencyCode';
+import { CurrencyCode } from '../../../accounts/domain/value-objects/CurrencyCode';
 
 describe('Budget Aggregate', () => {
   const validBudgetId = new BudgetId('123e4567-e89b-12d3-a456-426614174000');
@@ -128,5 +128,26 @@ describe('Budget Aggregate', () => {
     const restored = archived.restore();
     expect(restored.isArchived).toBe(false);
     expect(restored.archivedAt).toBeNull();
+  });
+
+  it('correctly reports overlaps and currencyCode getter', () => {
+    const b1 = Budget.create({
+      id: validBudgetId,
+      categoryId: null,
+      amount: validAmount,
+      currency,
+      period: new BudgetPeriod(BudgetPeriodType.Monthly, new Date('2026-06-01'), new Date('2026-06-30')),
+    });
+
+    const b2 = Budget.create({
+      id: new BudgetId('b2222222-e89b-12d3-a456-426614174000'),
+      categoryId: null,
+      amount: validAmount,
+      currency,
+      period: new BudgetPeriod(BudgetPeriodType.Monthly, new Date('2026-06-15'), new Date('2026-07-15')),
+    });
+
+    expect(b1.currencyCode.equals(currency)).toBe(true);
+    expect(b1.overlaps(b2)).toBe(true);
   });
 });

@@ -34,3 +34,6 @@ For the reusable template, see [ADR_TEMPLATE.md](./ADR_TEMPLATE.md).
 | 🟡 Proposed | Under discussion |
 | ↩️ Superseded | Replaced — see linked ADR |
 | ❌ Rejected | Considered but not adopted |
+
+- [ADR-017: Retirement of Expenses Bounded Context](ADR-017-retire-expenses-bounded-context.md)
+- [ADR-018: Authentication Architecture Consolidation](ADR-018-auth-architecture-consolidation.md)

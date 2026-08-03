@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { SupabaseBudgetRepository } from '../SupabaseBudgetRepository';
 import { Budget, BudgetId, BudgetAmount, BudgetPeriod, BudgetPeriodType } from '../../../../features/budgets/domain';
 import { CategoryId } from '../../../../features/categories/domain';
-import { CurrencyCode } from '../../../../features/expenses/domain/value-objects/CurrencyCode';
+import { CurrencyCode } from '../../../../features/accounts/domain/value-objects/CurrencyCode';
 
 describe('SupabaseBudgetRepository Unit & Query Logic', () => {
   let mockClient: any;

@@ -24,7 +24,8 @@ export class InMemoryTransactionRepository implements ITransactionRepository {
     let list = Array.from(this.store.values());
 
     if (filters?.accountId) {
-      list = list.filter((t) => t.accountId.equals(filters.accountId!));
+      const accVal = typeof filters.accountId === 'string' ? filters.accountId : filters.accountId.value;
+      list = list.filter((t) => t.accountId.value === accVal);
     }
 
     if (!filters?.includeVoided) {
@@ -40,7 +41,8 @@ export class InMemoryTransactionRepository implements ITransactionRepository {
     }
 
     if (filters?.type) {
-      list = list.filter((t) => t.type.equals(filters.type!));
+      const typeStr = typeof filters.type === 'string' ? filters.type : (filters.type as any).kind;
+      list = list.filter((t) => t.type.kind === typeStr);
     }
 
     if (filters?.categoryId !== undefined) {
@@ -55,9 +57,11 @@ export class InMemoryTransactionRepository implements ITransactionRepository {
   public async getByTransferGroupId(
     transferGroupId: TransferReference
   ): Promise<RepositoryResult<Transaction[], RepositoryError>> {
-    const matches = Array.from(this.store.values()).filter(
-      (t) => t.transferGroupId?.equals(transferGroupId)
-    );
+    const groupVal = typeof transferGroupId === 'string' ? transferGroupId : transferGroupId.value;
+    const matches = Array.from(this.store.values()).filter((t) => {
+      const tGVal = t.transferGroupId ? (typeof t.transferGroupId === 'string' ? t.transferGroupId : t.transferGroupId.value) : null;
+      return tGVal === groupVal;
+    });
     return Result.success(matches);
   }
 
@@ -85,11 +89,15 @@ export class InMemoryTransactionRepository implements ITransactionRepository {
   }
 
   public async voidTransferGroup(
-    transferGroupId: TransferReference,
+    transferGroupId: TransferReference | string,
     voidedAt: Date = new Date()
   ): Promise<RepositoryResult<void, RepositoryError>> {
+    const groupVal = typeof transferGroupId === 'string' ? transferGroupId : (transferGroupId as any)?.value ?? String(transferGroupId);
     for (const [id, t] of this.store.entries()) {
-      if (t.transferGroupId?.equals(transferGroupId)) {
+      const tGroupVal = t.transferGroupId
+        ? (typeof t.transferGroupId === 'string' ? t.transferGroupId : (t.transferGroupId as any).value ?? String(t.transferGroupId))
+        : null;
+      if (tGroupVal === groupVal) {
         this.store.set(id, t.voidTransaction(voidedAt));
       }
     }
@@ -99,8 +107,9 @@ export class InMemoryTransactionRepository implements ITransactionRepository {
   public async getAccountLedgerSummary(
     accountId: AccountId
   ): Promise<RepositoryResult<AccountLedgerSummary, RepositoryError>> {
+    const accVal = typeof accountId === 'string' ? accountId : accountId.value;
     const accountTransactions = Array.from(this.store.values()).filter(
-      (t) => t.accountId.equals(accountId) && !t.isVoided
+      (t) => t.accountId.value === accVal && !t.isVoided
     );
 
     let totalIncome = 0;
@@ -121,7 +130,7 @@ export class InMemoryTransactionRepository implements ITransactionRepository {
     }
 
     return Result.success({
-      accountId,
+      accountId: new AccountId(accVal),
       totalIncome,
       totalExpense,
       totalTransfersIn,

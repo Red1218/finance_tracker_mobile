@@ -7,7 +7,7 @@ import { BudgetPeriodType, BudgetDomainError } from '../../domain';
 import { Category, CategoryId, CategoryName, CategoryKind } from '../../../categories/domain';
 import { Transaction, TransactionId, TransactionType, TransactionTypeKind, TransactionDate, TransactionDescription, Money } from '../../../transactions/domain';
 import { AccountId } from '../../../accounts/domain';
-import { CurrencyCode } from '../../../expenses/domain/value-objects/CurrencyCode';
+import { CurrencyCode } from '../../../accounts/domain/value-objects/CurrencyCode';
 import { BudgetViewModel } from '../../presentation';
 
 describe('Budgets Bounded Context — End-to-End Lifecycle Integration', () => {

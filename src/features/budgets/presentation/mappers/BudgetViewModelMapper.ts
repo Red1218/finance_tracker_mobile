@@ -1,20 +1,39 @@
 import { Budget } from '../../domain';
-import { BudgetSummary } from '../../application';
+import { BudgetDTO, BudgetSummaryDTO } from '../../application/dto/BudgetDTO';
 import { BudgetViewModel } from '../models/BudgetViewModel';
 
 export class BudgetViewModelMapper {
-  public static toViewModel(budget: Budget, summary?: BudgetSummary): BudgetViewModel {
+  public static toViewModel(budget: Budget | BudgetDTO, summary?: BudgetSummaryDTO): BudgetViewModel {
+    const isDto = typeof budget.id === 'string' && 'currencyCode' in budget;
+
+    const idStr = isDto ? (budget as BudgetDTO).id : (budget as Budget).id.value;
+    const categoryIdStr = isDto
+      ? (budget as BudgetDTO).categoryId
+      : (budget as Budget).categoryId ? (budget as Budget).categoryId!.value : null;
+    const isOverallBool = isDto ? (budget as BudgetDTO).isOverall : (budget as Budget).isOverall;
+    const amountVal = isDto ? (budget as BudgetDTO).amount : (budget as Budget).amount.value;
+    const currencyStr = isDto
+      ? (budget as BudgetDTO).currencyCode
+      : (budget as Budget).currency ? (budget as Budget).currency.value : (budget as Budget).currencyCode.value;
+    const periodKindStr = isDto ? (budget as BudgetDTO).periodKind : (budget as Budget).period.kind;
+    const startDateIso = isDto ? (budget as BudgetDTO).startDate : (budget as Budget).startDate.toISOString();
+    const endDateIso = isDto ? (budget as BudgetDTO).endDate : (budget as Budget).endDate.toISOString();
+    const isArchivedBool = isDto ? (budget as BudgetDTO).isArchived : (budget as Budget).isArchived;
+    const archivedAtIso = isDto
+      ? (budget as BudgetDTO).archivedAt
+      : ((budget as Budget).archivedAt ? (budget as Budget).archivedAt!.toISOString() : null);
+
     return {
-      id: budget.id.value,
-      categoryId: budget.categoryId ? budget.categoryId.value : null,
-      isOverall: budget.isOverall,
-      amount: budget.amount.value,
-      currency: budget.currency.value,
-      periodKind: budget.period.kind,
-      startDate: budget.startDate.toISOString(),
-      endDate: budget.endDate.toISOString(),
-      isArchived: budget.isArchived,
-      archivedAt: budget.archivedAt ? budget.archivedAt.toISOString() : null,
+      id: idStr,
+      categoryId: categoryIdStr,
+      isOverall: isOverallBool,
+      amount: amountVal,
+      currency: currencyStr,
+      periodKind: periodKindStr,
+      startDate: startDateIso,
+      endDate: endDateIso,
+      isArchived: isArchivedBool,
+      archivedAt: archivedAtIso,
       spentAmount: summary?.spentAmount,
       remainingAmount: summary?.remainingAmount,
       percentageUsed: summary?.percentageUsed,

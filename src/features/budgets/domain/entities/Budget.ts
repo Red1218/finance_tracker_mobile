@@ -3,7 +3,7 @@ import { BudgetAmount } from '../value-objects/BudgetAmount';
 import { BudgetPeriod } from '../value-objects/BudgetPeriod';
 import { BudgetDomainError } from '../errors/BudgetDomainError';
 import { CategoryId } from '../../../categories/domain/value-objects/CategoryId';
-import { CurrencyCode } from '../../../expenses/domain/value-objects/CurrencyCode';
+import { CurrencyCode } from '../../../accounts/domain/value-objects/CurrencyCode';
 
 export interface BudgetProps {
   id: BudgetId;
@@ -122,8 +122,17 @@ export class Budget {
     });
   }
 
+  public get currencyCode(): CurrencyCode {
+    return this.currency;
+  }
+
   public isHistorical(currentDate: Date = new Date()): boolean {
     return this.period.endDate < currentDate;
+  }
+
+  public overlaps(other: BudgetPeriod | Budget): boolean {
+    const otherPeriod = other instanceof Budget ? other.period : other;
+    return this.period.overlaps(otherPeriod);
   }
 
   public equals(other: Budget): boolean {

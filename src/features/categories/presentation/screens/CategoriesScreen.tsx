@@ -96,9 +96,9 @@ export function CategoriesScreen() {
         </View>
       ) : (
         <CategoryList
-          categories={categories}
-          onSelect={handleEditCategory}
-          onArchive={handleArchiveRequest}
+          categories={categories as any}
+          onSelect={handleEditCategory as any}
+          onArchive={handleArchiveRequest as any}
         />
       )}
 

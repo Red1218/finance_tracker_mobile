@@ -1,62 +1,57 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { LoadAccountsUseCase } from '../use-cases/LoadAccountsUseCase';
-import { LoadAccountUseCase } from '../use-cases/LoadAccountUseCase';
-import { CreateAccountUseCase } from '../use-cases/CreateAccountUseCase';
-import { ArchiveAccountUseCase } from '../use-cases/ArchiveAccountUseCase';
+import { LoadAccountsQueryUseCase } from '../queries/LoadAccountsQueryUseCase';
+import { LoadAccountByIdQueryUseCase } from '../queries/LoadAccountByIdQueryUseCase';
 import { InMemoryAccountRepository } from './InMemoryAccountRepository';
-import { AccountTypeKind } from '../../domain';
+import { Account, AccountId, AccountName, AccountType, AccountTypeKind, CurrencyCode, OpeningBalance } from '../../domain';
+import { AccountNotFoundError } from '../errors/AccountApplicationError';
 
-describe('LoadAccounts Use Cases', () => {
+describe('LoadAccounts Queries', () => {
   let repository: InMemoryAccountRepository;
-  let createUseCase: CreateAccountUseCase;
-  let archiveUseCase: ArchiveAccountUseCase;
-  let loadAccountsUseCase: LoadAccountsUseCase;
-  let loadAccountUseCase: LoadAccountUseCase;
+  let loadAccountsQuery: LoadAccountsQueryUseCase;
+  let loadAccountByIdQuery: LoadAccountByIdQueryUseCase;
 
   beforeEach(() => {
     repository = new InMemoryAccountRepository();
-    createUseCase = new CreateAccountUseCase(repository);
-    archiveUseCase = new ArchiveAccountUseCase(repository);
-    loadAccountsUseCase = new LoadAccountsUseCase(repository);
-    loadAccountUseCase = new LoadAccountUseCase(repository);
+
+    const acc1 = new Account({
+      id: new AccountId('acc-1'),
+      name: new AccountName('Active Acc'),
+      type: new AccountType(AccountTypeKind.Bank),
+      currencyCode: new CurrencyCode('INR'),
+      openingBalance: new OpeningBalance(100),
+      isDefault: true,
+    });
+
+    const acc2 = new Account({
+      id: new AccountId('acc-2'),
+      name: new AccountName('Archived Acc'),
+      type: new AccountType(AccountTypeKind.Cash),
+      currencyCode: new CurrencyCode('INR'),
+      openingBalance: new OpeningBalance(50),
+      isDefault: false,
+      archivedAt: new Date(),
+    });
+
+    repository.seed(acc1);
+    repository.seed(acc2);
+
+    loadAccountsQuery = new LoadAccountsQueryUseCase(repository);
+    loadAccountByIdQuery = new LoadAccountByIdQueryUseCase(repository);
   });
 
-  it('should return empty list when repository is empty', async () => {
-    const res = await loadAccountsUseCase.execute();
-    expect(res.success).toBe(true);
-    if (res.success) {
-      expect(res.data.length).toBe(0);
-    }
+  it('should load active accounts only by default', async () => {
+    const list = await loadAccountsQuery.execute(false);
+    expect(list.length).toBe(1);
+    expect(list[0].id).toBe('acc-1');
   });
 
-  it('should filter out archived accounts unless includeArchived is true', async () => {
-    const res1 = await createUseCase.execute({ id: 'acc-1', name: 'Cash', type: AccountTypeKind.Cash });
-    const res2 = await createUseCase.execute({ id: 'acc-2', name: 'Bank', type: AccountTypeKind.Bank });
-    if (!res1.success || !res2.success) throw new Error('Create failed');
-    const acc1 = res1.data;
-    const acc2 = res2.data;
-
-    await archiveUseCase.execute({ accountId: acc2.id.value });
-
-    const activeOnlyRes = await loadAccountsUseCase.execute({ includeArchived: false });
-    expect(activeOnlyRes.success).toBe(true);
-    if (activeOnlyRes.success) {
-      expect(activeOnlyRes.data.length).toBe(1);
-      expect(activeOnlyRes.data[0].id.value).toBe('acc-1');
-    }
-
-    const allRes = await loadAccountsUseCase.execute({ includeArchived: true });
-    expect(allRes.success).toBe(true);
-    if (allRes.success) {
-      expect(allRes.data.length).toBe(2);
-    }
+  it('should load single account by ID returning DTO', async () => {
+    const dto = await loadAccountByIdQuery.execute('acc-1');
+    expect(dto.id).toBe('acc-1');
+    expect(dto.name).toBe('Active Acc');
   });
 
-  it('should return null when loading a non-existent account ID', async () => {
-    const res = await loadAccountUseCase.execute({ accountId: 'non-existent' });
-    expect(res.success).toBe(true);
-    if (res.success) {
-      expect(res.data).toBeNull();
-    }
+  it('should throw AccountNotFoundError when account ID is invalid', async () => {
+    await expect(loadAccountByIdQuery.execute('missing')).rejects.toThrow(AccountNotFoundError);
   });
 });

@@ -10,7 +10,7 @@ import {
 import { TransactionTypeKind } from '../../domain';
 import { TransactionViewModel } from '../models/TransactionViewModel';
 import { TransactionViewModelMapper } from '../mappers/TransactionViewModelMapper';
-import { AccountLedgerSummary } from '../../application/repositories/ITransactionRepository';
+import { LedgerProjectionDTO } from '../../application/queries/LoadAccountLedgerQueryUseCase';
 
 export class TransactionController {
   constructor(
@@ -33,12 +33,19 @@ export class TransactionController {
     endDate?: Date;
     includeVoided?: boolean;
   }): Promise<TransactionViewModel[]> {
-    const transactions = await this.loadTransactionsUseCase.execute(query);
+    const transactions = await this.loadTransactionsUseCase.execute({
+      accountId: query.accountId,
+      type: query.type,
+      categoryId: query.categoryId,
+      startDate: query.startDate,
+      endDate: query.endDate,
+      includeArchived: query.includeVoided,
+    });
     return transactions.map(TransactionViewModelMapper.mapToViewModel);
   }
 
-  public async loadAccountLedgerSummary(accountId: string): Promise<AccountLedgerSummary> {
-    return this.loadAccountLedgerUseCase.execute(accountId);
+  public async loadAccountLedgerSummary(accountId: string): Promise<LedgerProjectionDTO> {
+    return await this.loadAccountLedgerUseCase.execute(accountId);
   }
 
   public async createExpense(data: {
@@ -91,9 +98,8 @@ export class TransactionController {
     description?: string;
     categoryId?: string | null;
     transactionDate?: Date;
-  }): Promise<TransactionViewModel> {
-    const transaction = await this.updateTransactionUseCase.execute(data);
-    return TransactionViewModelMapper.mapToViewModel(transaction);
+  }): Promise<void> {
+    await this.updateTransactionUseCase.execute({ transactionId: data.id });
   }
 
   public async voidTransaction(id: string, voidedAt?: Date): Promise<void> {

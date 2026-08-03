@@ -1,49 +1,70 @@
 import { Account, AccountTypeKind } from '../../domain';
+import { AccountDTO } from '../../application/dto/AccountDTO';
 import { AccountViewModel } from '../models/AccountViewModel';
 
 export class AccountViewModelMapper {
-  private static readonly TYPE_LABEL_MAP: Record<AccountTypeKind, string> = {
+  private static readonly TYPE_LABEL_MAP: Record<string, string> = {
     [AccountTypeKind.Cash]: 'Cash',
     [AccountTypeKind.Bank]: 'Bank Account',
     [AccountTypeKind.CreditCard]: 'Credit Card',
     [AccountTypeKind.Wallet]: 'Digital Wallet',
   };
 
-  public static mapToViewModel(account: Account, decimalPrecision = 2): AccountViewModel {
+  public static mapToViewModel(account: Account | AccountDTO, decimalPrecision = 2): AccountViewModel {
+    const isDto = typeof account.id === 'string' && typeof account.name === 'string';
+
+    const idStr = isDto ? (account as AccountDTO).id : (account as Account).id.value;
+    const nameStr = isDto ? (account as AccountDTO).name : (account as Account).name.value;
+    const typeStr = isDto ? (account as AccountDTO).type : (account as Account).type.kind;
+    const currencyStr = isDto ? (account as AccountDTO).currencyCode : (account as Account).currencyCode.value;
+    const openingBalanceVal = isDto
+      ? (account as AccountDTO).openingBalance
+      : (account as Account).openingBalance.value;
+    const derivedBalanceVal = isDto
+      ? (account as any).derivedBalance ?? (account as AccountDTO).openingBalance
+      : (account as Account).openingBalance.value;
+    const isDefaultBool = isDto ? (account as AccountDTO).isDefault : (account as Account).isDefault;
+    const isArchivedBool = isDto ? (account as AccountDTO).isArchived : (account as Account).isArchived;
+    const archivedAtIso = isDto
+      ? (account as AccountDTO).archivedAt
+      : ((account as Account).archivedAt ? (account as Account).archivedAt!.toISOString() : null);
+    const createdAtIso = isDto
+      ? (account as AccountDTO).createdAt
+      : (account as Account).createdAt.toISOString();
+
     const formattedOpening = AccountViewModelMapper.formatCurrency(
-      account.openingBalance.value,
-      account.currencyCode.value,
+      openingBalanceVal,
+      currencyStr,
       decimalPrecision
     );
 
-    // Derived balance (Opening Balance + net ledger transactions in future)
-    const derivedBalance = account.openingBalance.value;
     const formattedDerived = AccountViewModelMapper.formatCurrency(
-      derivedBalance,
-      account.currencyCode.value,
+      derivedBalanceVal,
+      currencyStr,
       decimalPrecision
     );
 
     return {
-      id: account.id.value,
-      name: account.name.value,
-      type: account.type.kind,
-      typeLabel: AccountViewModelMapper.TYPE_LABEL_MAP[account.type.kind] ?? account.type.kind,
-      currencyCode: account.currencyCode.value,
-      openingBalance: account.openingBalance.value,
+      id: idStr,
+      name: nameStr,
+      type: typeStr as AccountTypeKind,
+      typeLabel: AccountViewModelMapper.TYPE_LABEL_MAP[typeStr] ?? typeStr,
+      currencyCode: currencyStr,
+      openingBalance: openingBalanceVal,
       formattedOpeningBalance: formattedOpening,
-      derivedBalance,
+      derivedBalance: derivedBalanceVal,
       formattedDerivedBalance: formattedDerived,
-      isDefault: account.isDefault,
-      isArchived: account.isArchived,
-      archivedAt: account.archivedAt ? account.archivedAt.toISOString() : null,
-      createdAt: account.createdAt.toISOString(),
+      isDefault: isDefaultBool,
+      isArchived: isArchivedBool,
+      archivedAt: archivedAtIso,
+      createdAt: createdAtIso,
     };
   }
 
   public static formatCurrency(amount: number, currencyCode: string, precision = 2): string {
+    const safeAmount = typeof amount === 'number' && !isNaN(amount) ? amount : 0;
     const symbol = currencyCode === 'INR' ? '₹' : `${currencyCode} `;
-    const fixedAmount = amount.toLocaleString('en-IN', {
+    const fixedAmount = safeAmount.toLocaleString('en-IN', {
       minimumFractionDigits: precision,
       maximumFractionDigits: precision,
     });

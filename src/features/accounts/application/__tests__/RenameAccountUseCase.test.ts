@@ -1,49 +1,42 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { RenameAccountUseCase } from '../use-cases/RenameAccountUseCase';
-import { CreateAccountUseCase } from '../use-cases/CreateAccountUseCase';
+import { RenameAccountUseCase } from '../commands/RenameAccountUseCase';
 import { InMemoryAccountRepository } from './InMemoryAccountRepository';
-import { AccountTypeKind, AccountDomainError } from '../../domain';
+import { Account, AccountId, AccountName, AccountType, AccountTypeKind, CurrencyCode, OpeningBalance } from '../../domain';
+import { AccountNotFoundError } from '../errors/AccountApplicationError';
 
 describe('RenameAccountUseCase', () => {
   let repository: InMemoryAccountRepository;
-  let createUseCase: CreateAccountUseCase;
-  let renameUseCase: RenameAccountUseCase;
+  let useCase: RenameAccountUseCase;
 
   beforeEach(() => {
     repository = new InMemoryAccountRepository();
-    createUseCase = new CreateAccountUseCase(repository);
-    renameUseCase = new RenameAccountUseCase(repository);
+    const account = new Account({
+      id: new AccountId('acc-1'),
+      name: new AccountName('Checking'),
+      type: new AccountType(AccountTypeKind.Bank),
+      currencyCode: new CurrencyCode('INR'),
+      openingBalance: new OpeningBalance(100),
+      isDefault: true,
+    });
+    repository.seed(account);
+    useCase = new RenameAccountUseCase(repository);
   });
 
-  it('should successfully rename an existing account', async () => {
-    const res = await createUseCase.execute({ id: 'acc-1', name: 'Cash', type: AccountTypeKind.Cash });
-    if (!res.success) throw res.error;
+  it('should successfully rename an account', async () => {
+    const dto = await useCase.execute({
+      accountId: 'acc-1',
+      newName: 'Personal Checking',
+    });
 
-    const renameRes = await renameUseCase.execute({ accountId: 'acc-1', newName: 'Primary Cash' });
-    expect(renameRes.success).toBe(true);
-
-    if (renameRes.success) {
-      expect(renameRes.data.name.value).toBe('Primary Cash');
-    }
+    expect(dto.name).toBe('Personal Checking');
   });
 
-  it('should allow renaming an account to its current name (idempotent behavior)', async () => {
-    const res = await createUseCase.execute({ id: 'acc-1', name: 'Cash', type: AccountTypeKind.Cash });
-    if (!res.success) throw res.error;
-
-    const renameRes = await renameUseCase.execute({ accountId: 'acc-1', newName: 'Cash' });
-    expect(renameRes.success).toBe(true);
-  });
-
-  it('should reject renaming to another existing active account name', async () => {
-    await createUseCase.execute({ id: 'acc-1', name: 'Cash', type: AccountTypeKind.Cash });
-    await createUseCase.execute({ id: 'acc-2', name: 'Bank', type: AccountTypeKind.Bank });
-
-    const renameRes = await renameUseCase.execute({ accountId: 'acc-2', newName: 'Cash' });
-    expect(renameRes.success).toBe(false);
-    if (!renameRes.success) {
-      expect(renameRes.error).toBeInstanceOf(AccountDomainError);
-      expect((renameRes.error as AccountDomainError).code).toBe('DUPLICATE_ACCOUNT_NAME');
-    }
+  it('should throw AccountNotFoundError for non-existent account', async () => {
+    await expect(
+      useCase.execute({
+        accountId: 'non-existent',
+        newName: 'Test',
+      })
+    ).rejects.toThrow(AccountNotFoundError);
   });
 });

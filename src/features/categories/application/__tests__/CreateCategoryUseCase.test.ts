@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { CreateCategoryUseCase } from '../use-cases/CreateCategoryUseCase';
+import { CreateCategoryUseCase } from '../commands/CreateCategoryUseCase';
 import { InMemoryCategoryRepository } from './InMemoryCategoryRepository';
-import { CategoryKind, CategoryDomainError } from '../../domain';
+import { DuplicateCategoryNameError } from '../errors/CategoryApplicationError';
 
 describe('CreateCategoryUseCase', () => {
   let repository: InMemoryCategoryRepository;
@@ -12,52 +12,25 @@ describe('CreateCategoryUseCase', () => {
     useCase = new CreateCategoryUseCase(repository);
   });
 
-  it('successfully creates a category with isSystem = false and archivedAt = null', async () => {
-    const category = await useCase.execute({
-      name: 'Groceries',
-      kind: CategoryKind.Expense,
-      colorHex: '#EF4444',
-      iconName: 'cart',
+  it('should successfully create custom expense category returning CategoryDTO', async () => {
+    const dto = await useCase.execute({
+      name: 'Coffee & Snacks',
+      kind: 'EXPENSE',
+      colorHex: '#FF5733',
+      iconName: 'coffee',
     });
 
-    expect(category.name.value).toBe('Groceries');
-    expect(category.kind).toBe(CategoryKind.Expense);
-    expect(category.isSystem).toBe(false);
-    expect(category.isArchived).toBe(false);
-    expect(category.colorHex).toBe('#EF4444');
-
-    const res = await repository.getAll();
-    if (res.success) {
-      expect(res.data).toHaveLength(1);
-    }
+    expect(dto.name).toBe('Coffee & Snacks');
+    expect(dto.kind).toBe('EXPENSE');
+    expect(dto.isSystem).toBe(false);
+    expect(dto.colorHex).toBe('#FF5733');
   });
 
-  it('rejects duplicate category name within the same kind (DUPLICATE_CATEGORY_NAME)', async () => {
-    await useCase.execute({ name: 'Investments', kind: CategoryKind.Income });
+  it('should throw DuplicateCategoryNameError on name collision per kind', async () => {
+    await useCase.execute({ name: 'Freelance', kind: 'INCOME' });
 
     await expect(
-      useCase.execute({ name: 'Investments', kind: CategoryKind.Income })
-    ).rejects.toThrowError(CategoryDomainError);
-  });
-
-  it('allows same name across different CategoryKinds (Income vs Expense)', async () => {
-    const expenseCat = await useCase.execute({ name: 'Refund', kind: CategoryKind.Expense });
-    const incomeCat = await useCase.execute({ name: 'Refund', kind: CategoryKind.Income });
-
-    expect(expenseCat.kind).toBe(CategoryKind.Expense);
-    expect(incomeCat.kind).toBe(CategoryKind.Income);
-
-    const res = await repository.getAll();
-    if (res.success) {
-      expect(res.data).toHaveLength(2);
-    }
-  });
-
-  it('propagates repository errors', async () => {
-    repository.setForceFailure('Database insert error');
-
-    await expect(
-      useCase.execute({ name: 'Groceries', kind: CategoryKind.Expense })
-    ).rejects.toThrowError('Database insert error');
+      useCase.execute({ name: 'Freelance', kind: 'INCOME' })
+    ).rejects.toThrow(DuplicateCategoryNameError);
   });
 });

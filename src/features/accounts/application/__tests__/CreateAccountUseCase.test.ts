@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { CreateAccountUseCase } from '../use-cases/CreateAccountUseCase';
+import { CreateAccountUseCase } from '../commands/CreateAccountUseCase';
 import { InMemoryAccountRepository } from './InMemoryAccountRepository';
-import { AccountTypeKind, AccountDomainError } from '../../domain';
+import { AccountTypeKind } from '../../domain';
+import { DuplicateAccountNameError } from '../errors/AccountApplicationError';
 
 describe('CreateAccountUseCase', () => {
   let repository: InMemoryAccountRepository;
@@ -12,31 +13,35 @@ describe('CreateAccountUseCase', () => {
     useCase = new CreateAccountUseCase(repository);
   });
 
-  it('should successfully create a new Bank account', async () => {
-    const result = await useCase.execute({
+  it('should successfully create a new Bank account returning AccountDTO', async () => {
+    const dto = await useCase.execute({
       name: 'HDFC Savings',
       type: AccountTypeKind.Bank,
       currencyCode: 'INR',
       openingBalance: 15000,
     });
 
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.data.name.value).toBe('HDFC Savings');
-      expect(result.data.openingBalance.value).toBe(15000);
-      expect(result.data.isDefault).toBe(true); // First account is auto-default
-    }
+    expect(dto.name).toBe('HDFC Savings');
+    expect(dto.openingBalance).toBe(15000);
+    expect(dto.currencyCode).toBe('INR');
+    expect(dto.isArchived).toBe(false);
   });
 
-  it('should fail when creating an account with a duplicate active name', async () => {
-    await useCase.execute({ name: 'Salary Account', type: AccountTypeKind.Bank });
+  it('should throw DuplicateAccountNameError when creating account with duplicate active name', async () => {
+    await useCase.execute({
+      name: 'Salary Account',
+      type: AccountTypeKind.Bank,
+      currencyCode: 'INR',
+      openingBalance: 0,
+    });
 
-    const duplicateResult = await useCase.execute({ name: 'Salary Account', type: AccountTypeKind.Bank });
-
-    expect(duplicateResult.success).toBe(false);
-    if (!duplicateResult.success) {
-      expect(duplicateResult.error).toBeInstanceOf(AccountDomainError);
-      expect((duplicateResult.error as AccountDomainError).code).toBe('DUPLICATE_ACCOUNT_NAME');
-    }
+    await expect(
+      useCase.execute({
+        name: 'Salary Account',
+        type: AccountTypeKind.Bank,
+        currencyCode: 'INR',
+        openingBalance: 500,
+      })
+    ).rejects.toThrow(DuplicateAccountNameError);
   });
 });

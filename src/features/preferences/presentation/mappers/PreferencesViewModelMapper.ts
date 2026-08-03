@@ -1,40 +1,49 @@
 import { Preferences } from '../../domain';
+import { PreferencesDTO } from '../../application/dto/PreferencesDTO';
 import { Category } from '../../../categories/domain';
 import { AppInfo } from '../../../../platform/system/AppInfoProvider';
 import { PreferencesViewModel } from '../models/PreferencesViewModel';
 
 export class PreferencesViewModelMapper {
   public static mapToViewModel(
-    preferences: Preferences,
+    preferences: Preferences | PreferencesDTO,
     categories: Category[] = [],
     appInfo?: AppInfo
   ): PreferencesViewModel {
-    const expenseCat = categories.find(
-      (c) => c.id.value === preferences.defaults.defaultExpenseCategoryId?.value
-    );
-    const incomeCat = categories.find(
-      (c) => c.id.value === preferences.defaults.defaultIncomeCategoryId?.value
-    );
+    const isDto = 'theme' in preferences && !('appearance' in preferences);
+
+    const themeVal = isDto ? (preferences as PreferencesDTO).theme : (preferences as Preferences).appearance.theme;
+    const currencyCodeVal = isDto ? (preferences as PreferencesDTO).currencyCode : (preferences as Preferences).finance.currencyCode.value;
+    const weekStartVal = isDto ? (preferences as PreferencesDTO).weekStart : (preferences as Preferences).finance.weekStart;
+    const decimalPrecisionVal = isDto ? (preferences as PreferencesDTO).decimalPrecision : (preferences as Preferences).finance.decimalPrecision;
+    const defExpCatId = isDto ? (preferences as PreferencesDTO).defaultExpenseCategoryId : (preferences as Preferences).defaults.defaultExpenseCategoryId?.value ?? null;
+    const defIncCatId = isDto ? (preferences as PreferencesDTO).defaultIncomeCategoryId : (preferences as Preferences).defaults.defaultIncomeCategoryId?.value ?? null;
+    const budgetAlerts = isDto ? (preferences as PreferencesDTO).budgetAlertsEnabled : (preferences as Preferences).notifications.budgetAlertsEnabled;
+    const dailyReminder = isDto ? (preferences as PreferencesDTO).dailyReminderEnabled : (preferences as Preferences).notifications.dailyReminderEnabled;
+    const reminderTimeVal = isDto ? (preferences as PreferencesDTO).reminderTime : ((preferences as Preferences).notifications.reminderTime?.value ?? null);
+
+    const expenseCat = categories.find((c) => (c.id ? c.id.value : (c as any).id) === defExpCatId);
+    const incomeCat = categories.find((c) => (c.id ? c.id.value : (c as any).id) === defIncCatId);
 
     return {
       appearance: {
-        theme: preferences.appearance.theme,
+        theme: themeVal as any,
       },
       finance: {
-        currencyCode: preferences.finance.currencyCode.value,
-        weekStart: preferences.finance.weekStart,
-        decimalPrecision: preferences.finance.decimalPrecision,
+        currencyCode: currencyCodeVal,
+        weekStart: weekStartVal as any,
+        decimalPrecision: decimalPrecisionVal as any,
       },
       defaults: {
-        defaultExpenseCategoryId: preferences.defaults.defaultExpenseCategoryId?.value ?? null,
-        defaultIncomeCategoryId: preferences.defaults.defaultIncomeCategoryId?.value ?? null,
-        defaultExpenseCategoryName: expenseCat?.name.value,
-        defaultIncomeCategoryName: incomeCat?.name.value,
+        defaultExpenseCategoryId: defExpCatId,
+        defaultIncomeCategoryId: defIncCatId,
+        defaultExpenseCategoryName: expenseCat ? (expenseCat.name ? expenseCat.name.value : (expenseCat as any).name) : undefined,
+        defaultIncomeCategoryName: incomeCat ? (incomeCat.name ? incomeCat.name.value : (incomeCat as any).name) : undefined,
       },
       notifications: {
-        budgetAlertsEnabled: preferences.notifications.budgetAlertsEnabled,
-        dailyReminderEnabled: preferences.notifications.dailyReminderEnabled,
-        reminderTime: preferences.notifications.reminderTime?.value ?? null,
+        budgetAlertsEnabled: budgetAlerts,
+        dailyReminderEnabled: dailyReminder,
+        reminderTime: reminderTimeVal,
       },
       about: {
         version: appInfo?.version ?? '1.0.0',

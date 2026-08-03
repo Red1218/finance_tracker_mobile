@@ -27,25 +27,14 @@ export class AccountController {
   }
 
   public async loadAccountsViewModel(includeArchived = false): Promise<AccountViewModel[]> {
-    const initResult = await this.initializeAccountsUseCase.execute();
-    if (!initResult.success) {
-      throw initResult.error;
-    }
-
-    const loadResult = await this.loadAccountsUseCase.execute({ includeArchived });
-    if (!loadResult.success) {
-      throw loadResult.error;
-    }
-
-    return loadResult.data.map((acc) => AccountViewModelMapper.mapToViewModel(acc));
+    await this.initializeAccountsUseCase.execute();
+    const accounts = await this.loadAccountsUseCase.execute({ includeArchived });
+    return accounts.map((acc) => AccountViewModelMapper.mapToViewModel(acc as any));
   }
 
   public async loadAccountViewModel(accountId: string): Promise<AccountViewModel | null> {
-    const result = await this.loadAccountUseCase.execute({ accountId });
-    if (!result.success) {
-      throw result.error;
-    }
-    return result.data ? AccountViewModelMapper.mapToViewModel(result.data) : null;
+    const account = await this.loadAccountUseCase.execute({ accountId });
+    return account ? AccountViewModelMapper.mapToViewModel(account as any) : null;
   }
 
   public async createAccount(data: {
@@ -55,39 +44,24 @@ export class AccountController {
     openingBalance?: number;
     isDefault?: boolean;
   }): Promise<AccountViewModel> {
-    const result = await this.createAccountUseCase.execute(data);
-    if (!result.success) {
-      throw result.error;
-    }
-    return AccountViewModelMapper.mapToViewModel(result.data);
+    const account = await this.createAccountUseCase.execute(data);
+    return AccountViewModelMapper.mapToViewModel(account as any);
   }
 
   public async renameAccount(accountId: string, newName: string): Promise<AccountViewModel> {
-    const result = await this.renameAccountUseCase.execute({ accountId, newName });
-    if (!result.success) {
-      throw result.error;
-    }
-    return AccountViewModelMapper.mapToViewModel(result.data);
+    const account = await this.renameAccountUseCase.execute({ accountId, newName });
+    return AccountViewModelMapper.mapToViewModel(account as any);
   }
 
   public async archiveAccount(accountId: string): Promise<void> {
-    const result = await this.archiveAccountUseCase.execute({ accountId });
-    if (!result.success) {
-      throw result.error;
-    }
+    await this.archiveAccountUseCase.execute({ accountId });
   }
 
   public async restoreAccount(accountId: string): Promise<void> {
-    const result = await this.restoreAccountUseCase.execute({ accountId });
-    if (!result.success) {
-      throw result.error;
-    }
+    await this.restoreAccountUseCase.execute({ accountId });
   }
 
   public async setDefaultAccount(accountId: string): Promise<void> {
-    const result = await this.setDefaultAccountUseCase.execute({ accountId });
-    if (!result.success) {
-      throw result.error;
-    }
+    await this.setDefaultAccountUseCase.execute({ accountId });
   }
 }

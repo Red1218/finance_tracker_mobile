@@ -6,7 +6,9 @@ export type TransactionErrorCode =
   | 'INVALID_TRANSACTION_TYPE'
   | 'IMMUTABLE_FIELD_MODIFICATION'
   | 'TRANSACTION_NOT_FOUND'
-  | 'INVALID_DESCRIPTION';
+  | 'INVALID_DESCRIPTION'
+  | 'TRANSACTION_ALREADY_ARCHIVED'
+  | 'TRANSACTION_NOT_ARCHIVED';
 
 export class TransactionDomainError extends Error {
   public readonly code: TransactionErrorCode;

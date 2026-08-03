@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { BudgetViewModelMapper } from '../mappers/BudgetViewModelMapper';
 import { Budget, BudgetId, BudgetAmount, BudgetPeriod, BudgetPeriodType } from '../../domain';
-import { CurrencyCode } from '../../../expenses/domain/value-objects/CurrencyCode';
+import { CurrencyCode } from '../../../accounts/domain/value-objects/CurrencyCode';
 import { CategoryId } from '../../../categories/domain';
 
 describe('BudgetViewModelMapper', () => {

@@ -19,8 +19,10 @@ export interface TransactionProps {
   currencyCode: CurrencyCode;
   description: TransactionDescription;
   transferGroupId?: TransferReference | null;
-  transactionDate: TransactionDate;
+  transactionDate?: TransactionDate;
+  occurredAt?: Date;
   createdAt?: Date;
+  archivedAt?: Date | null;
   voidedAt?: Date | null;
 }
 
@@ -35,6 +37,7 @@ export class Transaction {
   public readonly transferGroupId: TransferReference | null;
   public readonly transactionDate: TransactionDate;
   public readonly createdAt: Date;
+  public readonly archivedAt: Date | null;
   public readonly voidedAt: Date | null;
 
   constructor(props: TransactionProps) {
@@ -53,11 +56,62 @@ export class Transaction {
     this.currencyCode = props.currencyCode;
     this.description = props.description;
     this.transferGroupId = props.transferGroupId ?? null;
-    this.transactionDate = props.transactionDate;
+    
+    const rawOccurredAt = props.occurredAt ?? (props.transactionDate ? props.transactionDate.value : new Date());
+    this.transactionDate = props.transactionDate ?? new TransactionDate(rawOccurredAt);
     this.createdAt = props.createdAt ?? new Date();
+    this.archivedAt = props.archivedAt ?? null;
     this.voidedAt = props.voidedAt ?? null;
 
     Object.freeze(this);
+  }
+
+  public get occurredAt(): Date {
+    return this.transactionDate.value;
+  }
+
+  public get isArchived(): boolean {
+    return this.archivedAt !== null;
+  }
+
+  public archive(archivedAt: Date = new Date()): Transaction {
+    if (this.isArchived) {
+      throw new TransactionDomainError('TRANSACTION_ALREADY_ARCHIVED', 'Transaction is already archived.');
+    }
+    return new Transaction({
+      id: this.id,
+      accountId: this.accountId,
+      categoryId: this.categoryId,
+      type: this.type,
+      amount: this.amount,
+      currencyCode: this.currencyCode,
+      description: this.description,
+      transferGroupId: this.transferGroupId,
+      transactionDate: this.transactionDate,
+      createdAt: this.createdAt,
+      archivedAt,
+      voidedAt: this.voidedAt,
+    });
+  }
+
+  public restore(): Transaction {
+    if (!this.isArchived) {
+      throw new TransactionDomainError('TRANSACTION_NOT_ARCHIVED', 'Transaction is not archived.');
+    }
+    return new Transaction({
+      id: this.id,
+      accountId: this.accountId,
+      categoryId: this.categoryId,
+      type: this.type,
+      amount: this.amount,
+      currencyCode: this.currencyCode,
+      description: this.description,
+      transferGroupId: this.transferGroupId,
+      transactionDate: this.transactionDate,
+      createdAt: this.createdAt,
+      archivedAt: null,
+      voidedAt: this.voidedAt,
+    });
   }
 
   public get isVoided(): boolean {
@@ -92,7 +146,17 @@ export class Transaction {
   public voidTransaction(voidedAt: Date = new Date()): Transaction {
     if (this.isVoided) return this;
     return new Transaction({
-      ...this,
+      id: this.id,
+      accountId: this.accountId,
+      categoryId: this.categoryId,
+      type: this.type,
+      amount: this.amount,
+      currencyCode: this.currencyCode,
+      description: this.description,
+      transferGroupId: this.transferGroupId,
+      transactionDate: this.transactionDate,
+      createdAt: this.createdAt,
+      archivedAt: this.archivedAt,
       voidedAt,
     });
   }
@@ -100,7 +164,17 @@ export class Transaction {
   public unvoidTransaction(): Transaction {
     if (!this.isVoided) return this;
     return new Transaction({
-      ...this,
+      id: this.id,
+      accountId: this.accountId,
+      categoryId: this.categoryId,
+      type: this.type,
+      amount: this.amount,
+      currencyCode: this.currencyCode,
+      description: this.description,
+      transferGroupId: this.transferGroupId,
+      transactionDate: this.transactionDate,
+      createdAt: this.createdAt,
+      archivedAt: this.archivedAt,
       voidedAt: null,
     });
   }
@@ -113,6 +187,7 @@ export class Transaction {
     description: TransactionDescription;
     categoryId?: string | null;
     transactionDate?: TransactionDate;
+    occurredAt?: Date;
   }): Transaction {
     return new Transaction({
       id: props.id,
@@ -122,7 +197,8 @@ export class Transaction {
       currencyCode: props.currencyCode,
       description: props.description,
       categoryId: props.categoryId,
-      transactionDate: props.transactionDate ?? new TransactionDate(),
+      transactionDate: props.transactionDate,
+      occurredAt: props.occurredAt,
     });
   }
 
@@ -134,6 +210,7 @@ export class Transaction {
     description: TransactionDescription;
     categoryId?: string | null;
     transactionDate?: TransactionDate;
+    occurredAt?: Date;
   }): Transaction {
     return new Transaction({
       id: props.id,
@@ -143,7 +220,8 @@ export class Transaction {
       currencyCode: props.currencyCode,
       description: props.description,
       categoryId: props.categoryId,
-      transactionDate: props.transactionDate ?? new TransactionDate(),
+      transactionDate: props.transactionDate,
+      occurredAt: props.occurredAt,
     });
   }
 

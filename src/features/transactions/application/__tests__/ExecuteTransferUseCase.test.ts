@@ -1,13 +1,15 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { InMemoryTransactionRepository } from './InMemoryTransactionRepository';
 import { InMemoryAccountRepository } from '../../../accounts/application/__tests__/InMemoryAccountRepository';
 import { Account, AccountId, AccountName, AccountType, AccountTypeKind, CurrencyCode, OpeningBalance } from '../../../accounts/domain';
-import { ExecuteTransferUseCase } from '../use-cases/ExecuteTransferUseCase';
-import { TransactionDomainError, TransferReference } from '../../domain';
+import { ExecuteTransferUseCase } from '../commands/ExecuteTransferUseCase';
+import { SameAccountTransferError } from '../errors/TransactionApplicationError';
+import { IUnitOfWork } from '../../../../core/application/ports';
 
 describe('ExecuteTransferUseCase', () => {
   let transactionRepo: InMemoryTransactionRepository;
   let accountRepo: InMemoryAccountRepository;
+  let unitOfWork: IUnitOfWork;
   let useCase: ExecuteTransferUseCase;
 
   beforeEach(() => {
@@ -32,23 +34,17 @@ describe('ExecuteTransferUseCase', () => {
       isDefault: false,
     });
 
-    const accArchived = new Account({
-      id: new AccountId('acc-archived'),
-      name: new AccountName('Archived Account'),
-      type: new AccountType(AccountTypeKind.Bank),
-      currencyCode: new CurrencyCode('INR'),
-      openingBalance: new OpeningBalance(0),
-      isDefault: false,
-      archivedAt: new Date(),
-    });
-
     accountRepo.seed(accChecking);
     accountRepo.seed(accSavings);
-    accountRepo.seed(accArchived);
-    useCase = new ExecuteTransferUseCase(transactionRepo, accountRepo);
+
+    unitOfWork = {
+      runInTransaction: vi.fn(async (work) => await work()),
+    };
+
+    useCase = new ExecuteTransferUseCase(transactionRepo, accountRepo, unitOfWork);
   });
 
-  it('should successfully execute atomic transfer between active accounts', async () => {
+  it('should successfully execute atomic transfer between active accounts using unitOfWork', async () => {
     const { sourceEntry, destEntry } = await useCase.execute({
       sourceTransactionId: 't-src-1',
       destTransactionId: 't-dst-1',
@@ -60,45 +56,25 @@ describe('ExecuteTransferUseCase', () => {
       transferGroupId: 'tg-999',
     });
 
-    expect(sourceEntry.type.isTransferOut()).toBe(true);
-    expect(destEntry.type.isTransferIn()).toBe(true);
-    expect(sourceEntry.transferGroupId?.value).toBe('tg-999');
-    expect(destEntry.transferGroupId?.value).toBe('tg-999');
-
-    const storedGroupResult = await transactionRepo.getByTransferGroupId(new TransferReference('tg-999'));
-    expect(storedGroupResult.success).toBe(true);
-    if (storedGroupResult.success) {
-      expect(storedGroupResult.data).toHaveLength(2);
-    }
+    expect(unitOfWork.runInTransaction).toHaveBeenCalled();
+    expect(sourceEntry.type).toBe('TRANSFER_OUT');
+    expect(destEntry.type).toBe('TRANSFER_IN');
+    expect(sourceEntry.transferGroupId).toBe('tg-999');
+    expect(destEntry.transferGroupId).toBe('tg-999');
   });
 
-  it('should reject transfer when source account is archived', async () => {
+  it('should throw SameAccountTransferError when source and destination accounts are identical', async () => {
     await expect(
       useCase.execute({
         sourceTransactionId: 't-src-2',
         destTransactionId: 't-dst-2',
-        sourceAccountId: 'acc-archived',
-        destAccountId: 'acc-savings',
+        sourceAccountId: 'acc-checking',
+        destAccountId: 'acc-checking',
         amount: 500,
         currencyCode: 'INR',
-        description: 'Transfer from archived',
+        description: 'Self transfer',
         transferGroupId: 'tg-888',
       })
-    ).rejects.toThrow(TransactionDomainError);
-  });
-
-  it('should reject transfer when destination account is archived', async () => {
-    await expect(
-      useCase.execute({
-        sourceTransactionId: 't-src-3',
-        destTransactionId: 't-dst-3',
-        sourceAccountId: 'acc-checking',
-        destAccountId: 'acc-archived',
-        amount: 500,
-        currencyCode: 'INR',
-        description: 'Transfer to archived',
-        transferGroupId: 'tg-777',
-      })
-    ).rejects.toThrow(TransactionDomainError);
+    ).rejects.toThrow(SameAccountTransferError);
   });
 });

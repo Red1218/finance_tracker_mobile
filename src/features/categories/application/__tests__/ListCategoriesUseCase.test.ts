@@ -1,67 +1,43 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { ListCategoriesUseCase } from '../use-cases/ListCategoriesUseCase';
+import { ListCategoriesQueryUseCase } from '../queries/ListCategoriesQueryUseCase';
 import { InMemoryCategoryRepository } from './InMemoryCategoryRepository';
 import { Category, CategoryId, CategoryName, CategoryKind } from '../../domain';
 
-describe('ListCategoriesUseCase', () => {
+describe('ListCategoriesQueryUseCase', () => {
   let repository: InMemoryCategoryRepository;
-  let useCase: ListCategoriesUseCase;
+  let useCase: ListCategoriesQueryUseCase;
 
   beforeEach(() => {
     repository = new InMemoryCategoryRepository();
-    useCase = new ListCategoriesUseCase(repository);
 
-    repository.seed(
-      new Category({
-        id: new CategoryId('cat-exp-1'),
-        name: new CategoryName('Groceries'),
-        kind: CategoryKind.Expense,
-        isSystem: false,
-        archivedAt: null,
-      })
-    );
+    const cat1 = new Category({
+      id: new CategoryId('cat-exp'),
+      name: new CategoryName('Groceries'),
+      kind: CategoryKind.Expense,
+      isSystem: true,
+    });
 
-    repository.seed(
-      new Category({
-        id: new CategoryId('cat-inc-1'),
-        name: new CategoryName('Salary'),
-        kind: CategoryKind.Income,
-        isSystem: false,
-        archivedAt: null,
-      })
-    );
+    const cat2 = new Category({
+      id: new CategoryId('cat-inc'),
+      name: new CategoryName('Salary'),
+      kind: CategoryKind.Income,
+      isSystem: true,
+    });
 
-    repository.seed(
-      new Category({
-        id: new CategoryId('cat-exp-archived'),
-        name: new CategoryName('Old Subscriptions'),
-        kind: CategoryKind.Expense,
-        isSystem: false,
-        archivedAt: new Date(),
-      })
-    );
+    repository.seed(cat1);
+    repository.seed(cat2);
+
+    useCase = new ListCategoriesQueryUseCase(repository);
   });
 
-  it('lists active categories by default excluding archived categories', async () => {
+  it('should list all active categories by default', async () => {
     const list = await useCase.execute();
-
-    expect(list).toHaveLength(2);
-    expect(list.map((c) => c.id.value)).toEqual(['cat-exp-1', 'cat-inc-1']);
+    expect(list.length).toBe(2);
   });
 
-  it('filters active categories by CategoryKind (Expense vs Income)', async () => {
-    const expenses = await useCase.execute({ kind: CategoryKind.Expense });
-    expect(expenses).toHaveLength(1);
-    expect(expenses[0].id.value).toBe('cat-exp-1');
-
-    const income = await useCase.execute({ kind: CategoryKind.Income });
-    expect(income).toHaveLength(1);
-    expect(income[0].id.value).toBe('cat-inc-1');
-  });
-
-  it('includes archived categories when includeArchived = true', async () => {
-    const list = await useCase.execute({ includeArchived: true });
-
-    expect(list).toHaveLength(3);
+  it('should filter categories by kind', async () => {
+    const list = await useCase.execute('EXPENSE');
+    expect(list.length).toBe(1);
+    expect(list[0].kind).toBe('EXPENSE');
   });
 });

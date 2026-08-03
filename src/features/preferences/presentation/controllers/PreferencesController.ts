@@ -12,7 +12,7 @@ import {
 import { ListCategoriesUseCase } from '../../../categories/application/use-cases/ListCategoriesUseCase';
 import { Theme, WeekStart, DecimalPrecision } from '../../domain';
 import { Category } from '../../../categories/domain';
-import { AppInfoProvider, AppInfo } from '../../../../platform/system/AppInfoProvider';
+import { AppInfoProvider } from '../../../../platform/system/AppInfoProvider';
 import { PreferencesViewModel } from '../models/PreferencesViewModel';
 import { PreferencesViewModelMapper } from '../mappers/PreferencesViewModelMapper';
 
@@ -39,59 +39,48 @@ export class PreferencesController {
     viewModel: PreferencesViewModel;
     categories: Category[];
   }> {
-    const [prefResult, categories] = await Promise.all([
+    const [preferencesDto, categories] = await Promise.all([
       this.initializePreferencesUseCase.execute(userId),
       this.listCategoriesUseCase.execute({ includeArchived: false }).catch(() => []),
     ]);
 
-    if (!prefResult.success) {
-      throw prefResult.error;
-    }
-
     const viewModel = PreferencesViewModelMapper.mapToViewModel(
-      prefResult.data,
-      categories,
+      preferencesDto,
+      categories as any,
       this.appInfoProvider.getAppInfo()
     );
 
-    return { viewModel, categories };
+    return { viewModel, categories: categories as any };
   }
 
   public async updateTheme(theme: Theme, userId?: string): Promise<void> {
-    const result = await this.updateThemeUseCase.execute({ theme, userId });
-    if (!result.success) throw result.error;
+    await this.updateThemeUseCase.execute({ theme, userId });
   }
 
   public async updateCurrency(currencyCode: string, userId?: string): Promise<void> {
-    const result = await this.updateCurrencyUseCase.execute({ currencyCode, userId });
-    if (!result.success) throw result.error;
+    await this.updateCurrencyUseCase.execute({ currencyCode, userId });
   }
 
   public async updateWeekStart(weekStart: WeekStart, userId?: string): Promise<void> {
-    const result = await this.updateWeekStartUseCase.execute({ weekStart, userId });
-    if (!result.success) throw result.error;
+    await this.updateWeekStartUseCase.execute({ weekStart, userId });
   }
 
   public async updateDecimalPrecision(decimalPrecision: DecimalPrecision, userId?: string): Promise<void> {
-    const result = await this.updateDecimalPrecisionUseCase.execute({ decimalPrecision, userId });
-    if (!result.success) throw result.error;
+    await this.updateDecimalPrecisionUseCase.execute({ decimalPrecision, userId });
   }
 
   public async updateDefaultExpenseCategory(categoryId: string | null, userId?: string): Promise<void> {
-    const result = await this.updateDefaultExpenseCategoryUseCase.execute({ categoryId, userId });
-    if (!result.success) throw result.error;
+    await this.updateDefaultExpenseCategoryUseCase.execute({ categoryId, userId });
   }
 
   public async updateDefaultIncomeCategory(categoryId: string | null, userId?: string): Promise<void> {
-    const result = await this.updateDefaultIncomeCategoryUseCase.execute({ categoryId, userId });
-    if (!result.success) throw result.error;
+    await this.updateDefaultIncomeCategoryUseCase.execute({ categoryId, userId });
   }
 
   public async updateNotificationSettings(
     data: { budgetAlertsEnabled: boolean; dailyReminderEnabled: boolean; reminderTime?: string | null },
     userId?: string
   ): Promise<void> {
-    const result = await this.updateNotificationSettingsUseCase.execute({ ...data, userId });
-    if (!result.success) throw result.error;
+    await this.updateNotificationSettingsUseCase.execute({ ...data, userId });
   }
 }

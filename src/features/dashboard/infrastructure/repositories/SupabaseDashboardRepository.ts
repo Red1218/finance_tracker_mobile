@@ -25,11 +25,16 @@ export class SupabaseDashboardRepository implements DashboardReadRepository {
       const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
       const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
 
-      // Fetch Categories, Budgets, and Expenses concurrently from Supabase
+      // Fetch Categories, Budgets, and Transactions concurrently from Supabase
       const [categoriesRes, budgetsRes, expensesRes] = await Promise.all([
-        this.client.from('categories').select('id, name'),
-        this.client.from('budgets').select('id, amount, category_id'),
-        this.client.from('expenses').select('id, amount, currency, expense_date, category_id, note, merchant')
+        this.client.from('categories').select('id, name').eq('user_id', userId),
+        this.client.from('budgets').select('id, amount, category_id').eq('user_id', userId),
+        this.client.from('transactions')
+          .select('id, amount, currency_code, occurred_at, category_id, description, type')
+          .eq('type', 'EXPENSE')
+          .eq('user_id', userId)
+          .gte('occurred_at', firstDay.toISOString())
+          .lte('occurred_at', lastDay.toISOString())
       ]);
 
       if (categoriesRes.error) {
@@ -56,11 +61,11 @@ export class SupabaseDashboardRepository implements DashboardReadRepository {
 
       const transactions: TransactionSnapshot[] = (expensesRes.data || []).map((t: any) => ({
         id: t.id,
-        amount: new MonetaryAmount(Number(t.amount), t.currency || 'INR'),
-        direction: (t.type === 'income' || t.type === 'INCOME') ? 'Income' : 'Expense',
-        occurredAt: new Date(t.expense_date || t.created_at || now),
+        amount: new MonetaryAmount(Number(t.amount), t.currency_code || 'INR'),
+        direction: (t.type === 'INCOME') ? 'Income' : 'Expense',
+        occurredAt: new Date(t.occurred_at || t.created_at || now),
         categoryId: t.category_id || '',
-        description: t.note || t.merchant || 'Expense'
+        description: t.description || 'Expense'
       }));
 
       const snapshot: DashboardDataSnapshot = {

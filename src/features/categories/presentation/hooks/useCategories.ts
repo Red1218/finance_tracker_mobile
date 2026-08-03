@@ -1,13 +1,13 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Category, CategoryKind } from '../../domain';
-import { ListCategoriesUseCase } from '../../application';
+import { CategoryKind } from '../../domain';
+import { ListCategoriesUseCase, CategoryDTO } from '../../application';
 
 export function useCategories(
   listCategoriesUseCase: ListCategoriesUseCase,
   includeArchived: boolean = false,
   kind?: CategoryKind
 ) {
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<CategoryDTO[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

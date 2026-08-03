@@ -1,17 +1,15 @@
 import type { ComponentType, ReactNode } from 'react';
 import { ReactQueryProvider } from './ReactQueryProvider';
-import { AuthProvider } from '../platform/authentication';
 import { ThemeProvider } from '../shared/theme';
 
 /**
  * Ordered list of providers wrapping the application.
  * Providers are composed outside-in (first item wraps the second item, etc).
- * This makes it easy to insert new providers (e.g., ThemeProvider, AuthProvider) without refactoring.
+ * This makes it easy to insert new providers (e.g., ThemeProvider) without refactoring.
  */
 const providers: readonly ComponentType<{ children: ReactNode }>[] = Object.freeze([
   ThemeProvider,
   ReactQueryProvider,
-  AuthProvider,
 ]);
 
 export type AppProviderProps = Readonly<{

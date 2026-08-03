@@ -6,8 +6,12 @@ export function useAuth(controller: AuthController) {
   const [state, setState] = useState<AuthState>(controller.getState());
 
   useEffect(() => {
-    const unsubscribe = controller.subscribe(setState);
-    return () => unsubscribe();
+    const unsubscribe = controller.subscribe(() => {
+      setState(controller.getSnapshot());
+    });
+    // Call it initially to get the current state
+    setState(controller.getSnapshot());
+    return unsubscribe;
   }, [controller]);
 
   const login = useCallback(

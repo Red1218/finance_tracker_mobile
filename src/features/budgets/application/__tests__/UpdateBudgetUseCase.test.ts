@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { UpdateBudgetUseCase } from '../use-cases/UpdateBudgetUseCase';
 import { InMemoryBudgetRepository } from './InMemoryBudgetRepository';
 import { Budget, BudgetId, BudgetAmount, BudgetPeriod, BudgetPeriodType } from '../../domain';
-import { CurrencyCode } from '../../../expenses/domain/value-objects/CurrencyCode';
+import { CurrencyCode } from '../../../accounts/domain/value-objects/CurrencyCode';
 
 describe('UpdateBudgetUseCase', () => {
   let repository: InMemoryBudgetRepository;

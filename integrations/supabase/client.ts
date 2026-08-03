@@ -1,1 +1,1 @@
-export { supabase } from '@/src/platform/authentication/supabaseClient';
+export { supabase } from '@/src/database';

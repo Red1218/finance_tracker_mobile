@@ -3,6 +3,10 @@ import { AppearanceSettings } from '../value-objects/AppearanceSettings';
 import { FinanceSettings } from '../value-objects/FinanceSettings';
 import { DefaultSettings } from '../value-objects/DefaultSettings';
 import { NotificationSettings } from '../value-objects/NotificationSettings';
+import { Theme } from '../value-objects/Theme';
+import { CurrencyCode } from '../value-objects/CurrencyCode';
+import { WeekStart } from '../value-objects/WeekStart';
+import { DecimalPrecision } from '../value-objects/DecimalPrecision';
 
 export interface PreferencesProps {
   id: PreferencesId;
@@ -41,6 +45,40 @@ export class Preferences {
       defaults: DefaultSettings.createDefault(),
       notifications: NotificationSettings.createDefault(),
     });
+  }
+
+  public updateTheme(theme: Theme): Preferences {
+    return this.updateAppearance(new AppearanceSettings({ theme }));
+  }
+
+  public updateCurrency(currencyCode: CurrencyCode): Preferences {
+    return this.updateFinance(
+      new FinanceSettings({
+        currencyCode,
+        weekStart: this.finance.weekStart,
+        decimalPrecision: this.finance.decimalPrecision,
+      })
+    );
+  }
+
+  public updateWeekStart(weekStart: WeekStart): Preferences {
+    return this.updateFinance(
+      new FinanceSettings({
+        currencyCode: this.finance.currencyCode,
+        weekStart,
+        decimalPrecision: this.finance.decimalPrecision,
+      })
+    );
+  }
+
+  public updateDecimalPrecision(decimalPrecision: DecimalPrecision): Preferences {
+    return this.updateFinance(
+      new FinanceSettings({
+        currencyCode: this.finance.currencyCode,
+        weekStart: this.finance.weekStart,
+        decimalPrecision,
+      })
+    );
   }
 
   public updateAppearance(appearance: AppearanceSettings): Preferences {

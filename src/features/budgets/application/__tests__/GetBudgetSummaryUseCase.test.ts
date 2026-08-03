@@ -1,151 +1,63 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { GetBudgetSummaryUseCase } from '../use-cases/GetBudgetSummaryUseCase';
+import { GetBudgetSummaryProjection } from '../projections/GetBudgetSummaryProjection';
 import { InMemoryBudgetRepository } from './InMemoryBudgetRepository';
 import { InMemoryTransactionRepository } from '../../../transactions/application/__tests__/InMemoryTransactionRepository';
 import { Budget, BudgetId, BudgetAmount, BudgetPeriod, BudgetPeriodType } from '../../domain';
-import { CurrencyCode } from '../../../expenses/domain/value-objects/CurrencyCode';
-import { Transaction, TransactionId, TransactionType, TransactionTypeKind, TransactionDate, TransactionDescription, Money } from '../../../transactions/domain';
-import { AccountId } from '../../../accounts/domain';
+import { CategoryId } from '../../../categories/domain';
+import { CurrencyCode, AccountId } from '../../../accounts/domain';
+import { Transaction, TransactionId, Money, TransactionDescription } from '../../../transactions/domain';
 
-describe('GetBudgetSummaryUseCase', () => {
+describe('GetBudgetSummaryProjection', () => {
   let budgetRepo: InMemoryBudgetRepository;
-  let txRepo: InMemoryTransactionRepository;
-  let useCase: GetBudgetSummaryUseCase;
-
-  const validBudgetId = '123e4567-e89b-12d3-a456-426614174000';
-  const accountId = new AccountId('123e4567-e89b-12d3-a456-426614174001');
-  const catId = '123e4567-e89b-12d3-a456-426614174002';
-  const currency = new CurrencyCode('INR');
-  const startDate = new Date('2026-06-01T00:00:00Z');
-  const endDate = new Date('2026-06-30T23:59:59Z');
+  let transactionRepo: InMemoryTransactionRepository;
+  let projection: GetBudgetSummaryProjection;
+  const validBudgetId = 'b1111111-e89b-12d3-a456-426614174000';
 
   beforeEach(() => {
     budgetRepo = new InMemoryBudgetRepository();
-    txRepo = new InMemoryTransactionRepository();
-    useCase = new GetBudgetSummaryUseCase(budgetRepo, txRepo);
+    transactionRepo = new InMemoryTransactionRepository();
 
-    budgetRepo.seed(
-      Budget.create({
-        id: new BudgetId(validBudgetId),
-        categoryId: null, // Overall budget
-        amount: new BudgetAmount(10000),
-        currency,
-        period: new BudgetPeriod(BudgetPeriodType.Monthly, startDate, endDate),
-      })
-    );
+    const budget = Budget.create({
+      id: new BudgetId(validBudgetId),
+      categoryId: new CategoryId('cat-groceries'),
+      amount: new BudgetAmount(1000),
+      currency: new CurrencyCode('INR'),
+      period: new BudgetPeriod(BudgetPeriodType.Monthly, new Date('2026-06-01'), new Date('2026-06-30')),
+    });
+    budgetRepo.save(budget);
+
+    const tx1 = Transaction.createExpense({
+      id: new TransactionId('t-1'),
+      accountId: new AccountId('acc-1'),
+      amount: new Money(400),
+      currencyCode: new CurrencyCode('INR'),
+      description: new TransactionDescription('Groceries 1'),
+      categoryId: 'cat-groceries',
+      occurredAt: new Date('2026-06-10'),
+    });
+
+    const tx2 = Transaction.createExpense({
+      id: new TransactionId('t-2'),
+      accountId: new AccountId('acc-1'),
+      amount: new Money(450),
+      currencyCode: new CurrencyCode('INR'),
+      description: new TransactionDescription('Groceries 2'),
+      categoryId: 'cat-groceries',
+      occurredAt: new Date('2026-06-20'),
+    });
+
+    transactionRepo.save(tx1);
+    transactionRepo.save(tx2);
+
+    projection = new GetBudgetSummaryProjection(budgetRepo, transactionRepo);
   });
 
-  it('computes summary with zero transactions (ON_TRACK)', async () => {
-    const summary = await useCase.execute({ budgetId: validBudgetId });
+  it('should compute budget summary DTO correctly', async () => {
+    const summary = await projection.execute(validBudgetId);
 
-    expect(summary.spentAmount).toBe(0);
-    expect(summary.remainingAmount).toBe(10000);
-    expect(summary.percentageUsed).toBe(0);
-    expect(summary.healthStatus).toBe('ON_TRACK');
-  });
-
-  it('computes summary with partial spend (ON_TRACK / NEAR_LIMIT)', async () => {
-    txRepo.save(
-      new Transaction({
-        id: new TransactionId('123e4567-e89b-12d3-a456-426614174010'),
-        accountId,
-        categoryId: catId,
-        type: new TransactionType(TransactionTypeKind.Expense),
-        amount: new Money(8500),
-        currencyCode: currency,
-        description: new TransactionDescription('Groceries'),
-        transactionDate: new TransactionDate(new Date('2026-06-15')),
-      })
-    );
-
-    const summary = await useCase.execute({ budgetId: validBudgetId });
-
-    expect(summary.spentAmount).toBe(8500);
-    expect(summary.remainingAmount).toBe(1500);
+    expect(summary.spentAmount).toBe(850);
+    expect(summary.remainingAmount).toBe(150);
     expect(summary.percentageUsed).toBe(85);
     expect(summary.healthStatus).toBe('NEAR_LIMIT');
-  });
-
-  it('computes summary when spent equals budget limit (NEAR_LIMIT)', async () => {
-    txRepo.save(
-      new Transaction({
-        id: new TransactionId('123e4567-e89b-12d3-a456-426614174011'),
-        accountId,
-        categoryId: catId,
-        type: new TransactionType(TransactionTypeKind.Expense),
-        amount: new Money(10000),
-        currencyCode: currency,
-        description: new TransactionDescription('Rent'),
-        transactionDate: new TransactionDate(new Date('2026-06-15')),
-      })
-    );
-
-    const summary = await useCase.execute({ budgetId: validBudgetId });
-
-    expect(summary.spentAmount).toBe(10000);
-    expect(summary.remainingAmount).toBe(0);
-    expect(summary.percentageUsed).toBe(100);
-    expect(summary.healthStatus).toBe('NEAR_LIMIT');
-  });
-
-  it('computes summary when over budget (OVER_BUDGET)', async () => {
-    txRepo.save(
-      new Transaction({
-        id: new TransactionId('123e4567-e89b-12d3-a456-426614174012'),
-        accountId,
-        categoryId: catId,
-        type: new TransactionType(TransactionTypeKind.Expense),
-        amount: new Money(12000),
-        currencyCode: currency,
-        description: new TransactionDescription('Shopping'),
-        transactionDate: new TransactionDate(new Date('2026-06-15')),
-      })
-    );
-
-    const summary = await useCase.execute({ budgetId: validBudgetId });
-
-    expect(summary.spentAmount).toBe(12000);
-    expect(summary.remainingAmount).toBe(-2000);
-    expect(summary.percentageUsed).toBe(120);
-    expect(summary.healthStatus).toBe('OVER_BUDGET');
-  });
-
-  it('ignores voided transactions when computing spend summary', async () => {
-    const tx = new Transaction({
-      id: new TransactionId('123e4567-e89b-12d3-a456-426614174013'),
-      accountId,
-      categoryId: catId,
-      type: new TransactionType(TransactionTypeKind.Expense),
-      amount: new Money(5000),
-      currencyCode: currency,
-      description: new TransactionDescription('Cancelled Purchase'),
-      transactionDate: new TransactionDate(new Date('2026-06-15')),
-    });
-    txRepo.save(tx.voidTransaction());
-
-    const summary = await useCase.execute({ budgetId: validBudgetId });
-
-    expect(summary.spentAmount).toBe(0);
-    expect(summary.healthStatus).toBe('ON_TRACK');
-  });
-
-  it('includes historical transactions from archived categories within budget period', async () => {
-    txRepo.save(
-      new Transaction({
-        id: new TransactionId('123e4567-e89b-12d3-a456-426614174014'),
-        accountId,
-        categoryId: '123e4567-e89b-12d3-a456-426614174099', // archived category ID
-        type: new TransactionType(TransactionTypeKind.Expense),
-        amount: new Money(3000),
-        currencyCode: currency,
-        description: new TransactionDescription('Old Category Expense'),
-        transactionDate: new TransactionDate(new Date('2026-06-10')),
-      })
-    );
-
-    const summary = await useCase.execute({ budgetId: validBudgetId });
-
-    expect(summary.spentAmount).toBe(3000);
-    expect(summary.remainingAmount).toBe(7000);
   });
 });

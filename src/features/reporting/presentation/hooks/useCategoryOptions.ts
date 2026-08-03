@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
-import { CategoriesModule, Category } from '../../../categories';
+import { CategoriesModule, CategoryDTO } from '../../../categories';
 
 const categoriesModule = new CategoriesModule();
 
@@ -9,7 +9,7 @@ export interface CategoryOptionItem {
 }
 
 export function useCategoryOptions() {
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<CategoryDTO[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,8 +32,8 @@ export function useCategoryOptions() {
 
   const categoryOptions: CategoryOptionItem[] = useMemo(() => {
     return categories.map((cat) => ({
-      id: cat.id.value,
-      name: cat.name.value,
+      id: cat.id,
+      name: cat.name,
     }));
   }, [categories]);
 

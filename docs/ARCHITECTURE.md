@@ -189,11 +189,11 @@ No other module imports from inside a feature's subdirectories.
 
 ## Authentication
 
-- **Single Source of Truth:** `src/platform/authentication` owns the `AuthContext`, `AuthProvider`, `useAuth`, and all authentication state management (login, logout, registration, session restoration).
-- **Clean Architecture Boundary:** Features (e.g., the Identity feature) consume the platform authentication layer. They do not own or provide global authentication state. The legacy feature-layer authentication implementation has been removed.
+- **Single Source of Truth:** `src/features/auth` is the canonical authentication module implementing Clean Architecture / CQRS.
+- **Router Integration:** Expo Router consumes auth state via `src/features/auth/presentation/hooks/useAppAuth.ts`, which bridges the `AuthController` singleton to React using `useSyncExternalStore`. This allows the Router to react instantly to auth changes without relying on a top-level Context provider.
 - Supabase Auth issues JWTs on sign-in.
 - Sessions are stored securely via `expo-secure-store` on native platforms.
-- Protected routes (via `AuthGuard` and `GuestGuard` in `src/navigation`) rely on `useAuth()` to orchestrate redirects.
+- Protected routes (via `AuthGuard` and `GuestGuard` in `src/navigation`) rely on `useAppAuth()` to orchestrate redirects.
 - The JWT is forwarded by the Supabase client on every request, enabling RLS policy evaluation.
 
 ---

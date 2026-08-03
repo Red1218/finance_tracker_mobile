@@ -5,6 +5,7 @@ import { DashboardContainer } from './DashboardContainer';
 import { DashboardBootstrap } from './DashboardBootstrap';
 import { environment } from '../../../config/environment';
 import { setupDashboardMock } from './development/DashboardMockAPI';
+import { supabase } from '../../../database';
 import type { DashboardFacade } from '../application/facade/DashboardFacade';
 
 interface DashboardModuleProps {
@@ -29,7 +30,10 @@ export function DashboardModule({ userId, enableMockData }: DashboardModuleProps
       setupDashboardMock();
     }
 
-    DashboardBootstrap.initialize({}).then(() => {
+    DashboardBootstrap.initialize({
+      supabaseClient: supabase,
+      apiBaseUrl: environment.supabaseUrl
+    }).then(() => {
       if (!cancelled) {
         setFacade(DashboardContainer.getFacade());
       }

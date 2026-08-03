@@ -49,7 +49,7 @@ export class TransactionsModule {
     this.updateTransactionUseCase = new UpdateTransactionUseCase(this.transactionRepository);
     this.voidTransactionUseCase = new VoidTransactionUseCase(this.transactionRepository);
     this.loadTransactionsUseCase = new LoadTransactionsUseCase(this.transactionRepository);
-    this.loadAccountLedgerUseCase = new LoadAccountLedgerUseCase(this.transactionRepository);
+    this.loadAccountLedgerUseCase = new LoadAccountLedgerUseCase(this.transactionRepository, this.accountRepository);
 
     this.controller = new TransactionController(
       this.createExpenseUseCase,

@@ -8,13 +8,13 @@ import {
   RestoreCategoryUseCase,
   RestoreCategoryCommand,
   ListCategoriesUseCase,
-  ListCategoriesQuery,
-  ValidateCategoryForTransactionUseCase,
-  ValidateCategoryCommand,
+  CategoryValidationService,
+  ICategoryRepository,
 } from '../../application';
-import { CategoryKind } from '../../domain';
+import { CategoryKind, CategoryId } from '../../domain';
 import { CategoryViewModel } from '../models/CategoryViewModel';
 import { CategoryViewModelMapper } from '../mappers/CategoryViewModelMapper';
+import { CategoryNotFoundError } from '../../application/errors/CategoryApplicationError';
 
 export class CategoryController {
   constructor(
@@ -23,7 +23,8 @@ export class CategoryController {
     private readonly archiveCategoryUseCase: ArchiveCategoryUseCase,
     private readonly restoreCategoryUseCase: RestoreCategoryUseCase,
     private readonly listCategoriesUseCase: ListCategoriesUseCase,
-    private readonly validateCategoryForTransactionUseCase: ValidateCategoryForTransactionUseCase
+    private readonly validateCategoryForTransactionUseCase: CategoryValidationService,
+    private readonly categoryRepository?: ICategoryRepository
   ) {
     Object.freeze(this);
   }
@@ -46,7 +47,7 @@ export class CategoryController {
     await this.restoreCategoryUseCase.execute(command);
   }
 
-  public async listCategories(query?: ListCategoriesQuery): Promise<CategoryViewModel[]> {
+  public async listCategories(query?: any): Promise<CategoryViewModel[]> {
     const categories = await this.listCategoriesUseCase.execute(query);
     return CategoryViewModelMapper.mapToViewModels(categories);
   }
@@ -55,10 +56,23 @@ export class CategoryController {
     categoryId: string,
     expectedKind: CategoryKind
   ): Promise<CategoryViewModel> {
-    const category = await this.validateCategoryForTransactionUseCase.execute({
+    await this.validateCategoryForTransactionUseCase.execute({
       categoryId,
-      expectedKind,
+      expectedKind: expectedKind === CategoryKind.Expense ? 'EXPENSE' : 'INCOME',
     });
-    return CategoryViewModelMapper.mapToViewModel(category);
+
+    if (this.categoryRepository) {
+      const getRes = await this.categoryRepository.getById(new CategoryId(categoryId));
+      if (getRes.success && getRes.data) {
+        return CategoryViewModelMapper.mapToViewModel(getRes.data);
+      }
+    }
+
+    const categories = await this.listCategoriesUseCase.execute({ includeArchived: true });
+    const found = categories.find((c) => c.id === categoryId);
+    if (!found) {
+      throw new CategoryNotFoundError(categoryId);
+    }
+    return CategoryViewModelMapper.mapToViewModel(found);
   }
 }

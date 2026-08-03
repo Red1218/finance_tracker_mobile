@@ -1,9 +1,9 @@
 import { useState, useCallback, useEffect } from 'react';
 import { TransactionController } from '../controllers/TransactionController';
-import { AccountLedgerSummary } from '../../application/repositories/ITransactionRepository';
+import { LedgerProjectionDTO } from '../../application/queries/LoadAccountLedgerQueryUseCase';
 
 export function useAccountLedger(controller: TransactionController, accountId: string) {
-  const [summary, setSummary] = useState<AccountLedgerSummary | null>(null);
+  const [summary, setSummary] = useState<LedgerProjectionDTO | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
 
