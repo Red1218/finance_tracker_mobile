@@ -8,7 +8,7 @@ describe('CategoryMapper', () => {
     const row: CategoryRow = {
       id: 'cat-123',
       name: 'Groceries',
-      type: 'expense',
+      kind: 'expense',
       is_system: false,
       archived_at: null,
       color_hex: '#EF4444',
@@ -32,7 +32,7 @@ describe('CategoryMapper', () => {
     const row: CategoryRow = {
       id: 'cat-456',
       name: 'Salary',
-      type: 'income',
+      kind: 'income',
       is_system: true,
       archived_at: null,
     };
@@ -60,7 +60,7 @@ describe('CategoryMapper', () => {
     expect(row).toEqual({
       id: 'cat-123',
       name: 'Groceries',
-      type: 'expense',
+      kind: 'expense',
       is_system: false,
       archived_at: null,
       color_hex: '#EF4444',
@@ -83,7 +83,7 @@ describe('CategoryMapper', () => {
     expect(row).toEqual({
       id: 'cat-system',
       name: 'System Income',
-      type: 'income',
+      kind: 'income',
       is_system: true,
       archived_at: '2026-07-25T12:00:00.000Z',
       color_hex: null,
@@ -96,7 +96,7 @@ describe('CategoryMapper', () => {
       const originalRow: CategoryRow = {
         id: 'cat-rt-1',
         name: 'Dining Out',
-        type: 'expense',
+        kind: 'expense',
         is_system: false,
         archived_at: null,
         color_hex: null,

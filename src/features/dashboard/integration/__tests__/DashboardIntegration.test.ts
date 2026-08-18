@@ -14,11 +14,17 @@ describe('Dashboard Feature End-to-End Integration', () => {
       subscribe: vi.fn().mockReturnValue(vi.fn())
     };
 
+    const queryBuilder = {
+      eq: vi.fn().mockReturnThis(),
+      gte: vi.fn().mockReturnThis(),
+      lte: vi.fn().mockReturnThis(),
+      is: vi.fn().mockReturnThis(),
+      then: function(resolve: any) { resolve({ data: [], error: null }); }
+    };
+
     const mockSupabase: any = {
       from: vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockResolvedValue({ data: [], error: null })
-        })
+        select: vi.fn().mockReturnValue(queryBuilder)
       })
     };
 

@@ -10,7 +10,7 @@ import { supabase } from '../../../database';
 
 export class SupabaseCategoryRepository extends BaseRepository implements ICategoryRepository {
   private static readonly TABLE = 'categories';
-  private static readonly COLUMNS = 'id,name,type,is_system,archived_at,color_hex,icon_name';
+  private static readonly COLUMNS = 'id,name,kind,is_system,archived_at,color_hex,icon_name';
 
   constructor(client: SupabaseClient = supabase) {
     super(client);
@@ -58,7 +58,7 @@ export class SupabaseCategoryRepository extends BaseRepository implements ICateg
       }
 
       if (kind) {
-        query = query.eq('type', kind === CategoryKind.Income ? 'income' : 'expense');
+        query = query.eq('kind', kind === CategoryKind.Income ? 'income' : 'expense');
       }
       
       const { data, error } = await query;
@@ -165,7 +165,7 @@ export class SupabaseCategoryRepository extends BaseRepository implements ICateg
         .from(SupabaseCategoryRepository.TABLE)
         .select('id', { count: 'exact', head: true })
         .ilike('name', name.trim())
-        .eq('type', kind === CategoryKind.Income ? 'income' : 'expense')
+        .eq('kind', kind === CategoryKind.Income ? 'income' : 'expense')
         .is('archived_at', null);
 
       if (excludeCategoryId) {
