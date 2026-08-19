@@ -1,28 +1,21 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { StatusIndicator } from '@/src/shared/components';
 
-interface BudgetStatusBadgeProps {
-  status: 'OnTrack' | 'AtRisk' | 'Overbudget';
+export interface BudgetStatusBadgeProps {
+  status: 'OnTrack' | 'AtRisk' | 'Overbudget' | 'ON_TRACK' | 'NEAR_LIMIT' | 'OVER_BUDGET' | string;
 }
 
-export const BudgetStatusBadge: React.FC<BudgetStatusBadgeProps> = ({ status }) => {
-  let bgColor = 'bg-green-100';
-  let textColor = 'text-green-800';
+export function BudgetStatusBadge({ status }: BudgetStatusBadgeProps) {
+  let mappedStatus: 'success' | 'warning' | 'error' = 'success';
   let label = 'On Track';
 
-  if (status === 'AtRisk') {
-    bgColor = 'bg-yellow-100';
-    textColor = 'text-yellow-800';
-    label = 'At Risk';
-  } else if (status === 'Overbudget') {
-    bgColor = 'bg-red-100';
-    textColor = 'text-red-800';
-    label = 'Overbudget';
+  if (status === 'AtRisk' || status === 'NEAR_LIMIT') {
+    mappedStatus = 'warning';
+    label = 'Near Limit';
+  } else if (status === 'Overbudget' || status === 'OVER_BUDGET') {
+    mappedStatus = 'error';
+    label = 'Over Budget';
   }
 
-  return (
-    <View className={`px-2 py-1 rounded-md ${bgColor}`}>
-      <Text className={`text-xs font-semibold ${textColor}`}>{label}</Text>
-    </View>
-  );
-};
+  return <StatusIndicator status={mappedStatus} label={label} variant="badge" />;
+}

@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, ActivityIndicator, Pressable } from 'react-native';
 import { useTheme } from '../../../../shared/theme';
+import { AppBar, FAB, Icon } from '../../../../shared/components';
 import { AccountsModule } from '../../composition/AccountsModule';
 import { useAccounts } from '../hooks/useAccounts';
 import { useUpdateAccount } from '../hooks/useUpdateAccount';
 import { BalanceCard } from '../components/BalanceCard';
 import { AccountCard } from '../components/AccountCard';
 import { ArchiveDialog } from '../components/ArchiveDialog';
-import { FloatingActionButton } from '../components/FloatingActionButton';
 import { AccountViewModel } from '../models/AccountViewModel';
 
-interface AccountsScreenProps {
+export interface AccountsScreenProps {
   module?: AccountsModule;
   onNavigateToCreate?: () => void;
   onNavigateToArchived?: () => void;
@@ -53,10 +53,12 @@ export function AccountsScreen({
 
   return (
     <View style={[styles.container, { backgroundColor: colors.backgroundPrimary }]}>
-      <ScrollView contentContainerStyle={{ padding: spacing.space16 }}>
+      <AppBar title="Accounts" />
+
+      <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Header Title & Nav Links */}
         <View style={styles.headerRow}>
-          <Text style={[{ color: colors.textPrimary }, typography.heading]}>Accounts</Text>
+          <Text style={[{ color: colors.textPrimary }, typography.heading]}>My Accounts</Text>
           {onNavigateToArchived && (
             <Pressable
               style={[
@@ -64,6 +66,8 @@ export function AccountsScreen({
                 { backgroundColor: colors.surfaceSecondary, borderRadius: radius.small, paddingHorizontal: spacing.space12, paddingVertical: spacing.space8 },
               ]}
               onPress={onNavigateToArchived}
+              accessibilityRole="button"
+              accessibilityLabel="View archived accounts"
             >
               <Text style={[typography.caption, { color: colors.textPrimary, fontWeight: '600' }]}>
                 Archived Accounts
@@ -73,7 +77,7 @@ export function AccountsScreen({
         </View>
 
         {(error || updateError) && (
-          <View style={[styles.errorCard, { backgroundColor: colors.surfaceSecondary, marginBottom: spacing.space16 }]}>
+          <View style={[styles.errorCard, { backgroundColor: 'rgba(239, 68, 68, 0.15)', marginBottom: spacing.space16 }]}>
             <Text style={[{ color: colors.error }, typography.caption]}>
               {error ?? updateError}
             </Text>
@@ -84,23 +88,36 @@ export function AccountsScreen({
         <BalanceCard totalBalance={totalBalance} activeAccountsCount={viewModels.length} />
 
         {/* Active Accounts Section */}
-        <Text style={[{ color: colors.textSecondary, marginBottom: spacing.space12 }, typography.label]}>
-          Active Accounts
+        <Text style={[styles.sectionHeader, { color: colors.textSecondary, fontSize: typography.label.fontSize }]}>
+          ACTIVE ACCOUNTS ({viewModels.length})
         </Text>
 
-        {viewModels.map((vm) => (
-          <AccountCard
-            key={vm.id}
-            viewModel={vm}
-            onSetDefault={setDefaultAccount}
-            onArchive={() => setAccountToArchive(vm)}
-            disabled={isUpdating}
-          />
-        ))}
+        {viewModels.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Icon name="CreditCard" size={48} color={colors.textMuted} />
+            <Text style={[styles.emptyTitle, { color: colors.textPrimary, fontSize: typography.title.fontSize }]}>
+              No accounts created
+            </Text>
+            <Text style={[styles.emptySubtitle, { color: colors.textSecondary, fontSize: typography.body.fontSize }]}>
+              Tap '+' to create your first account.
+            </Text>
+          </View>
+        ) : (
+          viewModels.map((vm) => (
+            <AccountCard
+              key={vm.id}
+              viewModel={vm}
+              onSetDefault={setDefaultAccount}
+              onArchive={() => setAccountToArchive(vm)}
+              disabled={isUpdating}
+            />
+          ))
+        )}
       </ScrollView>
 
       {/* Create Account FAB */}
-      {onNavigateToCreate && <FloatingActionButton onPress={onNavigateToCreate} />}
+      {onNavigateToCreate && <FAB iconName="Plus" onPress={onNavigateToCreate} accessibilityLabel="Add Account" />}
+
 
       {/* Archive Modal */}
       <ArchiveDialog
@@ -124,6 +141,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 24,
   },
+  scrollContent: {
+    padding: 16,
+    paddingBottom: 80,
+  },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -134,5 +155,24 @@ const styles = StyleSheet.create({
   errorCard: {
     padding: 12,
     borderRadius: 8,
+  },
+  sectionHeader: {
+    fontWeight: '600',
+    letterSpacing: 0.5,
+    marginTop: 16,
+    marginBottom: 12,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 36,
+  },
+  emptyTitle: {
+    fontWeight: '700',
+    marginTop: 16,
+    marginBottom: 6,
+  },
+  emptySubtitle: {
+    textAlign: 'center',
   },
 });

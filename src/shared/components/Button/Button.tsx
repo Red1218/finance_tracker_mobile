@@ -9,28 +9,29 @@ export function Button({ variant = 'primary', loading, disabled, title, style, .
   const variantStyles: Record<ButtonVariant, { backgroundColor: string; textColor: string }> = {
     primary: {
       backgroundColor: colors.brandPrimary,
-      textColor: colors.backgroundPrimary,
+      textColor: '#FFFFFF',
     },
     secondary: {
-      backgroundColor: colors.surfaceSecondary,
+      backgroundColor: colors.surfaceElevated,
       textColor: colors.textPrimary,
     },
     destructive: {
       backgroundColor: colors.error,
-      textColor: colors.backgroundPrimary,
+      textColor: '#FFFFFF',
     },
   };
 
   const currentVariant = variantStyles[variant] || variantStyles.primary;
 
   const backgroundColor = disabled ? colors.disabled : currentVariant.backgroundColor;
-  const textColor = disabled ? colors.textSecondary : currentVariant.textColor;
+  const textColor = disabled ? colors.textMuted : currentVariant.textColor;
 
   const containerStyle: ViewStyle = {
     backgroundColor,
     borderRadius: radius.medium,
     paddingVertical: spacing.space12,
     paddingHorizontal: spacing.space24,
+    minHeight: 44,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
@@ -42,6 +43,7 @@ export function Button({ variant = 'primary', loading, disabled, title, style, .
     fontWeight: typography.title.fontWeight,
     lineHeight: typography.body.lineHeight,
   };
+
 
   return (
     <TouchableOpacity

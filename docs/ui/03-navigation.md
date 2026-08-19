@@ -1,22 +1,39 @@
 # Finance Tracker — Navigation Architecture
 
 > [!IMPORTANT]
-> **Status**: Approved & Frozen
-> **Version**: 1.0
+> **Status**: Approved & Frozen 🔒
+> **Version**: 2.1.0 (Phase 2 Shell Navigation & Stitch Integration)
 > 
 > In accordance with the UI Governance Constitution (`00-ui-governance.md`), this document is the **Single Source of Truth** for the application's navigation architecture.
 
 ## 1. Introduction
 The Finance Tracker Navigation Architecture defines the pathways and logic by which users move through the application. Navigation acts as the connective tissue bridging the Component System and the end-user experience. This document explicitly governs routing logic, modal presentation, state preservation, deep linking, and cross-module transitions.
 
-## 2. Navigation Philosophy
-Navigation in Finance Tracker must feel invisible. Users should never have to think about how to reach a destination or return to their previous context. Predictability, spatial awareness, and non-destructive state management are prioritized above all else. 
+## 2. Approved Primary Bottom Navigation (5 Destinations)
+The primary bottom navigation bar is managed by Expo Router (`app/(tabs)/_layout.tsx`) utilizing the frozen presentation-only `BottomNavigation` primitive:
 
-## 3. Navigation Principles
-- **Predictability Over Cleverness**: Routing must behave identically across all contexts.
-- **State Preservation**: Moving between contexts must never destroy unsaved user data or filter configurations without explicit warning.
-- **Deeply Linkable**: The application state must be fully addressable via URLs.
-- **Accessibility by Default**: Navigation must be fully operable via keyboard, screen reader, and alternative input devices.
+| Tab ID | Tab Label | Icon Name | Expo Route Name | Target Route Path | Target Screen / Module |
+|---|---|---|---|---|---|
+| `home` | Home | `Home` | `index` | `/` | Dashboard (`DashboardModule`) |
+| `transactions` | Transactions | `Receipt` | `spends` | `/spends` | Transactions (`TransactionsScreen`) |
+| `budgets` | Budgets | `Target` | `budgets` | `/budgets` | Budgets (`BudgetsScreen`) |
+| `analytics` | Analytics | `BarChart2` | `insights` | `/insights` | Analytics (`InsightsScreen`) |
+| `more` | More | `Menu` | `more` | `/more` | More Navigation Hub (`MoreNavigationRoute`) |
+
+## 3. Secondary & Deep Route Architecture
+Secondary features remain registered in Expo Router and fully accessible via deep URLs and secondary links from the `More` hub (`app/(tabs)/more.tsx`):
+
+| Route Path | Expo Route Name | Feature Screen | Access Pathway |
+|---|---|---|---|
+| `/accounts` | `accounts` | `AccountsScreen` | **More -> Accounts** & Dashboard Balance Card |
+| `/categories` | `categories` | `CategoriesScreen` | **More -> Categories** & Budget Configuration |
+| `/finances` | `finances` | `ReportingScreen` | **More -> Finances** & Net Worth Summary |
+| `/settings` | `settings` | `SettingsScreen` | **More -> Settings** |
+
+> [!NOTE]
+> **Shell Boundary Rule (ADR-011)**:
+> Expo Router navigation logic belongs strictly in `app/(tabs)/_layout.tsx`. The `BottomNavigation` component is presentation-only and accepts active tab IDs and callbacks without importing Expo Router directly.
+
 
 ## 4. Navigation Architecture & Ownership
 The navigation architecture isolates routing logic from component rendering. It operates on a robust state machine model where the URL (or abstract route state) is the single source of truth.

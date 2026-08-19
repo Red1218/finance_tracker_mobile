@@ -1,5 +1,7 @@
 import { ViewProps } from 'react-native';
 
+export type CardVariant = 'default' | 'outlined' | 'elevated';
+
 export interface CardProps extends ViewProps {
-  // Empty for now, allowing future extension of Card-specific features
+  variant?: CardVariant;
 }

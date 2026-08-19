@@ -3,3 +3,8 @@ export * from './Card';
 export * from './Screen';
 export * from './Loading';
 export * from './EmptyState';
+export * from './Icon';
+export * from './StatusIndicator';
+export * from './AppBar';
+export * from './BottomNavigation';
+export * from './FAB';

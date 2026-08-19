@@ -29,4 +29,16 @@ export const typography = {
     fontWeight: '400' as const,
     lineHeight: 16,
   },
+  numeric: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    lineHeight: 24,
+    fontVariant: ['tabular-nums'] as const,
+  },
+  numericLarge: {
+    fontSize: 28,
+    fontWeight: '700' as const,
+    lineHeight: 36,
+    fontVariant: ['tabular-nums'] as const,
+  },
 } as const;

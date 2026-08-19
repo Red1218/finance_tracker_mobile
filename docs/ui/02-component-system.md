@@ -1,28 +1,66 @@
 # Finance Tracker — Component System
 
 > [!IMPORTANT]
-> **Status**: Approved & Frozen
-> **Version**: 1.0
+> **Status**: Approved & Frozen 🔒
+> **Version**: 2.1.0 (Phase 2 Design System Reconciliation & Stitch Integration)
 > 
 > In accordance with the UI Governance Constitution (`00-ui-governance.md`), this document is the **Single Source of Truth** for the architecture, behavior, and lifecycle of every reusable UI component.
 
 ## 1. Introduction
 The Finance Tracker Component System establishes the behavioral architecture, lifecycle, and composition rules for all reusable UI elements. While the Design System dictates *how things look*, this Component System dictates *how things are built and behave*. It ensures that every component is predictable, robust, and infinitely reusable across the product ecosystem.
 
-## 2. Component Philosophy
-Our component philosophy is built on absolute modularity and predictability:
-- **Composable**: Components are designed to nest and interlock seamlessly without tight coupling.
-- **Predictable**: A component's behavior must match its API contract universally.
-- **Minimal**: Components only include the logic necessary for their specific function.
-- **Token-Driven**: Components derive all visual styling exclusively from Design System tokens.
-- **Stateless Where Possible**: Components should rely on external property injection rather than internal state management.
+## 2. Frozen Central Presentation Primitives (`src/shared/components/`)
+The following seven presentation-only UI primitives are **APPROVED & FROZEN**:
 
-## 3. Component Architecture
-A component in the Finance Tracker ecosystem is not just a UI fragment; it is a governed micro-architecture. Every component must strictly separate its concerns:
-- **Structure**: The semantic structural markup.
-- **Style**: The application of Design System tokens.
-- **Behavior**: The interaction and logic state machine.
-- **Accessibility**: The ARIA and focus management layers.
+| Component Primitive | Location | Description & Composition |
+|---|---|---|
+| **`Card`** | [`src/shared/components/Card/`](file:///d:/Projects/finance_tracker_mobile/src/shared/components/Card/) | Tonal container card (`default`, `outlined`, `elevated`) consuming Midnight Navy dark surface tokens |
+| **`Button`** | [`src/shared/components/Button/`](file:///d:/Projects/finance_tracker_mobile/src/shared/components/Button/) | Primary, secondary, outlined, and text action button with minimum **44x44pt** touch target |
+| **`Icon`** | [`src/shared/components/Icon/`](file:///d:/Projects/finance_tracker_mobile/src/shared/components/Icon/) | Universal icon wrapper wrapping `lucide-react-native` vector icons |
+| **`StatusIndicator`** | [`src/shared/components/StatusIndicator/`](file:///d:/Projects/finance_tracker_mobile/src/shared/components/StatusIndicator/) | Semantic status chip and dot indicator (`success`, `warning`, `error`, `info`) |
+| **`AppBar`** | [`src/shared/components/AppBar/`](file:///d:/Projects/finance_tracker_mobile/src/shared/components/AppBar/) | Presentation-only top navigation header bar |
+| **`BottomNavigation`** | [`src/shared/components/BottomNavigation/`](file:///d:/Projects/finance_tracker_mobile/src/shared/components/BottomNavigation/) | Presentation-only 5-destination primary bottom navigation tab bar |
+| **`FAB`** | [`src/shared/components/FAB/`](file:///d:/Projects/finance_tracker_mobile/src/shared/components/FAB/) | Presentation-only floating action button (`standard`, `extended`, `mini`) |
+
+> [!CAUTION]
+> **Presentation-Only Guardrail Rule**:
+> Shared primitives MUST remain strictly presentation-only. They must NOT:
+> - access repositories or persistence
+> - call Supabase or cloud services
+> - resolve user identity or manufacture `userId`
+> - contain domain business rules or application orchestration
+> - manage Expo Router navigation internally
+
+## 3. Feature Presentation Component Foundation (`src/features/<feature>/presentation/components/`)
+
+### Transactions Feature Components:
+- **`TransactionRow`**: Item card displaying merchant/category icon, title, subtitle, date label, and tabular red/green amount.
+- **`TransactionSearch`**: Search input field with search icon and dark input styling.
+- **`TransactionDateGroup`**: Group section header for date-based transaction lists (`TODAY`, `YESTERDAY`).
+
+### Budgets Feature Components:
+- **`BudgetCard`**: Budget summary card composing `Card`, `BudgetProgressBar`, and edit/delete actions.
+- **`BudgetProgressBar`**: 8px rounded track progress bar consuming semantic fill colors (`colors.success`, `colors.warning`, `colors.error`).
+- **`BudgetStatusBadge`**: Status badge composing `StatusIndicator` (`On Track`, `Near Limit`, `Overbudget`).
+
+### Accounts Feature Components:
+- **`AccountCard`**: Account item card with type badge (`Checking`, `Savings`, `Credit Card`) and default account indicator.
+- **`AccountMaskedBalance`**: Privacy toggle component switching between `$••••••••` and tabular numeric balance.
+
+## 4. Stitch to React Native Translation Strategy
+Raw web code generated by Google Stitch is translated into clean React Native primitives using `StyleSheet` and central tokens:
+
+```text
+Stitch Design Concept → React Native Primitive
+--------------------------------------------------
+HTML <div>            → View
+HTML text             → Text
+HTML <input>          → TextInput
+Web List Scrolling    → FlatList / ScrollView
+Material Web Glyphs   → Icon (lucide-react-native)
+CSS Tailwind Tokens   → Finance Tracker Theme Tokens (colors.ts, typography.ts)
+```
+
 
 ## 4. Component Taxonomy
 To maintain a scalable component library, components are classified into strict taxonomical tiers:
