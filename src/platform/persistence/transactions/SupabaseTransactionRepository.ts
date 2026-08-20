@@ -20,7 +20,7 @@ import { supabase } from '../../../database';
 export class SupabaseTransactionRepository extends BaseRepository implements ITransactionRepository {
   private static readonly TABLE = 'transactions';
   private static readonly COLUMNS =
-    'id,user_id,account_id,category_id,type,amount,currency_code,description,transfer_group_id,transaction_date,created_at,updated_at,voided_at';
+    'id,user_id,account_id,category_id,type,amount,currency_code,description,transfer_group_id,occurred_at,created_at,updated_at,archived_at';
 
   constructor(client: SupabaseClient = supabase) {
     super(client);
@@ -28,6 +28,10 @@ export class SupabaseTransactionRepository extends BaseRepository implements ITr
   }
 
   public async getById(id: TransactionId): Promise<RepositoryResult<Transaction | null, RepositoryError>> {
+    return this.findById(id);
+  }
+
+  public async findById(id: TransactionId): Promise<RepositoryResult<Transaction | null, RepositoryError>> {
     try {
       const { data, error } = await this.client
         .from(SupabaseTransactionRepository.TABLE)
@@ -36,7 +40,7 @@ export class SupabaseTransactionRepository extends BaseRepository implements ITr
         .maybeSingle();
 
       if (error) {
-        return this.handleError(error, { operation: 'getById', id: id.value });
+        return this.handleError(error, { operation: 'findById', id: id.value });
       }
 
       if (!data) {
@@ -45,60 +49,62 @@ export class SupabaseTransactionRepository extends BaseRepository implements ITr
 
       return Result.success(TransactionMapper.toDomain(data as TransactionRow));
     } catch (e) {
-      return this.handleError(e, { operation: 'getById', id: id.value });
+      return this.handleError(e, { operation: 'findById', id: id.value });
     }
   }
 
   public async getByAccountId(
     accountId: AccountId,
-    filters?: TransactionFilter
+    filter?: any
   ): Promise<RepositoryResult<Transaction[], RepositoryError>> {
-    return this.listTransactions({ ...filters, accountId });
+    return this.listTransactions({ ...filter, accountId });
   }
 
   public async listTransactions(
-    filters?: TransactionFilter
+
+    filter?: TransactionFilter
   ): Promise<RepositoryResult<Transaction[], RepositoryError>> {
     try {
       let query = this.client
         .from(SupabaseTransactionRepository.TABLE)
         .select(SupabaseTransactionRepository.COLUMNS);
 
-      if (filters?.accountId) {
-        query = query.eq('account_id', filters.accountId.value);
+      if (filter?.accountId) {
+        query = query.eq('account_id', filter.accountId.value);
       }
 
-      if (!filters?.includeVoided) {
-        query = query.is('voided_at', null);
+      if (!filter?.includeVoided) {
+        query = query.is('archived_at', null);
       }
 
-      if (filters?.startDate) {
-        query = query.gte('transaction_date', filters.startDate.toISOString());
+      if (filter?.startDate) {
+        query = query.gte('occurred_at', filter.startDate.toISOString());
       }
 
-      if (filters?.endDate) {
-        query = query.lte('transaction_date', filters.endDate.toISOString());
+      if (filter?.endDate) {
+        query = query.lte('occurred_at', filter.endDate.toISOString());
       }
 
-      if (filters?.type) {
-        query = query.eq('type', filters.type.kind);
+      if (filter?.type) {
+        query = query.eq('type', filter.type.kind);
       }
 
-      if (filters?.categoryId !== undefined) {
-        if (filters.categoryId === null) {
+      if (filter?.categoryId !== undefined) {
+        if (filter.categoryId === null) {
           query = query.is('category_id', null);
         } else {
-          query = query.eq('category_id', filters.categoryId);
+          query = query.eq('category_id', filter.categoryId);
         }
       }
 
-      query = query.order('transaction_date', { ascending: false }).order('id', { ascending: false });
+      query = query.order('occurred_at', { ascending: false }).order('id', { ascending: false });
 
       const { data, error } = await query;
 
       if (error) {
         return this.handleError(error, { operation: 'listTransactions' });
       }
+
 
       const domainTransactions = (data as TransactionRow[]).map(TransactionMapper.toDomain);
       return Result.success(domainTransactions);
@@ -158,12 +164,12 @@ export class SupabaseTransactionRepository extends BaseRepository implements ITr
         .upsert(rows, { onConflict: 'id' });
 
       if (error) {
-        return this.handleError(error, { operation: 'saveMany', count: transactions.length });
+        return this.handleError(error, { operation: 'saveMany' });
       }
 
       return Result.success(undefined);
     } catch (e) {
-      return this.handleError(e, { operation: 'saveMany', count: transactions.length });
+      return this.handleError(e, { operation: 'saveMany' });
     }
   }
 
@@ -174,7 +180,7 @@ export class SupabaseTransactionRepository extends BaseRepository implements ITr
     try {
       const { error } = await this.client
         .from(SupabaseTransactionRepository.TABLE)
-        .update({ voided_at: voidedAt.toISOString(), updated_at: new Date().toISOString() })
+        .update({ archived_at: voidedAt.toISOString(), updated_at: new Date().toISOString() })
         .eq('id', id.value);
 
       if (error) {
@@ -194,7 +200,7 @@ export class SupabaseTransactionRepository extends BaseRepository implements ITr
     try {
       const { error } = await this.client
         .from(SupabaseTransactionRepository.TABLE)
-        .update({ voided_at: voidedAt.toISOString(), updated_at: new Date().toISOString() })
+        .update({ archived_at: voidedAt.toISOString(), updated_at: new Date().toISOString() })
         .eq('transfer_group_id', transferGroupId.value);
 
       if (error) {
@@ -215,7 +221,7 @@ export class SupabaseTransactionRepository extends BaseRepository implements ITr
         .from(SupabaseTransactionRepository.TABLE)
         .select('type, amount')
         .eq('account_id', accountId.value)
-        .is('voided_at', null);
+        .is('archived_at', null);
 
       if (error) {
         return this.handleError(error, { operation: 'getAccountLedgerSummary', accountId: accountId.value });

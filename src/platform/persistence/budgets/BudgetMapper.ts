@@ -5,13 +5,14 @@ import { BudgetRow } from '../../../features/budgets/contracts/BudgetRow';
 
 export class BudgetMapper {
   public static toDomain(row: BudgetRow): Budget {
+    const periodKindStr = row.period_kind || row.period_type || 'MONTHLY';
     return new Budget({
       id: new BudgetId(row.id),
       categoryId: row.category_id ? new CategoryId(row.category_id) : null,
       amount: new BudgetAmount(row.amount),
       currency: new CurrencyCode(row.currency_code ?? 'INR'),
       period: new BudgetPeriod(
-        row.period_type as BudgetPeriodType,
+        periodKindStr as BudgetPeriodType,
         new Date(row.start_date),
         new Date(row.end_date)
       ),
@@ -26,10 +27,12 @@ export class BudgetMapper {
       category_id: budget.categoryId?.value ?? null,
       amount: budget.amount.value,
       currency_code: budget.currency.value,
+      period_kind: budget.period.kind,
       period_type: budget.period.kind,
       start_date: budget.startDate.toISOString(),
       end_date: budget.endDate.toISOString(),
       archived_at: budget.archivedAt ? budget.archivedAt.toISOString() : null,
     };
   }
+
 }

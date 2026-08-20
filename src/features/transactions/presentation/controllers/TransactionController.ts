@@ -2,11 +2,11 @@ import {
   CreateExpenseTransactionUseCase,
   CreateIncomeTransactionUseCase,
   ExecuteTransferUseCase,
-  UpdateTransactionUseCase,
   VoidTransactionUseCase,
   LoadTransactionsUseCase,
   LoadAccountLedgerUseCase,
 } from '../../application';
+import { UpdateTransactionUseCase } from '../../application/use-cases/UpdateTransactionUseCase';
 import { TransactionTypeKind } from '../../domain';
 import { TransactionViewModel } from '../models/TransactionViewModel';
 import { TransactionViewModelMapper } from '../mappers/TransactionViewModelMapper';
@@ -99,8 +99,15 @@ export class TransactionController {
     categoryId?: string | null;
     transactionDate?: Date;
   }): Promise<void> {
-    await this.updateTransactionUseCase.execute({ transactionId: data.id });
+    await this.updateTransactionUseCase.execute({
+      id: data.id,
+      amount: data.amount,
+      description: data.description,
+      categoryId: data.categoryId,
+      transactionDate: data.transactionDate,
+    });
   }
+
 
   public async voidTransaction(id: string, voidedAt?: Date): Promise<void> {
     await this.voidTransactionUseCase.execute(id, voidedAt);

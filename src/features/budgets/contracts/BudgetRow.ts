@@ -4,7 +4,10 @@ export interface BudgetRow {
   category_id: string | null;
   amount: number;
   currency_code: string;
+  period_kind?: string;
   period_type: string;
+
+
   start_date: string;
   end_date: string;
   created_at?: string;

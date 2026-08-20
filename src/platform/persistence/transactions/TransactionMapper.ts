@@ -13,6 +13,8 @@ import { TransactionRow } from '../../../features/transactions/contracts/Transac
 
 export class TransactionMapper {
   public static toDomain(row: TransactionRow): Transaction {
+    const rawDate = row.occurred_at || row.transaction_date || new Date().toISOString();
+    const rawVoided = row.archived_at || row.voided_at || null;
     return new Transaction({
       id: new TransactionId(row.id),
       accountId: new AccountId(row.account_id),
@@ -22,13 +24,15 @@ export class TransactionMapper {
       currencyCode: new CurrencyCode(row.currency_code),
       description: row.description ? new TransactionDescription(row.description) : new TransactionDescription(''),
       transferGroupId: row.transfer_group_id ? new TransferReference(row.transfer_group_id) : null,
-      transactionDate: new TransactionDate(new Date(row.transaction_date)),
+      transactionDate: new TransactionDate(new Date(rawDate)),
       createdAt: row.created_at ? new Date(row.created_at) : new Date(),
-      voidedAt: row.voided_at ? new Date(row.voided_at) : null,
+      voidedAt: rawVoided ? new Date(rawVoided) : null,
     });
   }
 
   public static toPersistence(entity: Transaction, userId: string): TransactionRow {
+    const isoDate = entity.transactionDate.value.toISOString();
+    const isoVoided = entity.voidedAt ? entity.voidedAt.toISOString() : null;
     return {
       id: entity.id.value,
       user_id: userId,
@@ -39,10 +43,13 @@ export class TransactionMapper {
       currency_code: entity.currencyCode.value,
       description: entity.description ? entity.description.value : null,
       transfer_group_id: entity.transferGroupId ? entity.transferGroupId.value : null,
-      transaction_date: entity.transactionDate.value.toISOString(),
+      occurred_at: isoDate,
+      transaction_date: isoDate,
       created_at: entity.createdAt.toISOString(),
       updated_at: new Date().toISOString(),
-      voided_at: entity.voidedAt ? entity.voidedAt.toISOString() : null,
+      archived_at: isoVoided,
+      voided_at: isoVoided,
     };
   }
+
 }

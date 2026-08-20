@@ -26,7 +26,9 @@ export function CategoryList({ categories, onSelect, onArchive }: CategoryListPr
   return (
     <FlatList
       data={categories}
-      keyExtractor={(item) => item.id.value}
+      keyExtractor={(item: any, index: number) =>
+        (item?.id?.value ? item.id.value : item?.id ? String(item.id) : `category-${index}`)
+      }
       renderItem={({ item }) => {
         const isSystem = item.isSystem;
         return (

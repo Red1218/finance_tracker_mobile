@@ -12,7 +12,8 @@ import { supabase } from '../../../database';
 export class SupabaseBudgetRepository extends BaseRepository implements IBudgetRepository {
   private static readonly TABLE = 'budgets';
   private static readonly COLUMNS =
-    'id,user_id,category_id,amount,currency_code,period_type,start_date,end_date,created_at,updated_at,archived_at';
+    'id,user_id,category_id,amount,currency_code,period_kind,start_date,end_date,created_at,updated_at,archived_at';
+
 
   constructor(client: SupabaseClient = supabase) {
     super(client);

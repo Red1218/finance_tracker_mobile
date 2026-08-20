@@ -3,11 +3,11 @@ import {
   CreateExpenseTransactionUseCase,
   CreateIncomeTransactionUseCase,
   ExecuteTransferUseCase,
-  UpdateTransactionUseCase,
   VoidTransactionUseCase,
   LoadTransactionsUseCase,
   LoadAccountLedgerUseCase,
 } from '../application';
+import { UpdateTransactionUseCase } from '../application/use-cases/UpdateTransactionUseCase';
 import { IAccountRepository } from '../../accounts/application';
 import { SupabaseTransactionRepository } from '../../../platform/persistence/transactions/SupabaseTransactionRepository';
 import { SupabaseAccountRepository } from '../../../platform/persistence/accounts/SupabaseAccountRepository';
