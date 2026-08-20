@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, StyleSheet, Text } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { useTheme } from '../../../../shared/theme';
 import { DashboardScreenState } from '../models/DashboardScreenState';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { DashboardHeader } from '../components/layout/DashboardHeader';
@@ -28,12 +29,13 @@ export function DashboardView({
   onExecuteQuickAction,
   onTogglePeriodSelector
 }: DashboardViewProps) {
+  const { colors } = useTheme();
   const { viewModel, isRefreshing, isPeriodSelectorOpen } = state;
 
   // Initial load skeleton
   if (!viewModel) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={[styles.loadingContainer, { backgroundColor: colors.backgroundPrimary }]}>
         <LoadingSkeleton height={150} />
         <LoadingSkeleton height={150} />
         <LoadingSkeleton height={150} />

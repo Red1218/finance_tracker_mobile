@@ -2,6 +2,9 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { SectionStateContainer } from '../common/SectionStateContainer';
 import { SectionViewModel } from '../../../application/view-models/DashboardViewModel';
+import { useTheme } from '../../../../../shared/theme';
+import { Card } from '../../../../../shared/components/Card';
+import { EmptyState } from '../common/EmptyState';
 
 interface BudgetHealthSectionProps {
   viewModel: SectionViewModel<any>;
@@ -9,73 +12,83 @@ interface BudgetHealthSectionProps {
 }
 
 export function BudgetHealthSection({ viewModel, onRetry }: BudgetHealthSectionProps) {
+  const { colors, typography } = useTheme();
+
   return (
     <SectionStateContainer
       status={viewModel.status}
       errorMessage={viewModel.error || undefined}
       onRetry={onRetry}
-      skeletonHeight={80}
+      skeletonHeight={120}
     >
-      <View>
-        <Text style={styles.title} accessibilityRole="header">Budget Health</Text>
-        {viewModel.content?.map((budget: any, index: number) => {
-          const percentage = Math.min(Math.max(budget.percentageUsed, 0), 100);
-          const isWarning = percentage >= 80;
-          
-          return (
-            <View key={index} style={styles.item}>
-              <View style={styles.header}>
-                <Text style={styles.label}>{budget.categoryName}</Text>
-                <Text style={styles.value}>{budget.formattedSpent} / {budget.formattedLimit}</Text>
+      <Card variant="elevated" style={styles.cardContainer}>
+        <Text style={[styles.title, { color: colors.textPrimary, fontSize: typography.heading.fontSize }]} accessibilityRole="header">
+          Budget Health
+        </Text>
+        {(!viewModel.content || viewModel.content.length === 0) ? (
+          <EmptyState message="No active budgets configured for this period." />
+        ) : (
+          viewModel.content.map((budget: any, index: number) => {
+            const percentage = Math.min(Math.max(budget.percentageUsed, 0), 100);
+            const isWarning = percentage >= 80;
+
+            return (
+              <View key={index} style={styles.item}>
+                <View style={styles.header}>
+                  <Text style={[styles.label, { color: colors.textPrimary, fontSize: typography.body.fontSize }]}>
+                    {budget.categoryName || 'Overall Budget'}
+                  </Text>
+                  <Text style={[styles.value, { color: colors.textSecondary, fontSize: typography.caption.fontSize }]}>
+                    {budget.formattedSpent} / {budget.formattedLimit}
+                  </Text>
+                </View>
+                <View style={[styles.barBackground, { backgroundColor: colors.borderSubtle }]}>
+                  <View
+                    style={[
+                      styles.barFill,
+                      { width: `${percentage}%`, backgroundColor: isWarning ? colors.error : colors.success },
+                    ]}
+                  />
+                </View>
               </View>
-              <View style={styles.barBackground}>
-                <View 
-                  style={[
-                    styles.barFill, 
-                    { width: `${percentage}%`, backgroundColor: isWarning ? '#EF4444' : '#10B981' }
-                  ]} 
-                />
-              </View>
-            </View>
-          );
-        })}
-      </View>
+            );
+          })
+        )}
+      </Card>
     </SectionStateContainer>
   );
 }
 
 const styles = StyleSheet.create({
+  cardContainer: {
+    padding: 16,
+  },
   title: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#111827',
+    fontWeight: '700',
     marginBottom: 16,
   },
   item: {
-    marginBottom: 12,
+    marginBottom: 14,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    alignItems: 'center',
+    marginBottom: 6,
   },
   label: {
-    fontSize: 14,
-    color: '#374151',
-    fontWeight: '500',
+    fontWeight: '600',
   },
   value: {
-    fontSize: 14,
-    color: '#6B7280',
+    fontWeight: '500',
   },
   barBackground: {
     height: 8,
-    backgroundColor: '#F3F4F6',
     borderRadius: 4,
     overflow: 'hidden',
   },
   barFill: {
     height: '100%',
     borderRadius: 4,
-  }
+  },
 });

@@ -1,55 +1,62 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { useTheme } from '../../../../../shared/theme';
+import { Card } from '../../../../../shared/components/Card';
+import { Icon } from '../../../../../shared/components/Icon';
 
-interface QuickActionsSectionProps {
+export interface QuickActionsSectionProps {
   onAction: (actionType: string) => void;
 }
 
 export function QuickActionsSection({ onAction }: QuickActionsSectionProps) {
+  const { colors, typography } = useTheme();
+
   const actions = [
-    { id: 'AddTransaction', label: 'Add Transaction', icon: '+$' },
-    { id: 'AdjustBudget', label: 'Adjust Budget', icon: '📊' }
+    { id: 'ADD_TRANSACTION', label: 'Add Transaction', iconName: 'PlusCircle' },
+    { id: 'MANAGE_BUDGETS', label: 'Manage Budgets', iconName: 'Target' },
   ];
 
   return (
-    <View style={styles.container}>
-      {actions.map(action => (
-        <Pressable 
-          key={action.id}
-          style={({ pressed }) => [styles.button, pressed && styles.pressed]}
-          onPress={() => onAction(action.id)}
-          accessible={true}
-          accessibilityRole="button"
-          accessibilityLabel={action.label}
-        >
-          <View style={styles.iconContainer}>
-            <Text style={styles.icon}>{action.icon}</Text>
-          </View>
-          <Text style={styles.label}>{action.label}</Text>
-        </Pressable>
-      ))}
-    </View>
+    <Card variant="elevated" style={styles.cardContainer}>
+      <View style={styles.container}>
+        {actions.map((action) => (
+          <Pressable
+            key={action.id}
+            style={({ pressed }) => [styles.button, pressed && styles.pressed]}
+            onPress={() => onAction(action.id)}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={action.label}
+          >
+            <View style={[styles.iconContainer, { backgroundColor: 'rgba(59, 130, 246, 0.15)' }]}>
+              <Icon name={action.iconName} size="md" color={colors.brandPrimary} />
+            </View>
+            <Text style={[styles.label, { color: colors.textPrimary, fontSize: typography.caption.fontSize }]}>
+              {action.label}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+    </Card>
   );
 }
 
 const styles = StyleSheet.create({
+  cardContainer: {
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    marginBottom: 8,
+  },
   container: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 2,
-    marginBottom: 16,
+    alignItems: 'center',
   },
   button: {
     alignItems: 'center',
-    minWidth: 80,
+    minWidth: 100,
     minHeight: 44,
+    justifyContent: 'center',
   },
   pressed: {
     opacity: 0.6,
@@ -58,17 +65,11 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#F3F4F6',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
-  },
-  icon: {
-    fontSize: 20,
+    marginBottom: 6,
   },
   label: {
-    fontSize: 12,
-    color: '#374151',
-    fontWeight: '500',
-  }
+    fontWeight: '600',
+  },
 });
