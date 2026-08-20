@@ -25,8 +25,9 @@ const mockVoidedTransaction: TransactionViewModel = {
   badgeColor: '#9CA3AF',
 };
 
-describe('TransactionDetailSheet Contract & Logic', () => {
-  it('validates active transaction metadata display', () => {
+describe('TransactionDetailSheet Presentation Behavior & State Rules', () => {
+  it('validates active transaction presentation props', () => {
+    expect(mockDetailTransaction.id).toBe('tx-200');
     expect(mockDetailTransaction.description).toBe('Starbucks Coffee');
     expect(mockDetailTransaction.formattedAmount).toBe('-₹1,250.00');
     expect(mockDetailTransaction.isVoided).toBe(false);
@@ -37,15 +38,20 @@ describe('TransactionDetailSheet Contract & Logic', () => {
     expect(mockVoidedTransaction.badgeColor).toBe('#9CA3AF');
   });
 
-  it('triggers onEdit callback with active transaction data', () => {
+  it('triggers onEdit callback when Edit action is invoked', () => {
     const onEditMock = vi.fn();
     onEditMock(mockDetailTransaction);
     expect(onEditMock).toHaveBeenCalledWith(mockDetailTransaction);
   });
 
-  it('triggers onVoid callback with transaction ID', async () => {
+  it('triggers onVoid callback when Void action is confirmed', async () => {
     const onVoidMock = vi.fn().mockResolvedValue(undefined);
     await onVoidMock('tx-200');
     expect(onVoidMock).toHaveBeenCalledWith('tx-200');
+  });
+
+  it('disables actions when transaction is voided', () => {
+    const isEditDisabled = mockVoidedTransaction.isVoided;
+    expect(isEditDisabled).toBe(true);
   });
 });

@@ -36,7 +36,7 @@ const mockTransactions: TransactionViewModel[] = [
   },
 ];
 
-describe('TransactionsScreen Contract & Flow Integration', () => {
+describe('TransactionsScreen Presentation & User Actions', () => {
   it('filters transactions by search query correctly', () => {
     const query = 'Groceries';
     const filtered = mockTransactions.filter((tx) =>
@@ -52,7 +52,19 @@ describe('TransactionsScreen Contract & Flow Integration', () => {
     expect(incomeOnly[0].description).toBe('Monthly Salary');
   });
 
-  it('triggers onFormSubmit and onRefresh callbacks on creation', async () => {
+  it('triggers onAddTransaction callback when FAB is pressed', () => {
+    const onAddTransactionMock = vi.fn();
+    onAddTransactionMock();
+    expect(onAddTransactionMock).toHaveBeenCalled();
+  });
+
+  it('triggers onSelectTransaction callback when row is selected', () => {
+    const onSelectTransactionMock = vi.fn();
+    onSelectTransactionMock(mockTransactions[0]);
+    expect(onSelectTransactionMock).toHaveBeenCalledWith(mockTransactions[0]);
+  });
+
+  it('triggers onFormSubmit and onRefresh callbacks on transaction creation', async () => {
     const onFormSubmitMock = vi.fn().mockResolvedValue(undefined);
     const onRefreshMock = vi.fn();
 

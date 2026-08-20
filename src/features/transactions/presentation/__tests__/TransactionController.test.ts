@@ -1,24 +1,38 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, Mock } from 'vitest';
 import { TransactionController } from '../controllers/TransactionController';
+import {
+  CreateExpenseTransactionUseCase,
+  CreateIncomeTransactionUseCase,
+  ExecuteTransferUseCase,
+  VoidTransactionUseCase,
+  LoadTransactionsUseCase,
+  LoadAccountLedgerUseCase,
+} from '../../application';
+import { UpdateTransactionUseCase } from '../../application/use-cases/UpdateTransactionUseCase';
+
+interface MockUseCase {
+  execute: Mock;
+}
 
 describe('TransactionController', () => {
-  const mockCreateExpenseUseCase = { execute: vi.fn() } as any;
-  const mockCreateIncomeUseCase = { execute: vi.fn() } as any;
-  const mockExecuteTransferUseCase = { execute: vi.fn() } as any;
-  const mockUpdateTransactionUseCase = { execute: vi.fn() } as any;
-  const mockVoidTransactionUseCase = { execute: vi.fn() } as any;
-  const mockLoadTransactionsUseCase = { execute: vi.fn() } as any;
-  const mockLoadAccountLedgerUseCase = { execute: vi.fn() } as any;
+  const mockCreateExpenseUseCase: MockUseCase = { execute: vi.fn() };
+  const mockCreateIncomeUseCase: MockUseCase = { execute: vi.fn() };
+  const mockExecuteTransferUseCase: MockUseCase = { execute: vi.fn() };
+  const mockUpdateTransactionUseCase: MockUseCase = { execute: vi.fn() };
+  const mockVoidTransactionUseCase: MockUseCase = { execute: vi.fn() };
+  const mockLoadTransactionsUseCase: MockUseCase = { execute: vi.fn() };
+  const mockLoadAccountLedgerUseCase: MockUseCase = { execute: vi.fn() };
 
   const controller = new TransactionController(
-    mockCreateExpenseUseCase,
-    mockCreateIncomeUseCase,
-    mockExecuteTransferUseCase,
-    mockUpdateTransactionUseCase,
-    mockVoidTransactionUseCase,
-    mockLoadTransactionsUseCase,
-    mockLoadAccountLedgerUseCase
+    mockCreateExpenseUseCase as unknown as CreateExpenseTransactionUseCase,
+    mockCreateIncomeUseCase as unknown as CreateIncomeTransactionUseCase,
+    mockExecuteTransferUseCase as unknown as ExecuteTransferUseCase,
+    mockUpdateTransactionUseCase as unknown as UpdateTransactionUseCase,
+    mockVoidTransactionUseCase as unknown as VoidTransactionUseCase,
+    mockLoadTransactionsUseCase as unknown as LoadTransactionsUseCase,
+    mockLoadAccountLedgerUseCase as unknown as LoadAccountLedgerUseCase
   );
+
 
   it('forwards createExpense payload correctly', async () => {
     const expenseData = {

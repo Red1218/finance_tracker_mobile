@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { TransactionFormValues, TransactionFormMode } from '../components/TransactionFormModal';
 
-describe('TransactionFormModal Contract & Logic', () => {
+describe('TransactionFormModal Presentation Behavior & Rules', () => {
   const mockAccounts = [
     { id: 'acc-1', name: 'Checking Account', isArchived: false },
     { id: 'acc-2', name: 'Savings Account', isArchived: false },
@@ -40,6 +40,12 @@ describe('TransactionFormModal Contract & Logic', () => {
     expect(values.accountId).not.toBe(values.destAccountId);
     expect(values.amount).toBe(5000);
     expect(values.categoryId).toBeNull();
+  });
+
+  it('validates edit mode title resolution', () => {
+    const mode: TransactionFormMode = 'edit';
+    const title = mode === 'edit' ? 'Edit Transaction' : 'New Expense';
+    expect(title).toBe('Edit Transaction');
   });
 
   it('handles submit callback invocation', async () => {

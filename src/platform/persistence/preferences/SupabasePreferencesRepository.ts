@@ -55,7 +55,8 @@ export class SupabasePreferencesRepository extends BaseRepository implements IPr
 
       const { error } = await this.client
         .from(SupabasePreferencesRepository.TABLE)
-        .upsert(payload as any, { onConflict: isUuid ? 'id' : 'user_id' });
+        .upsert(payload as PreferencesRow, { onConflict: isUuid ? 'id' : 'user_id' });
+
 
       if (error) {
         return this.handleError(error, { operation: 'save', id: preferences.id.value });

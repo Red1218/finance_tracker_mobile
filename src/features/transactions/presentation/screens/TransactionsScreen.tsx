@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
-import { useTheme } from '@/src/shared/theme';
-import { AppBar, FAB, Icon } from '@/src/shared/components';
+import { useTheme } from '../../../../shared/theme';
+import { AppBar, FAB, Icon } from '../../../../shared/components';
+
 import { TransactionRow, TransactionSearch, TransactionDateGroup, TransactionFormModal, TransactionDetailSheet, TransactionFormValues, TransactionFormMode } from '../components';
 import { TransactionViewModel } from '../models/TransactionViewModel';
 
