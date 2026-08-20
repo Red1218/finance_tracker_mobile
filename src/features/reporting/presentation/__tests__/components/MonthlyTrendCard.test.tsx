@@ -76,8 +76,11 @@ describe('MonthlyTrendCard Component Presentation', () => {
 
     // Change
     const changeVal = compRow?.props?.children?.[2]?.props?.children?.[1];
-    expect(changeVal?.props?.children?.join('')).toContain('+₹15,000');
-    expect(changeVal?.props?.children?.join('')).toContain('+50.0%');
+    const changeText = Array.isArray(changeVal?.props?.children)
+      ? changeVal.props.children.join('')
+      : String(changeVal?.props?.children ?? '');
+    expect(changeText).toContain('+₹15,000');
+    expect(changeText).toContain('+50.0%');
   });
 
   it('renders empty trend state message when no items exist', () => {

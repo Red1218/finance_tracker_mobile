@@ -62,13 +62,19 @@ describe('CategoryBreakdownCard Component Presentation', () => {
     const row0 = rows[0];
     expect(row0?.props?.children?.[0]?.props?.children?.[1]?.props?.children).toBe('Housing & Rent');
     expect(row0?.props?.children?.[1]?.props?.children).toContain('25,000');
-    expect(row0?.props?.children?.[2]?.props?.children?.join('')).toBe('62.5%');
+    const row0Pct = Array.isArray(row0?.props?.children?.[2]?.props?.children)
+      ? row0.props.children[2].props.children.join('')
+      : String(row0?.props?.children?.[2]?.props?.children ?? '');
+    expect(row0Pct).toBe('62.5%');
 
     // Row 2: Food & Dining
     const row1 = rows[1];
     expect(row1?.props?.children?.[0]?.props?.children?.[1]?.props?.children).toBe('Food & Dining');
     expect(row1?.props?.children?.[1]?.props?.children).toContain('15,000');
-    expect(row1?.props?.children?.[2]?.props?.children?.join('')).toBe('37.5%');
+    const row1Pct = Array.isArray(row1?.props?.children?.[2]?.props?.children)
+      ? row1.props.children[2].props.children.join('')
+      : String(row1?.props?.children?.[2]?.props?.children ?? '');
+    expect(row1Pct).toBe('37.5%');
   });
 
   it('renders empty category state message when no items exist', () => {
