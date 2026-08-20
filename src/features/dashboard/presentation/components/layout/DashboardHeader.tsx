@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useTheme } from '../../../../../shared/theme';
 
 interface DashboardHeaderProps {
   title: string;
@@ -7,12 +8,33 @@ interface DashboardHeaderProps {
 }
 
 export function DashboardHeader({ title, selector }: DashboardHeaderProps) {
+  const { colors, typography } = useTheme();
+
   return (
-    <View style={styles.container} accessible={true} accessibilityRole="header">
-      <Text style={styles.title} accessibilityRole="header">{title}</Text>
-      <View style={styles.selectorContainer}>
-        {selector}
-      </View>
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.backgroundPrimary,
+          borderBottomColor: colors.borderSubtle,
+        },
+      ]}
+      accessible={true}
+      accessibilityRole="header"
+    >
+      <Text
+        style={[
+          styles.title,
+          {
+            color: colors.textPrimary,
+            fontSize: typography.heading.fontSize,
+          },
+        ]}
+        accessibilityRole="header"
+      >
+        {title}
+      </Text>
+      <View style={styles.selectorContainer}>{selector}</View>
     </View>
   );
 }
@@ -23,17 +45,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
+    paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
   },
   title: {
-    fontSize: 24,
     fontWeight: '700',
-    color: '#111111',
   },
   selectorContainer: {
     minWidth: 120,
-  }
+  },
 });

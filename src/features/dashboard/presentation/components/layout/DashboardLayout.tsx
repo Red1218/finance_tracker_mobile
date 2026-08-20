@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, Platform } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTheme } from '../../../../../shared/theme';
 
 interface DashboardLayoutProps {
   isRefreshing: boolean;
@@ -10,8 +11,10 @@ interface DashboardLayoutProps {
 }
 
 export function DashboardLayout({ isRefreshing, onRefresh, header, children }: DashboardLayoutProps) {
+  const { colors } = useTheme();
+
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.backgroundPrimary }]}>
       <View style={styles.container}>
         {header}
         <ScrollView
@@ -21,7 +24,8 @@ export function DashboardLayout({ isRefreshing, onRefresh, header, children }: D
             <RefreshControl
               refreshing={isRefreshing}
               onRefresh={onRefresh}
-              tintColor="#333333"
+              tintColor={colors.brandPrimary}
+              colors={[colors.brandPrimary]}
             />
           }
         >
@@ -35,7 +39,6 @@ export function DashboardLayout({ isRefreshing, onRefresh, header, children }: D
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
   },
   container: {
     flex: 1,
@@ -47,5 +50,5 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 40,
     gap: 16,
-  }
+  },
 });

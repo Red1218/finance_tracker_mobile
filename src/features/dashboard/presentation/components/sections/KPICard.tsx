@@ -1,5 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useTheme } from '../../../../../shared/theme';
+import { Card } from '../../../../../shared/components/Card';
 import { TrendIndicatorViewModel } from '../../../application/view-models/TrendIndicatorViewModel';
 
 interface KPICardProps {
@@ -9,54 +11,62 @@ interface KPICardProps {
 }
 
 export function KPICard({ title, amount, trend }: KPICardProps) {
+  const { colors, typography } = useTheme();
+
   return (
-    <View style={styles.card}>
-      <Text style={styles.label}>{title}</Text>
-      <Text style={styles.value} accessible={true} accessibilityLabel={`${title} is ${amount}`}>
-        {amount}
-      </Text>
-      {trend && (
-        <View style={styles.trendContainer}>
-          <Text style={[styles.trend, trend.direction === 'Positive' ? styles.trendUp : styles.trendDown]}>
-            {trend.direction === 'Positive' ? '▲' : '▼'} {trend.label}
-          </Text>
-        </View>
-      )}
+    <View style={styles.gridItem}>
+      <Card variant="elevated" style={styles.cardContainer}>
+        <Text style={[styles.label, { color: colors.textSecondary, fontSize: typography.caption.fontSize }]}>
+          {title}
+        </Text>
+        <Text
+          style={[styles.value, { color: colors.textPrimary, fontSize: typography.heading.fontSize }]}
+          accessible={true}
+          accessibilityLabel={`${title} is ${amount}`}
+        >
+          {amount}
+        </Text>
+        {trend && trend.label !== '-' && (
+          <View style={styles.trendContainer}>
+            <Text
+              style={[
+                styles.trend,
+                {
+                  color: trend.direction === 'Positive' ? colors.success : colors.error,
+                  fontSize: typography.caption.fontSize,
+                },
+              ]}
+            >
+              {trend.direction === 'Positive' ? '▲' : '▼'} {trend.label}
+            </Text>
+          </View>
+        )}
+      </Card>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    flex: 1,
-    minWidth: '45%',
-    backgroundColor: '#F9FAFB',
-    padding: 12,
-    borderRadius: 8,
+  gridItem: {
+    width: '48%',
+  },
+  cardContainer: {
+    padding: 14,
   },
   label: {
-    fontSize: 12,
-    color: '#6B7280',
-    marginBottom: 4,
+    fontWeight: '500',
+    marginBottom: 6,
   },
   value: {
-    fontSize: 20,
     fontWeight: '700',
-    color: '#111827',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   trendContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginTop: 4,
   },
   trend: {
-    fontSize: 12,
-    fontWeight: '500',
+    fontWeight: '600',
   },
-  trendUp: {
-    color: '#10B981',
-  },
-  trendDown: {
-    color: '#EF4444',
-  }
 });

@@ -1,72 +1,103 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { SectionStateContainer } from '../common/SectionStateContainer';
-import { SectionViewModel } from '../../../application/view-models/DashboardViewModel';
+import { RecentActivityViewModel, RecentActivityRow, RecentActivityData } from '../../../application/view-models/RecentActivityViewModel';
+import { useTheme } from '../../../../../shared/theme';
+import { Card } from '../../../../../shared/components/Card';
+import { EmptyState } from '../common/EmptyState';
 
 interface RecentActivitySectionProps {
-  viewModel: SectionViewModel<any>;
+  viewModel: RecentActivityViewModel;
   onRetry: () => void;
 }
 
 export function RecentActivitySection({ viewModel, onRetry }: RecentActivitySectionProps) {
+  const { colors, typography } = useTheme();
+
+  const rows: RecentActivityRow[] = viewModel.content
+    ? Array.isArray(viewModel.content)
+      ? (viewModel.content as RecentActivityRow[])
+      : (viewModel.content as RecentActivityData).rows || []
+    : [];
+
   return (
     <SectionStateContainer
       status={viewModel.status}
       errorMessage={viewModel.error || undefined}
       onRetry={onRetry}
-      skeletonHeight={150}
+      skeletonHeight={160}
     >
-      <View>
-        <Text style={styles.title} accessibilityRole="header">Recent Activity</Text>
-        {viewModel.content?.map((activity: any, index: number) => (
-          <View key={index} style={styles.row}>
-            <View>
-              <Text style={styles.description}>{activity.description}</Text>
-              <Text style={styles.category}>{activity.categoryName} • {activity.formattedDate}</Text>
-            </View>
-            <Text style={[styles.amount, activity.type === 'INCOME' ? styles.income : styles.expense]}>
-              {activity.type === 'INCOME' ? '+' : '-'}{activity.formattedAmount}
-            </Text>
-          </View>
-        ))}
-      </View>
+      <Card variant="elevated" style={styles.cardContainer}>
+        <Text style={[styles.title, { color: colors.textPrimary, fontSize: typography.heading.fontSize }]} accessibilityRole="header">
+          Recent Activity
+        </Text>
+        {rows.length === 0 ? (
+          <EmptyState message="No recent activity transactions found." />
+        ) : (
+          rows.map((activity: RecentActivityRow, index: number) => {
+            const isIncome = activity.direction === 'Income' || (activity as unknown as { type?: string }).type === 'INCOME';
+            const description = activity.description;
+            const categoryName = activity.categoryName || 'General';
+            const dateText = activity.date || (activity as unknown as { formattedDate?: string }).formattedDate || 'Recent';
+            const amountText = activity.amount || (activity as unknown as { formattedAmount?: string }).formattedAmount || '₹0';
+
+            return (
+              <View key={index} style={[styles.row, { borderBottomColor: colors.borderSubtle }]}>
+                <View style={styles.left}>
+                  <Text style={[styles.description, { color: colors.textPrimary, fontSize: typography.body.fontSize }]}>
+                    {description}
+                  </Text>
+                  <Text style={[styles.category, { color: colors.textSecondary, fontSize: typography.caption.fontSize }]}>
+                    {categoryName} • {dateText}
+                  </Text>
+                </View>
+                <Text
+                  style={[
+                    styles.amount,
+                    {
+                      color: isIncome ? colors.success : colors.textPrimary,
+                      fontSize: typography.body.fontSize,
+                    },
+                  ]}
+                >
+                  {isIncome ? '+' : '-'}{amountText}
+                </Text>
+              </View>
+            );
+          })
+        )}
+      </Card>
     </SectionStateContainer>
   );
 }
 
 const styles = StyleSheet.create({
+  cardContainer: {
+    padding: 16,
+  },
   title: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#111827',
-    marginBottom: 16,
+    fontWeight: '700',
+    marginBottom: 12,
   },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+  },
+  left: {
+    flex: 1,
+    paddingRight: 12,
   },
   description: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#111827',
-    marginBottom: 4,
+    fontWeight: '600',
+    marginBottom: 3,
   },
   category: {
-    fontSize: 12,
-    color: '#6B7280',
+    fontWeight: '400',
   },
   amount: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
-  income: {
-    color: '#10B981',
-  },
-  expense: {
-    color: '#111827',
-  }
 });
