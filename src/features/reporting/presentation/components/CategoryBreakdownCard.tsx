@@ -1,5 +1,7 @@
 import React, { useMemo } from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import { Card } from '../../../../shared/components/Card';
+import { useTheme } from '../../../../shared/theme';
 import { CategoryBreakdownResponse } from '../../application';
 import { CategoryChartMapper } from '../mappers/CategoryChartMapper';
 import { CategoryDonutChart } from './charts/CategoryDonutChart';
@@ -10,40 +12,90 @@ interface Props {
 }
 
 export const CategoryBreakdownCard: React.FC<Props> = ({ data }) => {
-  const chartViewModel = useMemo(() => CategoryChartMapper.mapToChartViewModel(data), [data]);
+  const theme = useTheme();
+  const chartViewModel = CategoryChartMapper.mapToChartViewModel(data);
 
   return (
-    <View className="bg-white rounded-2xl p-4 m-4 shadow-sm">
-      <Text className="text-lg font-semibold text-gray-800 mb-1">Spending by Category</Text>
+    <Card variant="elevated" style={styles.card}>
+      <Text style={[styles.title, { color: theme.colors.textPrimary }]}>Spending by Category</Text>
 
       <CategoryDonutChart viewModel={chartViewModel} />
 
       {data.items.length === 0 ? (
-        <Text className="text-gray-400 text-sm">No category data for this period.</Text>
+        <Text style={[styles.emptyText, { color: theme.colors.textMuted }]}>No category data for this period.</Text>
       ) : (
         data.items.map((item, index) => (
-          <View key={item.categoryId} className="flex-row justify-between items-center mb-2">
-            <View className="flex-row items-center flex-1 mr-2">
+          <View key={item.categoryId} style={styles.row}>
+            <View style={styles.leftCol}>
               <View
-                className="w-3 h-3 rounded-full mr-2"
-                style={{
-                  backgroundColor:
-                    chartTheme.categoryPalette[index % chartTheme.categoryPalette.length],
-                }}
+                style={[
+                  styles.dot,
+                  {
+                    backgroundColor:
+                      chartTheme.categoryPalette[index % chartTheme.categoryPalette.length],
+                  },
+                ]}
               />
-              <Text className="text-sm text-gray-700 flex-1" numberOfLines={1}>
+              <Text style={[styles.categoryName, { color: theme.colors.textPrimary }]} numberOfLines={1}>
                 {item.categoryName}
               </Text>
             </View>
-            <Text className="text-sm font-semibold text-gray-900 mr-2">
-              ₹{item.amount.toLocaleString()}
+            <Text style={[styles.amountText, { color: theme.colors.textPrimary }]}>
+              ₹{item.amount.toLocaleString('en-IN')}
             </Text>
-            <Text className="text-xs text-gray-400 w-12 text-right">
+            <Text style={[styles.percentText, { color: theme.colors.textMuted }]}>
               {item.percentage.toFixed(1)}%
             </Text>
           </View>
         ))
       )}
-    </View>
+    </Card>
   );
 };
+
+const styles = StyleSheet.create({
+  card: {
+    marginBottom: 16,
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  emptyText: {
+    fontSize: 13,
+    marginTop: 8,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  leftCol: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    marginRight: 8,
+  },
+  dot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginRight: 8,
+  },
+  categoryName: {
+    fontSize: 13,
+    flex: 1,
+  },
+  amountText: {
+    fontSize: 13,
+    fontWeight: '600',
+    marginRight: 8,
+  },
+  percentText: {
+    fontSize: 12,
+    width: 48,
+    textAlign: 'right',
+  },
+});

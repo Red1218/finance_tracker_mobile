@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import { useTheme } from '../../../../shared/theme';
 import { CategoryOptionItem } from '../hooks/useCategoryOptions';
 
 interface Props {
@@ -15,24 +16,30 @@ export const CategoryFilterSelector: React.FC<Props> = ({
   onSelectCategory,
   disabled = false,
 }) => {
+  const theme = useTheme();
+
   return (
-    <View className="py-1 px-4">
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row">
+    <View style={styles.container}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* All Categories Option */}
         <TouchableOpacity
           onPress={() => onSelectCategory(null)}
           disabled={disabled}
           accessibilityLabel="Select All Categories filter"
-          className={`mr-2 px-3 py-1.5 rounded-full border ${
-            selectedCategoryId === null
-              ? 'bg-blue-600 border-blue-600'
-              : 'bg-gray-100 border-gray-200'
-          } ${disabled ? 'opacity-50' : 'opacity-100'}`}
+          style={[
+            styles.chip,
+            {
+              backgroundColor: selectedCategoryId === null ? theme.colors.brandPrimary : theme.colors.surfaceElevated,
+              borderColor: selectedCategoryId === null ? theme.colors.brandPrimary : theme.colors.borderSubtle,
+              opacity: disabled ? 0.5 : 1,
+            },
+          ]}
         >
           <Text
-            className={`text-xs font-medium ${
-              selectedCategoryId === null ? 'text-white font-semibold' : 'text-gray-700'
-            }`}
+            style={[
+              styles.chipText,
+              { color: selectedCategoryId === null ? theme.colors.textPrimary : theme.colors.textSecondary, fontWeight: selectedCategoryId === null ? '700' : '500' },
+            ]}
           >
             All Categories
           </Text>
@@ -47,14 +54,20 @@ export const CategoryFilterSelector: React.FC<Props> = ({
               onPress={() => onSelectCategory(cat.id)}
               disabled={disabled}
               accessibilityLabel={`Filter by category ${cat.name}`}
-              className={`mr-2 px-3 py-1.5 rounded-full border ${
-                isSelected ? 'bg-blue-600 border-blue-600' : 'bg-gray-100 border-gray-200'
-              } ${disabled ? 'opacity-50' : 'opacity-100'}`}
+              style={[
+                styles.chip,
+                {
+                  backgroundColor: isSelected ? theme.colors.brandPrimary : theme.colors.surfaceElevated,
+                  borderColor: isSelected ? theme.colors.brandPrimary : theme.colors.borderSubtle,
+                  opacity: disabled ? 0.5 : 1,
+                },
+              ]}
             >
               <Text
-                className={`text-xs font-medium ${
-                  isSelected ? 'text-white font-semibold' : 'text-gray-700'
-                }`}
+                style={[
+                  styles.chipText,
+                  { color: isSelected ? theme.colors.textPrimary : theme.colors.textSecondary, fontWeight: isSelected ? '700' : '500' },
+                ]}
               >
                 {cat.name}
               </Text>
@@ -65,3 +78,23 @@ export const CategoryFilterSelector: React.FC<Props> = ({
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    paddingVertical: 4,
+  },
+  scrollContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  chip: {
+    marginRight: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  chipText: {
+    fontSize: 12,
+  },
+});

@@ -1,14 +1,15 @@
 import React from 'react';
 import { View, Text } from 'react-native';
 import { BarChart } from 'react-native-gifted-charts';
+import { useTheme } from '../../../../../shared/theme';
 import { BudgetChartViewModel } from '../../mappers/BudgetChartMapper';
-import { chartTheme } from '../../theme/reportingChartTheme';
 
 interface Props {
   readonly viewModel: BudgetChartViewModel;
 }
 
 export const BudgetBarChart: React.FC<Props> = ({ viewModel }) => {
+  const theme = useTheme();
   const { barData, accessibilitySummary } = viewModel;
 
   if (barData.length === 0) {
@@ -20,16 +21,16 @@ export const BudgetBarChart: React.FC<Props> = ({ viewModel }) => {
       accessible={true}
       accessibilityRole="image"
       accessibilityLabel={accessibilitySummary}
-      className="my-3"
+      style={{ marginVertical: theme.spacing.space8 }}
     >
-      <View className="flex-row justify-end gap-4 mb-2 pr-2">
-        <View className="flex-row items-center gap-1">
-          <View className="w-2.5 h-2.5 rounded-sm bg-slate-400" />
-          <Text className="text-xs text-gray-600">Budget</Text>
+      <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: theme.spacing.space12, marginBottom: theme.spacing.space4, paddingRight: theme.spacing.space4 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.space4 }}>
+          <View style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: theme.colors.textMuted }} />
+          <Text style={{ fontSize: 12, color: theme.colors.textSecondary }}>Budget</Text>
         </View>
-        <View className="flex-row items-center gap-1">
-          <View className="w-2.5 h-2.5 rounded-sm bg-blue-600" />
-          <Text className="text-xs text-gray-600">Spent</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.space4 }}>
+          <View style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: theme.colors.brandPrimary }} />
+          <Text style={{ fontSize: 12, color: theme.colors.textSecondary }}>Spent</Text>
         </View>
       </View>
 
@@ -41,11 +42,11 @@ export const BudgetBarChart: React.FC<Props> = ({ viewModel }) => {
         spacing={12}
         roundedTop
         roundedBottom
-        rulesColor={chartTheme.colors.gridLines}
+        rulesColor={theme.colors.borderSubtle}
         rulesType="solid"
         noOfSections={4}
-        yAxisTextStyle={{ color: chartTheme.colors.textSecondary, fontSize: 10 }}
-        xAxisLabelTextStyle={{ color: chartTheme.colors.textSecondary, fontSize: 10 }}
+        yAxisTextStyle={{ color: theme.colors.textMuted, fontSize: 10 }}
+        xAxisLabelTextStyle={{ color: theme.colors.textMuted, fontSize: 10 }}
       />
     </View>
   );

@@ -1,154 +1,234 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
+import { useTheme } from '../../../../shared/theme';
+import { Card } from '../../../../shared/components/Card';
 import { useReporting } from '../hooks/useReporting';
 import { reportingModule } from '../../composition/ReportingModule';
-import { ReportingPeriod } from '../../domain';
-
-const PERIOD_OPTIONS: { id: ReportingPeriod; label: string }[] = [
-  { id: ReportingPeriod.MONTH, label: 'Month' },
-  { id: ReportingPeriod.QUARTER, label: 'Quarter' },
-  { id: ReportingPeriod.YEAR, label: 'Year' },
-  { id: ReportingPeriod.CUSTOM, label: 'Custom' },
-];
+import { ReportingPeriodSelector } from '../components/ReportingPeriodSelector';
+import { MonthlyTrendCard } from '../components/MonthlyTrendCard';
+import { CategoryBreakdownCard } from '../components/CategoryBreakdownCard';
 
 export const ReportingScreen: React.FC = () => {
+  const theme = useTheme();
   const { selectedPeriod, viewModel, isLoading, error, changePeriod, refresh } = useReporting(
     reportingModule.reportingController
   );
 
+  const categoryBreakdownResponse = {
+    items: viewModel.categoryBreakdown.map((c) => ({
+      categoryId: c.categoryId,
+      categoryName: c.categoryName,
+      amount: parseFloat(c.formattedAmount.replace(/[^0-9.]/g, '')) || 0,
+      percentage: c.percentage,
+      transactionCount: 0,
+    })),
+  };
+
+  const monthlyTrendResponse = {
+    comparison: undefined,
+    items: viewModel.monthlyTrend.map((t) => ({
+      period: t.periodLabel,
+      income: parseFloat(t.formattedIncome.replace(/[^0-9.]/g, '')) || 0,
+      expenses: parseFloat(t.formattedExpense.replace(/[^0-9.]/g, '')) || 0,
+      netCashFlow: parseFloat(t.formattedNet.replace(/[^0-9.]/g, '')) || 0,
+    })),
+  };
+
   return (
-    <View className="flex-1 bg-gray-950">
+    <View style={[styles.screen, { backgroundColor: theme.colors.backgroundPrimary }]}>
       {/* Header & Period Selector */}
-      <View className="p-4 bg-gray-900 border-b border-gray-800">
-        <View className="flex-row justify-between items-center mb-3">
-          <Text className="text-2xl font-bold text-white tracking-tight">Reports & Analytics</Text>
-          <TouchableOpacity onPress={refresh} className="bg-gray-800 px-3 py-1.5 rounded-lg border border-gray-700">
-            <Text className="text-xs font-semibold text-gray-300">Refresh</Text>
+      <View style={[styles.header, { backgroundColor: theme.colors.surfaceElevated, borderBottomColor: theme.colors.borderSubtle }]}>
+        <View style={styles.headerTop}>
+          <Text style={[styles.title, { color: theme.colors.textPrimary }]}>Reports & Analytics</Text>
+          <TouchableOpacity
+            onPress={refresh}
+            style={[styles.refreshButton, { backgroundColor: theme.colors.surfacePrimary, borderColor: theme.colors.borderSubtle }]}
+            accessibilityLabel="Refresh report data"
+          >
+            <Text style={[styles.refreshText, { color: theme.colors.textSecondary }]}>Refresh</Text>
           </TouchableOpacity>
         </View>
 
-        <View className="flex-row gap-2">
-          {PERIOD_OPTIONS.map((p) => {
-            const isSelected = selectedPeriod === p.id;
-            return (
-              <TouchableOpacity
-                key={p.id}
-                onPress={() => changePeriod(p.id)}
-                className={`px-3 py-1.5 rounded-lg border ${
-                  isSelected ? 'bg-red-600 border-red-500' : 'bg-gray-800 border-gray-700'
-                }`}
-                accessibilityLabel={`Select ${p.label} period`}
-              >
-                <Text className={`text-xs font-semibold ${isSelected ? 'text-white' : 'text-gray-400'}`}>
-                  {p.label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+        <ReportingPeriodSelector
+          selected={selectedPeriod}
+          onSelect={changePeriod}
+          disabled={isLoading}
+        />
       </View>
 
       {/* Main Content ScrollView */}
-      <ScrollView className="flex-1 p-4">
+      <ScrollView contentContainerStyle={styles.scrollContent}>
         {error ? (
-          <View className="bg-red-950/80 border border-red-800 p-4 rounded-xl mb-4">
-            <Text className="text-red-300 text-sm font-semibold">{error}</Text>
+          <View style={[styles.errorBanner, { backgroundColor: theme.colors.surfacePrimary, borderColor: theme.colors.error }]}>
+            <Text style={[styles.errorText, { color: theme.colors.error }]}>{error}</Text>
           </View>
         ) : null}
 
         {isLoading ? (
-          <View className="py-12 items-center">
-            <ActivityIndicator size="large" color="#EF4444" />
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={theme.colors.brandPrimary} />
           </View>
         ) : (
           <>
-            {/* Financial Summary Cards */}
+            {/* Financial Summary Performance Card */}
             {viewModel.financialSummary && (
-              <View className="mb-6">
-                <Text className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+              <Card variant="elevated" style={styles.summaryCard}>
+                <Text style={[styles.sectionHeading, { color: theme.colors.textMuted }]}>
                   Financial Performance Summary
                 </Text>
-                <View className="bg-gray-900 border border-gray-800 p-5 rounded-2xl shadow-sm mb-3">
-                  <View className="flex-row justify-between items-center mb-3">
-                    <Text className="text-gray-400 text-sm">Net Savings</Text>
-                    <View className="bg-red-950/60 border border-red-800/60 px-2.5 py-0.5 rounded-full">
-                      <Text className="text-red-400 text-xs font-bold">
+
+                <View style={[styles.savingsBox, { backgroundColor: theme.colors.surfacePrimary, borderColor: theme.colors.borderSubtle }]}>
+                  <View style={styles.savingsHeader}>
+                    <Text style={[styles.savingsLabel, { color: theme.colors.textMuted }]}>Net Savings</Text>
+                    <View style={[styles.savingsBadge, { backgroundColor: theme.colors.surfaceElevated, borderColor: theme.colors.borderSubtle }]}>
+                      <Text style={[styles.badgeText, { color: viewModel.financialSummary.isPositiveSavings ? theme.colors.success : theme.colors.error }]}>
                         {viewModel.financialSummary.savingsRatePercentage}% Savings Rate
                       </Text>
                     </View>
                   </View>
-                  <Text className={`text-3xl font-extrabold ${viewModel.financialSummary.isPositiveSavings ? 'text-emerald-400' : 'text-red-400'}`}>
+                  <Text
+                    style={[
+                      styles.netSavingsAmount,
+                      { color: viewModel.financialSummary.isPositiveSavings ? theme.colors.success : theme.colors.error },
+                    ]}
+                  >
                     {viewModel.financialSummary.formattedNetSavings}
                   </Text>
                 </View>
 
-                <View className="flex-row gap-3">
-                  <View className="flex-1 bg-gray-900 border border-gray-800 p-4 rounded-xl">
-                    <Text className="text-xs text-gray-400 mb-1">Total Income</Text>
-                    <Text className="text-lg font-bold text-emerald-400">
+                <View style={styles.tilesRow}>
+                  <View style={[styles.metricTile, { backgroundColor: theme.colors.surfacePrimary, borderColor: theme.colors.borderSubtle }]}>
+                    <Text style={[styles.tileLabel, { color: theme.colors.textMuted }]}>Total Income</Text>
+                    <Text style={[styles.tileAmount, { color: theme.colors.success }]}>
                       {viewModel.financialSummary.formattedIncome}
                     </Text>
                   </View>
 
-                  <View className="flex-row-1 flex-1 bg-gray-900 border border-gray-800 p-4 rounded-xl">
-                    <Text className="text-xs text-gray-400 mb-1">Total Expenses</Text>
-                    <Text className="text-lg font-bold text-red-400">
+                  <View style={[styles.metricTile, { backgroundColor: theme.colors.surfacePrimary, borderColor: theme.colors.borderSubtle }]}>
+                    <Text style={[styles.tileLabel, { color: theme.colors.textMuted }]}>Total Expenses</Text>
+                    <Text style={[styles.tileAmount, { color: theme.colors.error }]}>
                       {viewModel.financialSummary.formattedExpense}
                     </Text>
                   </View>
                 </View>
-              </View>
+              </Card>
             )}
 
-            {/* Category Breakdown */}
-            <View className="mb-6">
-              <Text className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
-                Category Spend Breakdown
-              </Text>
-              {viewModel.categoryBreakdown.length === 0 ? (
-                <View className="bg-gray-900 p-4 rounded-xl border border-gray-800">
-                  <Text className="text-gray-500 text-xs">No category expenses found for this period.</Text>
-                </View>
-              ) : (
-                viewModel.categoryBreakdown.map((cat) => (
-                  <View key={cat.categoryId} className="bg-gray-900 border border-gray-800 p-3.5 rounded-xl mb-2">
-                    <View className="flex-row justify-between items-center mb-1.5">
-                      <Text className="text-white text-sm font-semibold">{cat.categoryName}</Text>
-                      <Text className="text-gray-300 text-sm font-bold">{cat.formattedAmount}</Text>
-                    </View>
-                    <View className="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
-                      <View className="bg-red-500 h-full rounded-full" style={{ width: `${Math.min(cat.percentage, 100)}%` }} />
-                    </View>
-                    <Text className="text-right text-[10px] text-gray-400 mt-1">{cat.percentage}% of total spend</Text>
-                  </View>
-                ))
-              )}
-            </View>
+            {/* Category Breakdown Card */}
+            <CategoryBreakdownCard data={categoryBreakdownResponse} />
 
-            {/* Monthly Trend */}
-            <View className="mb-6">
-              <Text className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
-                Monthly Trend Analysis
-              </Text>
-              {viewModel.monthlyTrend.length === 0 ? (
-                <View className="bg-gray-900 p-4 rounded-xl border border-gray-800">
-                  <Text className="text-gray-500 text-xs">No monthly trend data available.</Text>
-                </View>
-              ) : (
-                viewModel.monthlyTrend.map((p) => (
-                  <View key={p.periodLabel} className="bg-gray-900 border border-gray-800 p-3.5 rounded-xl mb-2 flex-row justify-between items-center">
-                    <Text className="text-gray-300 font-bold text-sm">{p.periodLabel}</Text>
-                    <View className="items-end">
-                      <Text className="text-emerald-400 text-xs font-semibold">Income: {p.formattedIncome}</Text>
-                      <Text className="text-red-400 text-xs font-semibold">Expenses: {p.formattedExpense}</Text>
-                    </View>
-                  </View>
-                ))
-              )}
-            </View>
+            {/* Monthly Trend Card */}
+            <MonthlyTrendCard data={monthlyTrendResponse} />
           </>
         )}
       </ScrollView>
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+  },
+  header: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+  },
+  refreshButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  refreshText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  scrollContent: {
+    padding: 16,
+  },
+  errorBanner: {
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 16,
+  },
+  errorText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  loadingContainer: {
+    paddingVertical: 48,
+    alignItems: 'center',
+  },
+  summaryCard: {
+    marginBottom: 16,
+  },
+  sectionHeading: {
+    fontSize: 11,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 8,
+  },
+  savingsBox: {
+    padding: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+    marginBottom: 12,
+  },
+  savingsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  savingsLabel: {
+    fontSize: 13,
+  },
+  savingsBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 2,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  badgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  netSavingsAmount: {
+    fontSize: 28,
+    fontWeight: '800',
+  },
+  tilesRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  metricTile: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  tileLabel: {
+    fontSize: 11,
+    marginBottom: 4,
+  },
+  tileAmount: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+});

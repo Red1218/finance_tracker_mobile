@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Platform, StyleSheet } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { useTheme } from '../../../../shared/theme';
 import { ReportingPeriod } from '../../domain';
 
 const PERIOD_OPTIONS: { period: ReportingPeriod; label: string }[] = [
@@ -29,6 +30,7 @@ export const ReportingPeriodSelector: React.FC<Props> = ({
   onCustomRangeChange,
   disabled = false,
 }) => {
+  const theme = useTheme();
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
 
@@ -42,8 +44,8 @@ export const ReportingPeriodSelector: React.FC<Props> = ({
     customStartDate > customEndDate;
 
   return (
-    <View className="py-2 px-4">
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row">
+    <View style={styles.container}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {PERIOD_OPTIONS.map(({ period, label }) => {
           const isActive = period === selected;
           return (
@@ -52,11 +54,21 @@ export const ReportingPeriodSelector: React.FC<Props> = ({
               onPress={() => onSelect(period)}
               disabled={disabled}
               accessibilityLabel={`Select period ${label}`}
-              className={`mr-2 px-4 py-2 rounded-full ${
-                isActive ? 'bg-blue-600' : 'bg-gray-100'
-              } ${disabled ? 'opacity-50' : 'opacity-100'}`}
+              style={[
+                styles.chip,
+                {
+                  backgroundColor: isActive ? theme.colors.brandPrimary : theme.colors.surfaceElevated,
+                  borderColor: isActive ? theme.colors.brandPrimary : theme.colors.borderSubtle,
+                  opacity: disabled ? 0.5 : 1,
+                },
+              ]}
             >
-              <Text className={`text-sm font-medium ${isActive ? 'text-white' : 'text-gray-600'}`}>
+              <Text
+                style={[
+                  styles.chipText,
+                  { color: isActive ? theme.colors.textPrimary : theme.colors.textSecondary, fontWeight: isActive ? '700' : '500' },
+                ]}
+              >
                 {label}
               </Text>
             </TouchableOpacity>
@@ -65,19 +77,17 @@ export const ReportingPeriodSelector: React.FC<Props> = ({
       </ScrollView>
 
       {selected === ReportingPeriod.CUSTOM && (
-        <View className="mt-3 p-3 bg-white rounded-xl border border-gray-200">
-          <View className="flex-row justify-between gap-3">
-            <View className="flex-1">
-              <Text className="text-xs font-semibold text-gray-500 mb-1">Start Date</Text>
+        <View style={[styles.customBox, { backgroundColor: theme.colors.surfaceElevated, borderColor: theme.colors.borderSubtle }]}>
+          <View style={styles.pickerRow}>
+            <View style={styles.pickerCol}>
+              <Text style={[styles.pickerLabel, { color: theme.colors.textMuted }]}>Start Date</Text>
               <TouchableOpacity
                 disabled={disabled}
                 onPress={() => setShowStartDatePicker(true)}
-                className={`border border-gray-300 rounded-lg p-2 bg-gray-50 ${
-                  disabled ? 'opacity-50' : 'opacity-100'
-                }`}
+                style={[styles.pickerButton, { backgroundColor: theme.colors.surfacePrimary, borderColor: theme.colors.borderSubtle, opacity: disabled ? 0.5 : 1 }]}
                 accessibilityLabel="Select start date"
               >
-                <Text className="text-xs text-gray-900">
+                <Text style={[styles.pickerText, { color: theme.colors.textPrimary }]}>
                   {customStartDate ? customStartDate.toLocaleDateString() : 'Pick Start Date'}
                 </Text>
               </TouchableOpacity>
@@ -96,17 +106,15 @@ export const ReportingPeriodSelector: React.FC<Props> = ({
               )}
             </View>
 
-            <View className="flex-1">
-              <Text className="text-xs font-semibold text-gray-500 mb-1">End Date</Text>
+            <View style={styles.pickerCol}>
+              <Text style={[styles.pickerLabel, { color: theme.colors.textMuted }]}>End Date</Text>
               <TouchableOpacity
                 disabled={disabled}
                 onPress={() => setShowEndDatePicker(true)}
-                className={`border border-gray-300 rounded-lg p-2 bg-gray-50 ${
-                  disabled ? 'opacity-50' : 'opacity-100'
-                }`}
+                style={[styles.pickerButton, { backgroundColor: theme.colors.surfacePrimary, borderColor: theme.colors.borderSubtle, opacity: disabled ? 0.5 : 1 }]}
                 accessibilityLabel="Select end date"
               >
-                <Text className="text-xs text-gray-900">
+                <Text style={[styles.pickerText, { color: theme.colors.textPrimary }]}>
                   {customEndDate ? customEndDate.toLocaleDateString() : 'Pick End Date'}
                 </Text>
               </TouchableOpacity>
@@ -127,7 +135,7 @@ export const ReportingPeriodSelector: React.FC<Props> = ({
           </View>
 
           {isInvalidRange && (
-            <Text className="text-xs text-red-500 mt-2 font-medium">
+            <Text style={[styles.errorText, { color: theme.colors.error }]}>
               Start date must be before or equal to End date.
             </Text>
           )}
@@ -136,3 +144,55 @@ export const ReportingPeriodSelector: React.FC<Props> = ({
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    paddingVertical: 8,
+  },
+  scrollContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  chip: {
+    marginRight: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  chipText: {
+    fontSize: 13,
+  },
+  customBox: {
+    marginTop: 12,
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  pickerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  pickerCol: {
+    flex: 1,
+  },
+  pickerLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  pickerButton: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 8,
+  },
+  pickerText: {
+    fontSize: 12,
+  },
+  errorText: {
+    fontSize: 12,
+    marginTop: 8,
+    fontWeight: '500',
+  },
+});

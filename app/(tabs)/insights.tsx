@@ -1,6 +1,6 @@
 import React from 'react';
-import { InsightsScreen } from '@/src/features/insights/presentation/screens/InsightsScreen';
+import { ReportingScreen } from '@/src/features/reporting/presentation/screens/ReportingScreen';
 
 export default function InsightsRoute() {
-  return <InsightsScreen />;
+  return <ReportingScreen />;
 }
