@@ -27,29 +27,49 @@ const mockOverBudgetDetail: BudgetViewModel = {
   healthStatus: 'OVER_BUDGET',
 };
 
-describe('BudgetDetailSheet Presentation Behavior & State Rules', () => {
-  it('validates near-limit budget presentation metrics', () => {
-    expect(mockBudgetDetail.id).toBe('b-500');
-    expect(mockBudgetDetail.spentAmount).toBe(13500);
-    expect(mockBudgetDetail.remainingAmount).toBe(1500);
-    expect(mockBudgetDetail.healthStatus).toBe('NEAR_LIMIT');
+const mockOnTrackBudgetDetail: BudgetViewModel = {
+  ...mockBudgetDetail,
+  id: 'b-502',
+  spentAmount: 4000,
+  remainingAmount: 11000,
+  percentageUsed: 26.7,
+  healthStatus: 'ON_TRACK',
+};
+
+describe('BudgetDetailSheet Presentation & Behavior Rules', () => {
+  it('validates ON_TRACK status presentation state', () => {
+    expect(mockOnTrackBudgetDetail.healthStatus).toBe('ON_TRACK');
+    expect(mockOnTrackBudgetDetail.remainingAmount).toBeGreaterThan(0);
+    expect(mockOnTrackBudgetDetail.percentageUsed).toBeLessThan(80);
   });
 
-  it('validates over-budget detail metrics rendering', () => {
+  it('validates NEAR_LIMIT status presentation state', () => {
+    expect(mockBudgetDetail.healthStatus).toBe('NEAR_LIMIT');
+    expect(mockBudgetDetail.spentAmount).toBe(13500);
+    expect(mockBudgetDetail.remainingAmount).toBe(1500);
+  });
+
+  it('validates OVER_BUDGET status presentation state', () => {
     expect(mockOverBudgetDetail.healthStatus).toBe('OVER_BUDGET');
     expect(mockOverBudgetDetail.remainingAmount).toBeLessThan(0);
     expect(mockOverBudgetDetail.percentageUsed).toBeGreaterThan(100);
   });
 
-  it('invokes onEdit callback when Edit action is triggered', () => {
+  it('triggers onEdit callback when Edit Limit action is pressed', () => {
     const onEditMock = vi.fn();
     onEditMock(mockBudgetDetail);
     expect(onEditMock).toHaveBeenCalledWith(mockBudgetDetail);
   });
 
-  it('invokes onArchive callback when Archive action is confirmed', () => {
+  it('triggers onArchive callback when Archive Budget action is pressed', () => {
     const onArchiveMock = vi.fn();
     onArchiveMock(mockBudgetDetail);
     expect(onArchiveMock).toHaveBeenCalledWith(mockBudgetDetail);
+  });
+
+  it('triggers onClose callback when Close action is pressed', () => {
+    const onCloseMock = vi.fn();
+    onCloseMock();
+    expect(onCloseMock).toHaveBeenCalled();
   });
 });

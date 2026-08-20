@@ -69,63 +69,73 @@ export function BudgetForm({
         </View>
       ) : null}
 
-      {/* Scope / Category Selector */}
-      {!isEditMode && (
-        <View style={styles.section}>
+      {/* Scope / Category Selector (Read-only during edit) */}
+      <View style={styles.section}>
+        <View style={styles.labelRow}>
           <Text style={[styles.label, { color: colors.textSecondary, fontSize: typography.caption.fontSize }]}>
             Scope / Category
           </Text>
-          <View style={styles.chipGrid}>
-            <TouchableOpacity
-              key="overall"
-              onPress={() => setValue('categoryId', null)}
-              style={[
-                styles.chip,
-                {
-                  backgroundColor: selectedCategoryId === null ? colors.brandPrimary : colors.surfaceElevated,
-                  borderColor: selectedCategoryId === null ? colors.brandPrimary : colors.borderSubtle,
-                },
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel="Select Overall Budget"
-            >
-              <Text style={[styles.chipText, { color: selectedCategoryId === null ? '#FFFFFF' : colors.textPrimary }]}>
-                Overall (All Categories)
-              </Text>
-            </TouchableOpacity>
-
-            {categories.map((cat) => {
-              const isSelected = selectedCategoryId === cat.id;
-              return (
-                <TouchableOpacity
-                  key={cat.id}
-                  onPress={() => setValue('categoryId', cat.id)}
-                  style={[
-                    styles.chip,
-                    {
-                      backgroundColor: isSelected ? colors.brandPrimary : colors.surfaceElevated,
-                      borderColor: isSelected ? colors.brandPrimary : colors.borderSubtle,
-                    },
-                  ]}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Select category ${cat.label}`}
-                >
-                  <Text style={[styles.chipText, { color: isSelected ? '#FFFFFF' : colors.textPrimary }]}>
-                    {cat.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-          {errors.categoryId && (
-            <Text style={[styles.fieldError, { color: colors.error, fontSize: typography.caption.fontSize }]}>
-              {errors.categoryId.message}
+          {isEditMode && (
+            <Text style={[styles.readOnlyBadge, { color: colors.textMuted, fontSize: typography.caption.fontSize }]}>
+              (Read-only in Edit)
             </Text>
           )}
         </View>
-      )}
+        <View style={[styles.chipGrid, isEditMode && styles.disabledContainer]}>
+          <TouchableOpacity
+            key="overall"
+            disabled={isEditMode}
+            onPress={() => setValue('categoryId', null)}
+            style={[
+              styles.chip,
+              {
+                backgroundColor: selectedCategoryId === null ? colors.brandPrimary : colors.surfaceElevated,
+                borderColor: selectedCategoryId === null ? colors.brandPrimary : colors.borderSubtle,
+                opacity: isEditMode ? (selectedCategoryId === null ? 0.8 : 0.4) : 1,
+              },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel="Select Overall Budget"
+          >
+            <Text style={[styles.chipText, { color: selectedCategoryId === null ? '#FFFFFF' : colors.textPrimary }]}>
+              Overall (All Categories)
+            </Text>
+          </TouchableOpacity>
 
-      {/* Budget Amount Input */}
+          {categories.map((cat) => {
+            const isSelected = selectedCategoryId === cat.id;
+            if (isEditMode && !isSelected) return null; // In edit mode, show the active scope chip
+            return (
+              <TouchableOpacity
+                key={cat.id}
+                disabled={isEditMode}
+                onPress={() => setValue('categoryId', cat.id)}
+                style={[
+                  styles.chip,
+                  {
+                    backgroundColor: isSelected ? colors.brandPrimary : colors.surfaceElevated,
+                    borderColor: isSelected ? colors.brandPrimary : colors.borderSubtle,
+                    opacity: isEditMode ? 0.8 : 1,
+                  },
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel={`Select category ${cat.label}`}
+              >
+                <Text style={[styles.chipText, { color: isSelected ? '#FFFFFF' : colors.textPrimary }]}>
+                  {cat.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+        {errors.categoryId && (
+          <Text style={[styles.fieldError, { color: colors.error, fontSize: typography.caption.fontSize }]}>
+            {errors.categoryId.message}
+          </Text>
+        )}
+      </View>
+
+      {/* Budget Amount Input (Active editable field) */}
       <View style={styles.section}>
         <Text style={[styles.label, { color: colors.textSecondary, fontSize: typography.caption.fontSize }]}>
           Budget Limit Amount (₹)
@@ -161,103 +171,119 @@ export function BudgetForm({
         )}
       </View>
 
-      {/* Budget Period Selector */}
-      {!isEditMode && (
-        <View style={styles.section}>
+      {/* Budget Period Selector (Read-only during edit) */}
+      <View style={styles.section}>
+        <View style={styles.labelRow}>
           <Text style={[styles.label, { color: colors.textSecondary, fontSize: typography.caption.fontSize }]}>
             Period Type
           </Text>
-          <View style={styles.chipGrid}>
-            {PERIOD_OPTIONS.map((p) => {
-              const isSelected = selectedPeriod === p.id;
-              return (
-                <TouchableOpacity
-                  key={p.id}
-                  onPress={() => setValue('period', p.id)}
-                  style={[
-                    styles.chip,
-                    {
-                      backgroundColor: isSelected ? colors.brandPrimary : colors.surfaceElevated,
-                      borderColor: isSelected ? colors.brandPrimary : colors.borderSubtle,
-                    },
-                  ]}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Select period ${p.label}`}
-                >
-                  <Text style={[styles.chipText, { color: isSelected ? '#FFFFFF' : colors.textPrimary }]}>
-                    {p.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </View>
-      )}
-
-      {/* Date Pickers */}
-      {!isEditMode && (
-        <View style={styles.dateRow}>
-          <View style={styles.dateCol}>
-            <Text style={[styles.label, { color: colors.textSecondary, fontSize: typography.caption.fontSize }]}>
-              Start Date
+          {isEditMode && (
+            <Text style={[styles.readOnlyBadge, { color: colors.textMuted, fontSize: typography.caption.fontSize }]}>
+              (Read-only in Edit)
             </Text>
-            <TouchableOpacity
-              onPress={() => setShowStartDatePicker(true)}
-              style={[
-                styles.dateButton,
-                { backgroundColor: colors.surfaceElevated, borderColor: colors.borderSubtle },
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel="Select start date"
-            >
-              <Text style={[styles.dateButtonText, { color: colors.textPrimary }]}>
-                {startDate ? new Date(startDate).toLocaleDateString('en-IN') : 'Start Date'}
-              </Text>
-            </TouchableOpacity>
-            {showStartDatePicker && (
-              <DateTimePicker
-                value={startDate ? new Date(startDate) : new Date()}
-                mode="date"
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                onChange={(event, selected) => {
-                  if (Platform.OS === 'android') setShowStartDatePicker(false);
-                  if (selected) setValue('startDate', selected);
-                }}
-              />
-            )}
-          </View>
-
-          <View style={styles.dateCol}>
-            <Text style={[styles.label, { color: colors.textSecondary, fontSize: typography.caption.fontSize }]}>
-              End Date
-            </Text>
-            <TouchableOpacity
-              onPress={() => setShowEndDatePicker(true)}
-              style={[
-                styles.dateButton,
-                { backgroundColor: colors.surfaceElevated, borderColor: colors.borderSubtle },
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel="Select end date"
-            >
-              <Text style={[styles.dateButtonText, { color: colors.textPrimary }]}>
-                {endDate ? new Date(endDate).toLocaleDateString('en-IN') : 'End Date'}
-              </Text>
-            </TouchableOpacity>
-            {showEndDatePicker && (
-              <DateTimePicker
-                value={endDate ? new Date(endDate) : new Date()}
-                mode="date"
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                onChange={(event, selected) => {
-                  if (Platform.OS === 'android') setShowEndDatePicker(false);
-                  if (selected) setValue('endDate', selected);
-                }}
-              />
-            )}
-          </View>
+          )}
         </View>
-      )}
+        <View style={[styles.chipGrid, isEditMode && styles.disabledContainer]}>
+          {PERIOD_OPTIONS.map((p) => {
+            const isSelected = selectedPeriod === p.id;
+            if (isEditMode && !isSelected) return null; // In edit mode, display active period chip
+            return (
+              <TouchableOpacity
+                key={p.id}
+                disabled={isEditMode}
+                onPress={() => setValue('period', p.id)}
+                style={[
+                  styles.chip,
+                  {
+                    backgroundColor: isSelected ? colors.brandPrimary : colors.surfaceElevated,
+                    borderColor: isSelected ? colors.brandPrimary : colors.borderSubtle,
+                    opacity: isEditMode ? 0.8 : 1,
+                  },
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel={`Select period ${p.label}`}
+              >
+                <Text style={[styles.chipText, { color: isSelected ? '#FFFFFF' : colors.textPrimary }]}>
+                  {p.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </View>
+
+      {/* Date Range Display (Read-only during edit) */}
+      <View style={styles.dateRow}>
+        <View style={styles.dateCol}>
+          <Text style={[styles.label, { color: colors.textSecondary, fontSize: typography.caption.fontSize }]}>
+            Start Date
+          </Text>
+          <TouchableOpacity
+            disabled={isEditMode}
+            onPress={() => setShowStartDatePicker(true)}
+            style={[
+              styles.dateButton,
+              {
+                backgroundColor: colors.surfaceElevated,
+                borderColor: colors.borderSubtle,
+                opacity: isEditMode ? 0.6 : 1,
+              },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel="Select start date"
+          >
+            <Text style={[styles.dateButtonText, { color: colors.textPrimary }]}>
+              {startDate ? new Date(startDate).toLocaleDateString('en-IN') : 'Start Date'}
+            </Text>
+          </TouchableOpacity>
+          {showStartDatePicker && !isEditMode && (
+            <DateTimePicker
+              value={startDate ? new Date(startDate) : new Date()}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              onChange={(event, selected) => {
+                if (Platform.OS === 'android') setShowStartDatePicker(false);
+                if (selected) setValue('startDate', selected);
+              }}
+            />
+          )}
+        </View>
+
+        <View style={styles.dateCol}>
+          <Text style={[styles.label, { color: colors.textSecondary, fontSize: typography.caption.fontSize }]}>
+            End Date
+          </Text>
+          <TouchableOpacity
+            disabled={isEditMode}
+            onPress={() => setShowEndDatePicker(true)}
+            style={[
+              styles.dateButton,
+              {
+                backgroundColor: colors.surfaceElevated,
+                borderColor: colors.borderSubtle,
+                opacity: isEditMode ? 0.6 : 1,
+              },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel="Select end date"
+          >
+            <Text style={[styles.dateButtonText, { color: colors.textPrimary }]}>
+              {endDate ? new Date(endDate).toLocaleDateString('en-IN') : 'End Date'}
+            </Text>
+          </TouchableOpacity>
+          {showEndDatePicker && !isEditMode && (
+            <DateTimePicker
+              value={endDate ? new Date(endDate) : new Date()}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              onChange={(event, selected) => {
+                if (Platform.OS === 'android') setShowEndDatePicker(false);
+                if (selected) setValue('endDate', selected);
+              }}
+            />
+          )}
+        </View>
+      </View>
 
       {/* Form Action Buttons */}
       <View style={styles.actionsRow}>
@@ -308,9 +334,20 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: 16,
   },
-  label: {
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 8,
+  },
+  label: {
     fontWeight: '600',
+  },
+  readOnlyBadge: {
+    fontStyle: 'italic',
+  },
+  disabledContainer: {
+    opacity: 0.8,
   },
   chipGrid: {
     flexDirection: 'row',

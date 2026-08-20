@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { BudgetViewModel } from '../models/BudgetViewModel';
+import { BudgetPeriodType } from '../../domain/value-objects/BudgetPeriod';
 
 const mockBudgets: BudgetViewModel[] = [
   {
@@ -36,8 +37,8 @@ const mockBudgets: BudgetViewModel[] = [
   },
 ];
 
-describe('BudgetsScreen Presentation & User Actions', () => {
-  it('computes aggregated totals across active budgets correctly', () => {
+describe('BudgetsScreen Presentation & User Action Workflows', () => {
+  it('aggregates total budgeted, spent, and remaining allowance from view models', () => {
     let totalBudgeted = 0;
     let totalSpent = 0;
 
@@ -65,7 +66,7 @@ describe('BudgetsScreen Presentation & User Actions', () => {
     expect(onSelectBudgetMock).toHaveBeenCalledWith(mockBudgets[0]);
   });
 
-  it('triggers create submit and refresh callbacks cleanly', async () => {
+  it('triggers create budget submit and refresh callbacks cleanly', async () => {
     const onCreateMock = vi.fn().mockResolvedValue(undefined);
     const onRefreshMock = vi.fn();
 
@@ -73,7 +74,7 @@ describe('BudgetsScreen Presentation & User Actions', () => {
       categoryId: null,
       amount: 40000,
       currencyCode: 'INR',
-      period: 'MONTHLY' as any,
+      period: BudgetPeriodType.Monthly,
       startDate: new Date('2026-08-01'),
       endDate: new Date('2026-08-31'),
     };
@@ -82,6 +83,22 @@ describe('BudgetsScreen Presentation & User Actions', () => {
     onRefreshMock();
 
     expect(onCreateMock).toHaveBeenCalledWith(payload);
+    expect(onRefreshMock).toHaveBeenCalled();
+  });
+
+  it('triggers update budget submit and refresh callbacks cleanly', async () => {
+    const onUpdateMock = vi.fn().mockResolvedValue(undefined);
+    const onRefreshMock = vi.fn();
+
+    const updatePayload = {
+      id: 'b-1',
+      newAmount: 60000,
+    };
+
+    await onUpdateMock(updatePayload);
+    onRefreshMock();
+
+    expect(onUpdateMock).toHaveBeenCalledWith(updatePayload);
     expect(onRefreshMock).toHaveBeenCalled();
   });
 

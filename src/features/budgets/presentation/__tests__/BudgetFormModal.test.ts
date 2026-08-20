@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { CreateBudgetFormData } from '../validation/budgetSchema';
 import { BudgetViewModel } from '../models/BudgetViewModel';
+import { BudgetPeriodType } from '../../domain/value-objects/BudgetPeriod';
 
 describe('BudgetFormModal Presentation Behavior & Validation Rules', () => {
   const mockCategories = [
@@ -30,14 +31,14 @@ describe('BudgetFormModal Presentation Behavior & Validation Rules', () => {
       categoryId: null,
       amount: 25000,
       currencyCode: 'INR',
-      period: 'MONTHLY' as any,
+      period: BudgetPeriodType.Monthly,
       startDate: new Date('2026-08-01'),
       endDate: new Date('2026-08-31'),
     };
 
     expect(values.categoryId).toBeNull();
     expect(values.amount).toBe(25000);
-    expect(values.period).toBe('MONTHLY');
+    expect(values.period).toBe(BudgetPeriodType.Monthly);
   });
 
   it('validates category budget form submission values', () => {
@@ -45,13 +46,14 @@ describe('BudgetFormModal Presentation Behavior & Validation Rules', () => {
       categoryId: 'cat-1',
       amount: 8000,
       currencyCode: 'INR',
-      period: 'WEEKLY' as any,
+      period: BudgetPeriodType.Weekly,
       startDate: new Date('2026-08-01'),
       endDate: new Date('2026-08-07'),
     };
 
     expect(values.categoryId).toBe('cat-1');
     expect(values.amount).toBe(8000);
+    expect(values.period).toBe(BudgetPeriodType.Weekly);
     expect(values.startDate.getTime()).toBeLessThan(values.endDate.getTime());
   });
 
@@ -67,7 +69,7 @@ describe('BudgetFormModal Presentation Behavior & Validation Rules', () => {
       categoryId: 'cat-2',
       amount: 15000,
       currencyCode: 'INR',
-      period: 'MONTHLY' as any,
+      period: BudgetPeriodType.Monthly,
       startDate: new Date('2026-08-01'),
       endDate: new Date('2026-08-31'),
     };
