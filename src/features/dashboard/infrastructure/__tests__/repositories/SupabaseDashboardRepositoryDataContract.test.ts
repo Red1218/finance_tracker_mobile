@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+import { SupabaseClient } from '@supabase/supabase-js';
 import { SupabaseDashboardRepository } from '../../repositories/SupabaseDashboardRepository';
 
 describe('SupabaseDashboardRepository Data Contract Tests', () => {
@@ -29,7 +30,7 @@ describe('SupabaseDashboardRepository Data Contract Tests', () => {
           eq: vi.fn().mockResolvedValue({ data: [], error: null }),
         };
       }),
-    } as any;
+    } as unknown as SupabaseClient;
 
     const repository = new SupabaseDashboardRepository(mockSupabaseClient);
     const snapshot = await repository.getDashboardData('user-123', 'CurrentMonth');
