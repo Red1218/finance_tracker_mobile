@@ -1,11 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '../../../../shared/theme';
+import { Card } from '../../../../shared/components';
 import { AccountViewModel } from '../models/AccountViewModel';
 import { AccountTypeBadge } from './AccountTypeBadge';
 import { DefaultAccountBadge } from './DefaultAccountBadge';
 
-interface AccountCardProps {
+export interface AccountCardProps {
   viewModel: AccountViewModel;
   onSetDefault?: (id: string) => void;
   onArchive?: (id: string) => void;
@@ -20,13 +21,13 @@ export function AccountCard({
   onRestore,
   disabled,
 }: AccountCardProps) {
-  const { colors, spacing, typography, radius } = useTheme();
+  const { colors, typography } = useTheme();
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.surfacePrimary, borderRadius: radius.medium, padding: spacing.space16, marginBottom: spacing.space12 }]}>
+    <Card style={styles.cardContainer}>
       <View style={styles.headerRow}>
         <View style={styles.titleContainer}>
-          <Text style={[{ color: colors.textPrimary, fontWeight: 'bold' }, typography.title]}>
+          <Text style={[styles.accountName, { color: colors.textPrimary, fontSize: typography.title.fontSize }]} numberOfLines={1}>
             {viewModel.name}
           </Text>
           <View style={styles.badgeRow}>
@@ -36,56 +37,59 @@ export function AccountCard({
         </View>
 
         <View style={styles.balanceContainer}>
-          <Text style={[{ color: colors.textPrimary, fontWeight: 'bold' }, typography.heading]}>
+          <Text style={[styles.derivedBalance, { color: colors.textPrimary, fontSize: typography.numeric.fontSize, fontVariant: ['tabular-nums'] }]}>
             {viewModel.formattedDerivedBalance}
           </Text>
-          <Text style={[{ color: colors.textSecondary }, typography.caption]}>Opening: {viewModel.formattedOpeningBalance}</Text>
+          <Text style={[styles.openingBalance, { color: colors.textSecondary, fontSize: typography.caption.fontSize }]}>
+            Opening: {viewModel.formattedOpeningBalance}
+          </Text>
         </View>
       </View>
 
-      {/* Action Buttons Footer */}
-      <View style={styles.actionsRow}>
+      <View style={[styles.actionsRow, { borderTopColor: colors.borderSubtle }]}>
         {!viewModel.isArchived && !viewModel.isDefault && onSetDefault && (
-          <Pressable
-            style={[styles.actionButton, { backgroundColor: colors.backgroundPrimary, borderRadius: radius.small, paddingHorizontal: spacing.space12, paddingVertical: spacing.space8 }]}
+          <TouchableOpacity
+            style={[styles.actionButton, { backgroundColor: colors.surfaceElevated }]}
             onPress={() => onSetDefault(viewModel.id)}
             disabled={disabled}
+            accessibilityRole="button"
+            accessibilityLabel={`Set ${viewModel.name} as default account`}
           >
-            <Text style={[typography.caption, { color: colors.brandPrimary, fontWeight: '600' }]}>Set Default</Text>
-          </Pressable>
+            <Text style={[styles.actionBtnText, { color: colors.brandPrimary, fontSize: typography.caption.fontSize }]}>Set Default</Text>
+          </TouchableOpacity>
         )}
 
         {!viewModel.isArchived && onArchive && (
-          <Pressable
-            style={[styles.actionButton, { backgroundColor: colors.backgroundPrimary, borderRadius: radius.small, paddingHorizontal: spacing.space12, paddingVertical: spacing.space8 }]}
+          <TouchableOpacity
+            style={[styles.actionButton, { backgroundColor: 'rgba(239, 68, 68, 0.15)' }]}
             onPress={() => onArchive(viewModel.id)}
             disabled={disabled}
+            accessibilityRole="button"
+            accessibilityLabel={`Archive ${viewModel.name}`}
           >
-            <Text style={[typography.caption, { color: colors.error, fontWeight: '600' }]}>Archive</Text>
-          </Pressable>
+            <Text style={[styles.actionBtnText, { color: colors.error, fontSize: typography.caption.fontSize }]}>Archive</Text>
+          </TouchableOpacity>
         )}
 
         {viewModel.isArchived && onRestore && (
-          <Pressable
-            style={[styles.actionButton, { backgroundColor: colors.backgroundPrimary, borderRadius: radius.small, paddingHorizontal: spacing.space12, paddingVertical: spacing.space8 }]}
+          <TouchableOpacity
+            style={[styles.actionButton, { backgroundColor: colors.surfaceElevated }]}
             onPress={() => onRestore(viewModel.id)}
             disabled={disabled}
+            accessibilityRole="button"
+            accessibilityLabel={`Restore ${viewModel.name}`}
           >
-            <Text style={[typography.caption, { color: colors.brandPrimary, fontWeight: '600' }]}>Restore</Text>
-          </Pressable>
+            <Text style={[styles.actionBtnText, { color: colors.brandPrimary, fontSize: typography.caption.fontSize }]}>Restore</Text>
+          </TouchableOpacity>
         )}
       </View>
-    </View>
+    </Card>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
+  cardContainer: {
+    marginBottom: 12,
   },
   headerRow: {
     flexDirection: 'row',
@@ -96,6 +100,9 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingRight: 12,
   },
+  accountName: {
+    fontWeight: '700',
+  },
   badgeRow: {
     flexDirection: 'row',
     gap: 6,
@@ -104,6 +111,12 @@ const styles = StyleSheet.create({
   balanceContainer: {
     alignItems: 'flex-end',
   },
+  derivedBalance: {
+    fontWeight: '700',
+  },
+  openingBalance: {
+    marginTop: 2,
+  },
   actionsRow: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
@@ -111,7 +124,15 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.05)',
   },
-  actionButton: {},
+  actionButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    minHeight: 32,
+    justifyContent: 'center',
+  },
+  actionBtnText: {
+    fontWeight: '600',
+  },
 });

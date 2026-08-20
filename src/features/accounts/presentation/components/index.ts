@@ -1,4 +1,5 @@
 export * from './AccountCard';
+export * from './AccountMaskedBalance';
 export * from './AccountTypeBadge';
 export * from './DefaultAccountBadge';
 export * from './BalanceCard';
