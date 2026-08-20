@@ -16,8 +16,12 @@ export class BudgetViewModelMapper {
       ? (budget as BudgetDTO).currencyCode
       : (budget as Budget).currency ? (budget as Budget).currency.value : (budget as Budget).currencyCode.value;
     const periodKindStr = isDto ? (budget as BudgetDTO).periodKind : (budget as Budget).period.kind;
-    const startDateIso = isDto ? (budget as BudgetDTO).startDate : (budget as Budget).startDate.toISOString();
-    const endDateIso = isDto ? (budget as BudgetDTO).endDate : (budget as Budget).endDate.toISOString();
+    const startDateIso = isDto
+      ? (budget as BudgetDTO).startDate
+      : (budget as Budget).period ? (budget as Budget).period.startDate.toISOString() : new Date().toISOString();
+    const endDateIso = isDto
+      ? (budget as BudgetDTO).endDate
+      : (budget as Budget).period ? (budget as Budget).period.endDate.toISOString() : new Date().toISOString();
     const isArchivedBool = isDto ? (budget as BudgetDTO).isArchived : (budget as Budget).isArchived;
     const archivedAtIso = isDto
       ? (budget as BudgetDTO).archivedAt

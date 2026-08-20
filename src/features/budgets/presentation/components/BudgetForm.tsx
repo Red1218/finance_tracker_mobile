@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Platform, StyleSheet } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { useTheme } from '../../../../shared/theme';
 import { createBudgetSchema, CreateBudgetFormData } from '../validation/budgetSchema';
 import { BudgetPeriodType } from '../../domain/value-objects/BudgetPeriod';
 
@@ -11,9 +12,10 @@ export interface CategoryOption {
   label: string;
 }
 
-interface BudgetFormProps {
+export interface BudgetFormProps {
   initialValues?: Partial<CreateBudgetFormData>;
   categories?: CategoryOption[];
+  isEditMode?: boolean;
   onSubmit: (data: CreateBudgetFormData) => void;
   onCancel?: () => void;
   isSubmitting?: boolean;
@@ -28,14 +30,17 @@ const PERIOD_OPTIONS: { id: BudgetPeriodType; label: string }[] = [
   { id: BudgetPeriodType.Custom, label: 'Custom' },
 ];
 
-export const BudgetForm: React.FC<BudgetFormProps> = ({
+export function BudgetForm({
   initialValues,
   categories = [],
+  isEditMode = false,
   onSubmit,
   onCancel,
   isSubmitting,
   error,
-}) => {
+}: BudgetFormProps) {
+  const { colors, typography } = useTheme();
+
   const { control, handleSubmit, setValue, watch, formState: { errors } } = useForm<CreateBudgetFormData>({
     resolver: zodResolver(createBudgetSchema),
     defaultValues: {
@@ -45,7 +50,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
       startDate: initialValues?.startDate ? new Date(initialValues.startDate) : new Date(),
       endDate: initialValues?.endDate ? new Date(initialValues.endDate) : new Date(Date.now() + 30 * 86400000),
       categoryId: initialValues?.categoryId !== undefined ? initialValues.categoryId : null,
-    }
+    },
   });
 
   const selectedCategoryId = watch('categoryId');
@@ -57,167 +62,314 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
 
   return (
-    <ScrollView className="p-4 bg-white rounded-xl max-h-[85vh]">
+    <ScrollView contentContainerStyle={styles.scrollContent}>
       {error ? (
-        <View className="bg-red-50 p-3 rounded-lg mb-4 border border-red-200">
-          <Text className="text-red-600 text-sm font-medium">{error}</Text>
+        <View style={[styles.errorBanner, { backgroundColor: 'rgba(239, 68, 68, 0.15)', borderColor: colors.error }]}>
+          <Text style={[styles.errorText, { color: colors.error, fontSize: typography.caption.fontSize }]}>{error}</Text>
         </View>
       ) : null}
 
-      {/* Category Picker */}
-      <View className="mb-4">
-        <Text className="text-sm font-semibold text-gray-700 mb-2">Category</Text>
-        <View className="flex-row flex-wrap gap-2">
-          <TouchableOpacity
-            key="overall"
-            onPress={() => setValue('categoryId', null)}
-            className={`px-3 py-2 rounded-lg border ${
-              selectedCategoryId === null ? 'bg-blue-600 border-blue-600' : 'bg-gray-100 border-gray-200'
-            }`}
-          >
-            <Text className={selectedCategoryId === null ? 'text-white font-semibold' : 'text-gray-700'}>
-              Overall (All Categories)
-            </Text>
-          </TouchableOpacity>
-          {categories.map((cat) => {
-            const isSelected = selectedCategoryId === cat.id;
-            return (
-              <TouchableOpacity
-                key={cat.id}
-                onPress={() => setValue('categoryId', cat.id)}
-                className={`px-3 py-2 rounded-lg border ${
-                  isSelected ? 'bg-blue-600 border-blue-600' : 'bg-gray-100 border-gray-200'
-                }`}
-              >
-                <Text className={isSelected ? 'text-white font-semibold' : 'text-gray-700'}>
-                  {cat.label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-        {errors.categoryId && <Text className="text-xs text-red-500 mt-1">{errors.categoryId.message}</Text>}
-      </View>
+      {/* Scope / Category Selector */}
+      {!isEditMode && (
+        <View style={styles.section}>
+          <Text style={[styles.label, { color: colors.textSecondary, fontSize: typography.caption.fontSize }]}>
+            Scope / Category
+          </Text>
+          <View style={styles.chipGrid}>
+            <TouchableOpacity
+              key="overall"
+              onPress={() => setValue('categoryId', null)}
+              style={[
+                styles.chip,
+                {
+                  backgroundColor: selectedCategoryId === null ? colors.brandPrimary : colors.surfaceElevated,
+                  borderColor: selectedCategoryId === null ? colors.brandPrimary : colors.borderSubtle,
+                },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel="Select Overall Budget"
+            >
+              <Text style={[styles.chipText, { color: selectedCategoryId === null ? '#FFFFFF' : colors.textPrimary }]}>
+                Overall (All Categories)
+              </Text>
+            </TouchableOpacity>
 
-      {/* Amount Input */}
-      <View className="mb-4">
-        <Text className="text-sm font-semibold text-gray-700 mb-1">Budget Amount</Text>
+            {categories.map((cat) => {
+              const isSelected = selectedCategoryId === cat.id;
+              return (
+                <TouchableOpacity
+                  key={cat.id}
+                  onPress={() => setValue('categoryId', cat.id)}
+                  style={[
+                    styles.chip,
+                    {
+                      backgroundColor: isSelected ? colors.brandPrimary : colors.surfaceElevated,
+                      borderColor: isSelected ? colors.brandPrimary : colors.borderSubtle,
+                    },
+                  ]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Select category ${cat.label}`}
+                >
+                  <Text style={[styles.chipText, { color: isSelected ? '#FFFFFF' : colors.textPrimary }]}>
+                    {cat.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+          {errors.categoryId && (
+            <Text style={[styles.fieldError, { color: colors.error, fontSize: typography.caption.fontSize }]}>
+              {errors.categoryId.message}
+            </Text>
+          )}
+        </View>
+      )}
+
+      {/* Budget Amount Input */}
+      <View style={styles.section}>
+        <Text style={[styles.label, { color: colors.textSecondary, fontSize: typography.caption.fontSize }]}>
+          Budget Limit Amount (₹)
+        </Text>
         <Controller
           control={control}
           name="amount"
           render={({ field: { onChange, onBlur, value } }) => (
             <TextInput
-              className="border border-gray-300 rounded-lg p-3 text-base text-gray-900 bg-gray-50"
+              style={[
+                styles.input,
+                {
+                  backgroundColor: colors.surfaceElevated,
+                  color: colors.textPrimary,
+                  borderColor: errors.amount ? colors.error : colors.borderSubtle,
+                  fontSize: typography.body.fontSize,
+                },
+              ]}
               keyboardType="numeric"
               placeholder="0.00"
+              placeholderTextColor={colors.textMuted}
               onBlur={onBlur}
               onChangeText={(text) => onChange(parseFloat(text) || 0)}
               value={value ? value.toString() : ''}
-              accessibilityLabel="Budget Amount"
+              accessibilityLabel="Budget Amount Input"
             />
           )}
         />
-        {errors.amount && <Text className="text-xs text-red-500 mt-1">{errors.amount.message}</Text>}
+        {errors.amount && (
+          <Text style={[styles.fieldError, { color: colors.error, fontSize: typography.caption.fontSize }]}>
+            {errors.amount.message}
+          </Text>
+        )}
       </View>
 
-      {/* Period Selector */}
-      <View className="mb-4">
-        <Text className="text-sm font-semibold text-gray-700 mb-2">Budget Period</Text>
-        <View className="flex-row flex-wrap gap-2">
-          {PERIOD_OPTIONS.map((p) => {
-            const isSelected = selectedPeriod === p.id;
-            return (
-              <TouchableOpacity
-                key={p.id}
-                onPress={() => setValue('period', p.id)}
-                className={`px-3 py-2 rounded-lg border ${
-                  isSelected ? 'bg-blue-600 border-blue-600' : 'bg-gray-100 border-gray-200'
-                }`}
-              >
-                <Text className={isSelected ? 'text-white font-semibold' : 'text-gray-700'}>
-                  {p.label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
+      {/* Budget Period Selector */}
+      {!isEditMode && (
+        <View style={styles.section}>
+          <Text style={[styles.label, { color: colors.textSecondary, fontSize: typography.caption.fontSize }]}>
+            Period Type
+          </Text>
+          <View style={styles.chipGrid}>
+            {PERIOD_OPTIONS.map((p) => {
+              const isSelected = selectedPeriod === p.id;
+              return (
+                <TouchableOpacity
+                  key={p.id}
+                  onPress={() => setValue('period', p.id)}
+                  style={[
+                    styles.chip,
+                    {
+                      backgroundColor: isSelected ? colors.brandPrimary : colors.surfaceElevated,
+                      borderColor: isSelected ? colors.brandPrimary : colors.borderSubtle,
+                    },
+                  ]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Select period ${p.label}`}
+                >
+                  <Text style={[styles.chipText, { color: isSelected ? '#FFFFFF' : colors.textPrimary }]}>
+                    {p.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </View>
-        {errors.period && <Text className="text-xs text-red-500 mt-1">{errors.period.message}</Text>}
-      </View>
+      )}
 
       {/* Date Pickers */}
-      <View className="mb-6 flex-row justify-between gap-3">
-        <View className="flex-1">
-          <Text className="text-sm font-semibold text-gray-700 mb-1">Start Date</Text>
-          <TouchableOpacity
-            onPress={() => setShowStartDatePicker(true)}
-            className="border border-gray-300 rounded-lg p-3 bg-gray-50"
-            accessibilityLabel="Select start date"
-          >
-            <Text className="text-gray-900 text-sm">
-              {startDate ? new Date(startDate).toLocaleDateString() : 'Select Start Date'}
+      {!isEditMode && (
+        <View style={styles.dateRow}>
+          <View style={styles.dateCol}>
+            <Text style={[styles.label, { color: colors.textSecondary, fontSize: typography.caption.fontSize }]}>
+              Start Date
             </Text>
-          </TouchableOpacity>
-          {showStartDatePicker && (
-            <DateTimePicker
-              value={startDate ? new Date(startDate) : new Date()}
-              mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={(event, selected) => {
-                if (Platform.OS === 'android') setShowStartDatePicker(false);
-                if (selected) setValue('startDate', selected);
-              }}
-            />
-          )}
-          {errors.startDate && <Text className="text-xs text-red-500 mt-1">{errors.startDate.message}</Text>}
-        </View>
+            <TouchableOpacity
+              onPress={() => setShowStartDatePicker(true)}
+              style={[
+                styles.dateButton,
+                { backgroundColor: colors.surfaceElevated, borderColor: colors.borderSubtle },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel="Select start date"
+            >
+              <Text style={[styles.dateButtonText, { color: colors.textPrimary }]}>
+                {startDate ? new Date(startDate).toLocaleDateString('en-IN') : 'Start Date'}
+              </Text>
+            </TouchableOpacity>
+            {showStartDatePicker && (
+              <DateTimePicker
+                value={startDate ? new Date(startDate) : new Date()}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                onChange={(event, selected) => {
+                  if (Platform.OS === 'android') setShowStartDatePicker(false);
+                  if (selected) setValue('startDate', selected);
+                }}
+              />
+            )}
+          </View>
 
-        <View className="flex-1">
-          <Text className="text-sm font-semibold text-gray-700 mb-1">End Date</Text>
-          <TouchableOpacity
-            onPress={() => setShowEndDatePicker(true)}
-            className="border border-gray-300 rounded-lg p-3 bg-gray-50"
-            accessibilityLabel="Select end date"
-          >
-            <Text className="text-gray-900 text-sm">
-              {endDate ? new Date(endDate).toLocaleDateString() : 'Select End Date'}
+          <View style={styles.dateCol}>
+            <Text style={[styles.label, { color: colors.textSecondary, fontSize: typography.caption.fontSize }]}>
+              End Date
             </Text>
-          </TouchableOpacity>
-          {showEndDatePicker && (
-            <DateTimePicker
-              value={endDate ? new Date(endDate) : new Date()}
-              mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={(event, selected) => {
-                if (Platform.OS === 'android') setShowEndDatePicker(false);
-                if (selected) setValue('endDate', selected);
-              }}
-            />
-          )}
-          {errors.endDate && <Text className="text-xs text-red-500 mt-1">{errors.endDate.message}</Text>}
+            <TouchableOpacity
+              onPress={() => setShowEndDatePicker(true)}
+              style={[
+                styles.dateButton,
+                { backgroundColor: colors.surfaceElevated, borderColor: colors.borderSubtle },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel="Select end date"
+            >
+              <Text style={[styles.dateButtonText, { color: colors.textPrimary }]}>
+                {endDate ? new Date(endDate).toLocaleDateString('en-IN') : 'End Date'}
+              </Text>
+            </TouchableOpacity>
+            {showEndDatePicker && (
+              <DateTimePicker
+                value={endDate ? new Date(endDate) : new Date()}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                onChange={(event, selected) => {
+                  if (Platform.OS === 'android') setShowEndDatePicker(false);
+                  if (selected) setValue('endDate', selected);
+                }}
+              />
+            )}
+          </View>
         </View>
-      </View>
+      )}
 
       {/* Form Action Buttons */}
-      <View className="flex-row justify-end space-x-3 mb-6">
+      <View style={styles.actionsRow}>
         {onCancel && (
           <TouchableOpacity
-            className="bg-gray-200 rounded-lg py-3 px-4 flex-1 items-center mr-2"
+            style={[styles.actionBtn, { backgroundColor: colors.surfaceSecondary }]}
             onPress={onCancel}
             disabled={isSubmitting}
+            accessibilityRole="button"
+            accessibilityLabel="Cancel budget form"
           >
-            <Text className="text-gray-700 font-semibold text-base">Cancel</Text>
+            <Text style={[styles.actionBtnText, { color: colors.textPrimary }]}>Cancel</Text>
           </TouchableOpacity>
         )}
-        <TouchableOpacity 
-          className={`bg-blue-600 rounded-lg py-3 px-4 flex-1 items-center ${isSubmitting ? 'opacity-50' : ''}`}
+        <TouchableOpacity
+          style={[
+            styles.actionBtn,
+            styles.submitBtn,
+            { backgroundColor: colors.brandPrimary, opacity: isSubmitting ? 0.6 : 1 },
+          ]}
           onPress={handleSubmit(onSubmit)}
           disabled={isSubmitting}
+          accessibilityRole="button"
+          accessibilityLabel="Save budget"
         >
-          <Text className="text-white font-bold text-base">
-            {isSubmitting ? 'Saving...' : 'Save Budget'}
+          <Text style={[styles.actionBtnText, { color: '#FFFFFF', fontWeight: '700' }]}>
+            {isSubmitting ? 'Saving...' : isEditMode ? 'Update Budget' : 'Save Budget'}
           </Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
   );
-};
+}
+
+const styles = StyleSheet.create({
+  scrollContent: {
+    padding: 20,
+  },
+  errorBanner: {
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginBottom: 16,
+  },
+  errorText: {
+    fontWeight: '500',
+  },
+  section: {
+    marginBottom: 16,
+  },
+  label: {
+    marginBottom: 8,
+    fontWeight: '600',
+  },
+  chipGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  chip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  chipText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  input: {
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  fieldError: {
+    marginTop: 4,
+  },
+  dateRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 20,
+  },
+  dateCol: {
+    flex: 1,
+  },
+  dateButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  dateButtonText: {
+    fontSize: 14,
+  },
+  actionsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 8,
+    marginBottom: 24,
+  },
+  actionBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  submitBtn: {},
+  actionBtnText: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+});

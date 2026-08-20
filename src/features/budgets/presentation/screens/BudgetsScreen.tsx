@@ -1,31 +1,73 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, ActivityIndicator, Modal, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
-import { useTheme } from '@/src/shared/theme';
-import { AppBar, FAB, Icon } from '@/src/shared/components';
+import { useTheme } from '../../../../shared/theme';
+import { AppBar, FAB } from '../../../../shared/components';
 import { useBudgets } from '../hooks/useBudgets';
 import { useCreateBudget } from '../hooks/useCreateBudget';
 import { useUpdateBudget } from '../hooks/useUpdateBudget';
 import { useArchiveBudget } from '../hooks/useArchiveBudget';
-import { BudgetForm } from '../components/BudgetForm';
+import { useCategoryOptions } from '../hooks/useCategoryOptions';
 import { BudgetCard } from '../components/BudgetCard';
+import { BudgetSummaryCard } from '../components/BudgetSummaryCard';
+import { BudgetFormModal } from '../components/BudgetFormModal';
+import { BudgetDetailSheet } from '../components/BudgetDetailSheet';
+import { EmptyBudgetState } from '../components/EmptyBudgetState';
 import { BudgetViewModel } from '../models/BudgetViewModel';
-import { BudgetPeriod } from '../../domain';
 import { CreateBudgetFormData } from '../validation/budgetSchema';
 import { BudgetsModule } from '../../composition/BudgetsModule';
-
+import { BudgetPeriod } from '../../domain';
 
 const budgetsModule = new BudgetsModule();
 
 export const BudgetsScreen: React.FC = () => {
-  const { colors, typography, spacing } = useTheme();
+  const { colors, typography } = useTheme();
   const { budgets, isLoading, error, refresh } = useBudgets(budgetsModule.listBudgetsUseCase);
   const { createBudget, isLoading: isCreating, error: createError } = useCreateBudget(budgetsModule.createBudgetUseCase);
   const { updateBudget, isLoading: isUpdating, error: updateError } = useUpdateBudget(budgetsModule.updateBudgetUseCase);
   const { archiveBudget, isLoading: isArchiving } = useArchiveBudget(budgetsModule.archiveBudgetUseCase);
+  const { categoryOptions, categories } = useCategoryOptions();
 
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [editingBudget, setEditingBudget] = useState<BudgetViewModel | null>(null);
+  const [selectedDetailBudget, setSelectedDetailBudget] = useState<BudgetViewModel | null>(null);
   const [budgetToArchive, setBudgetToArchive] = useState<BudgetViewModel | null>(null);
+
+  // Category map for fast name lookup
+  const categoryMap = useMemo(() => {
+    const map = new Map<string, string>();
+    categories.forEach((cat) => {
+      map.set(cat.id, cat.name);
+    });
+    return map;
+  }, [categories]);
+
+  // Aggregated summary calculation across active budgets
+  const { totalBudgeted, totalSpent, totalRemaining, overallHealthStatus } = useMemo(() => {
+    let budgeted = 0;
+    let spent = 0;
+    let hasOverBudget = false;
+    let hasNearLimit = false;
+
+    budgets.forEach((b) => {
+      budgeted += b.amount;
+      const s = b.spentAmount ?? 0;
+      spent += s;
+      if (b.healthStatus === 'OVER_BUDGET') hasOverBudget = true;
+      if (b.healthStatus === 'NEAR_LIMIT') hasNearLimit = true;
+    });
+
+    const remaining = budgeted - spent;
+    let health = 'ON_TRACK';
+    if (hasOverBudget) health = 'OVER_BUDGET';
+    else if (hasNearLimit) health = 'NEAR_LIMIT';
+
+    return {
+      totalBudgeted: budgeted,
+      totalSpent: spent,
+      totalRemaining: remaining,
+      overallHealthStatus: health,
+    };
+  }, [budgets]);
 
   const handleAddBudget = () => {
     setEditingBudget(null);
@@ -33,12 +75,18 @@ export const BudgetsScreen: React.FC = () => {
   };
 
   const handleEditBudget = (budget: BudgetViewModel) => {
+    setSelectedDetailBudget(null);
     setEditingBudget(budget);
     setIsFormVisible(true);
   };
 
   const handleArchiveRequest = (budget: BudgetViewModel) => {
+    setSelectedDetailBudget(null);
     setBudgetToArchive(budget);
+  };
+
+  const handleCardPress = (budget: BudgetViewModel) => {
+    setSelectedDetailBudget(budget);
   };
 
   const handleFormSubmit = async (formData: CreateBudgetFormData) => {
@@ -94,45 +142,56 @@ export const BudgetsScreen: React.FC = () => {
 
       {error && (
         <View style={[styles.errorContainer, { backgroundColor: 'rgba(239, 68, 68, 0.15)' }]}>
-          <Text style={[styles.errorText, { color: colors.error, fontSize: typography.caption.fontSize }]}>{error}</Text>
+          <Text style={[styles.errorText, { color: colors.error, fontSize: typography.caption.fontSize }]}>
+            {error}
+          </Text>
         </View>
       )}
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
+        {budgets.length > 0 && (
+          <BudgetSummaryCard
+            totalBudgeted={totalBudgeted}
+            totalSpent={totalSpent}
+            totalRemaining={totalRemaining}
+            overallHealthStatus={overallHealthStatus}
+          />
+        )}
+
         {budgets.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Icon name="Target" size={48} color={colors.textMuted} />
-            <Text style={[styles.emptyTitle, { color: colors.textPrimary, fontSize: typography.title.fontSize }]}>
-              No active budgets
-            </Text>
-            <Text style={[styles.emptySubtitle, { color: colors.textSecondary, fontSize: typography.body.fontSize }]}>
-              Tap '+' to create your first budget.
-            </Text>
-          </View>
+          <EmptyBudgetState />
         ) : (
           budgets.map((b) => {
+            const catName = b.isOverall
+              ? 'Overall Budget'
+              : (b.categoryId ? categoryMap.get(b.categoryId) || 'Category' : 'Category');
+
             const summary = {
               budget: {
                 id: b.id,
                 categoryId: b.categoryId,
                 amount: b.amount,
                 currency: b.currency,
-                period: (b.periodKind as unknown as BudgetPeriod) || ('MONTHLY' as unknown as BudgetPeriod),
+                period: b.periodKind as unknown as BudgetPeriod,
                 startDate: new Date(b.startDate),
                 endDate: new Date(b.endDate),
               },
               spentAmount: b.spentAmount ?? 0,
-              remainingAmount: b.remainingAmount ?? b.amount,
-              percentageUsed: b.percentageUsed ?? 0,
-              status: (b.healthStatus === 'NEAR_LIMIT' ? 'AtRisk' : b.healthStatus === 'OVER_BUDGET' ? 'Overbudget' : 'OnTrack') as 'OnTrack' | 'AtRisk' | 'Overbudget',
+              remainingAmount: b.remainingAmount ?? (b.amount - (b.spentAmount ?? 0)),
+              percentageUsed: b.percentageUsed ?? (b.amount > 0 ? ((b.spentAmount ?? 0) / b.amount) * 100 : 0),
+              status: (b.healthStatus === 'NEAR_LIMIT'
+                ? 'AtRisk'
+                : b.healthStatus === 'OVER_BUDGET'
+                ? 'Overbudget'
+                : 'OnTrack') as 'OnTrack' | 'AtRisk' | 'Overbudget',
             };
-            const catName = b.isOverall ? 'Overall Budget' : `Category (${b.categoryId ?? 'Uncategorized'})`;
 
             return (
               <BudgetCard
                 key={b.id}
                 summary={summary}
                 categoryName={catName}
+                onPress={() => handleCardPress(b)}
                 onEdit={() => handleEditBudget(b)}
                 onDelete={() => handleArchiveRequest(b)}
               />
@@ -143,51 +202,46 @@ export const BudgetsScreen: React.FC = () => {
 
       <FAB iconName="Plus" onPress={handleAddBudget} accessibilityLabel="Add Budget" />
 
-
-      {/* Form Modal for Create / Edit */}
-      <Modal
+      {/* Form Modal (Create / Edit) */}
+      <BudgetFormModal
         visible={isFormVisible}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setIsFormVisible(false)}
-      >
-        <View style={[styles.modalHeader, { backgroundColor: colors.surfacePrimary, borderBottomColor: colors.borderSubtle }]}>
-          <Text style={[styles.modalTitle, { color: colors.textPrimary, fontSize: typography.title.fontSize }]}>
-            {editingBudget ? 'Edit Budget' : 'New Budget'}
-          </Text>
-          <TouchableOpacity onPress={() => setIsFormVisible(false)} style={styles.closeBtn} accessibilityRole="button" accessibilityLabel="Close modal">
-            <Text style={{ color: colors.brandPrimary, fontWeight: '600' }}>Close</Text>
-          </TouchableOpacity>
-        </View>
+        isEditMode={!!editingBudget}
+        editingBudget={editingBudget}
+        categories={categoryOptions.map((c) => ({ id: c.id, label: c.name }))}
+        isSubmitting={isCreating || isUpdating}
+        error={editingBudget ? updateError || undefined : createError || undefined}
+        onSubmit={handleFormSubmit}
+        onClose={() => {
+          setIsFormVisible(false);
+          setEditingBudget(null);
+        }}
+      />
 
-        <BudgetForm
-          initialValues={
-            editingBudget
-              ? {
-                  amount: editingBudget.amount,
-                  currencyCode: editingBudget.currency,
-                  startDate: new Date(editingBudget.startDate),
-                  endDate: new Date(editingBudget.endDate),
-                  categoryId: editingBudget.categoryId,
-                }
-              : undefined
-          }
-          onSubmit={handleFormSubmit}
-          onCancel={() => setIsFormVisible(false)}
-          isSubmitting={isCreating || isUpdating}
-          error={editingBudget ? updateError || undefined : createError || undefined}
-        />
-      </Modal>
+      {/* Detail Bottom Sheet */}
+      <BudgetDetailSheet
+        visible={!!selectedDetailBudget}
+        budget={selectedDetailBudget}
+        categoryName={
+          selectedDetailBudget
+            ? selectedDetailBudget.isOverall
+              ? 'Overall Budget'
+              : (selectedDetailBudget.categoryId ? categoryMap.get(selectedDetailBudget.categoryId) || 'Category' : 'Category')
+            : undefined
+        }
+        onClose={() => setSelectedDetailBudget(null)}
+        onEdit={handleEditBudget}
+        onArchive={handleArchiveRequest}
+      />
 
-      {/* Archive Confirmation Modal */}
+      {/* Archive Confirmation Dialog Modal */}
       <Modal visible={!!budgetToArchive} transparent animationType="fade">
         <View style={styles.dialogBackdrop}>
-          <View style={[styles.dialogCard, { backgroundColor: colors.surfacePrimary, borderColor: colors.border }]}>
+          <View style={[styles.dialogCard, { backgroundColor: colors.surfacePrimary, borderColor: colors.borderSubtle }]}>
             <Text style={[styles.dialogTitle, { color: colors.textPrimary, fontSize: typography.title.fontSize }]}>
               Archive Budget?
             </Text>
             <Text style={[styles.dialogMessage, { color: colors.textSecondary, fontSize: typography.body.fontSize }]}>
-              This budget will be hidden from active budgets but remains in history.
+              This budget will be hidden from active budgets but remains in historical reporting.
             </Text>
             <View style={styles.dialogActions}>
               <TouchableOpacity
@@ -235,33 +289,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 16,
     paddingBottom: 80,
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 48,
-  },
-  emptyTitle: {
-    fontWeight: '700',
-    marginTop: 16,
-    marginBottom: 6,
-  },
-  emptySubtitle: {
-    textAlign: 'center',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-  },
-  modalTitle: {
-    fontWeight: '700',
-  },
-  closeBtn: {
-    minHeight: 44,
-    justifyContent: 'center',
   },
   dialogBackdrop: {
     flex: 1,
