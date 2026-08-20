@@ -1,14 +1,15 @@
 import React from 'react';
 import { View, Text } from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
+import { useTheme } from '../../../../../shared/theme';
 import { MonthlyTrendChartViewModel } from '../../mappers/MonthlyTrendChartMapper';
-import { chartTheme } from '../../theme/reportingChartTheme';
 
 interface Props {
   readonly viewModel: MonthlyTrendChartViewModel;
 }
 
 export const TrendLineChart: React.FC<Props> = ({ viewModel }) => {
+  const theme = useTheme();
   const { expenseData, incomeData, accessibilitySummary } = viewModel;
 
   if (expenseData.length === 0) {
@@ -20,16 +21,16 @@ export const TrendLineChart: React.FC<Props> = ({ viewModel }) => {
       accessible={true}
       accessibilityRole="image"
       accessibilityLabel={accessibilitySummary}
-      className="my-2"
+      style={{ marginVertical: theme.spacing.space8 }}
     >
-      <View className="flex-row justify-end gap-4 mb-2 pr-2">
-        <View className="flex-row items-center gap-1">
-          <View className="w-2.5 h-2.5 rounded-full bg-red-600" />
-          <Text className="text-xs text-gray-600">Expenses</Text>
+      <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: theme.spacing.space12, marginBottom: theme.spacing.space4, paddingRight: theme.spacing.space4 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.space4 }}>
+          <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: theme.colors.error }} />
+          <Text style={{ fontSize: 12, color: theme.colors.textSecondary }}>Expenses</Text>
         </View>
-        <View className="flex-row items-center gap-1">
-          <View className="w-2.5 h-2.5 rounded-full bg-green-600" />
-          <Text className="text-xs text-gray-600">Income</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.space4 }}>
+          <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: theme.colors.success }} />
+          <Text style={{ fontSize: 12, color: theme.colors.textSecondary }}>Income</Text>
         </View>
       </View>
 
@@ -37,18 +38,18 @@ export const TrendLineChart: React.FC<Props> = ({ viewModel }) => {
         data={expenseData}
         data2={incomeData}
         height={180}
-        color1={chartTheme.colors.expense}
-        color2={chartTheme.colors.income}
+        color1={theme.colors.error}
+        color2={theme.colors.success}
         thickness={2.5}
-        dataPointsColor1={chartTheme.colors.expense}
-        dataPointsColor2={chartTheme.colors.income}
+        dataPointsColor1={theme.colors.error}
+        dataPointsColor2={theme.colors.success}
         dataPointsRadius={3}
         spacing={expenseData.length <= 6 ? 50 : Math.max(25, 280 / expenseData.length)}
         initialSpacing={15}
         endSpacing={15}
-        yAxisTextStyle={{ color: chartTheme.colors.textSecondary, fontSize: 10 }}
-        xAxisLabelTextStyle={{ color: chartTheme.colors.textSecondary, fontSize: 10 }}
-        rulesColor={chartTheme.colors.gridLines}
+        yAxisTextStyle={{ color: theme.colors.textMuted, fontSize: 10 }}
+        xAxisLabelTextStyle={{ color: theme.colors.textMuted, fontSize: 10 }}
+        rulesColor={theme.colors.borderSubtle}
         rulesType="solid"
         noOfSections={4}
         hideDataPoints={expenseData.length > 20}

@@ -1,26 +1,75 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import { Card } from '../../../../shared/components/Card';
+import { useTheme } from '../../../../shared/theme';
 import { LargestTransactionsResponse } from '../../application';
 
 interface Props {
   readonly data: LargestTransactionsResponse;
 }
 
-export const LargestTransactionsCard: React.FC<Props> = ({ data }) => (
-  <View className="bg-white rounded-2xl p-4 m-4 shadow-sm">
-    <Text className="text-lg font-semibold text-gray-800 mb-3">Largest Transactions</Text>
-    {data.items.length === 0 ? (
-      <Text className="text-gray-400 text-sm">No transactions for this period.</Text>
-    ) : (
-      data.items.map((item) => (
-        <View key={item.expenseId} className="flex-row justify-between items-center mb-3">
-          <View className="flex-1 mr-2">
-            <Text className="text-sm font-medium text-gray-800" numberOfLines={1}>{item.merchant}</Text>
-            <Text className="text-xs text-gray-400">{item.categoryName} · {item.transactionDate}</Text>
+export const LargestTransactionsCard: React.FC<Props> = ({ data }) => {
+  const theme = useTheme();
+
+  return (
+    <Card variant="elevated" style={styles.card}>
+      <Text style={[styles.title, { color: theme.colors.textPrimary }]}>Largest Transactions</Text>
+      {data.items.length === 0 ? (
+        <Text style={[styles.emptyText, { color: theme.colors.textMuted }]}>No transactions for this period.</Text>
+      ) : (
+        data.items.map((item) => (
+          <View key={item.expenseId} style={styles.itemRow}>
+            <View style={styles.itemMeta}>
+              <Text style={[styles.merchantText, { color: theme.colors.textPrimary }]} numberOfLines={1}>
+                {item.merchant}
+              </Text>
+              <Text style={[styles.dateCategoryText, { color: theme.colors.textMuted }]}>
+                {item.categoryName} · {item.transactionDate}
+              </Text>
+            </View>
+            <Text style={[styles.amountText, { color: theme.colors.textPrimary }]}>
+              ₹{item.amount.toLocaleString('en-IN')}
+            </Text>
           </View>
-          <Text className="text-sm font-bold text-gray-900">₹{item.amount.toLocaleString()}</Text>
-        </View>
-      ))
-    )}
-  </View>
-);
+        ))
+      )}
+    </Card>
+  );
+};
+
+const styles = StyleSheet.create({
+  card: {
+    marginBottom: 16,
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 12,
+  },
+  emptyText: {
+    fontSize: 13,
+    marginTop: 4,
+  },
+  itemRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  itemMeta: {
+    flex: 1,
+    marginRight: 8,
+  },
+  merchantText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  dateCategoryText: {
+    fontSize: 11,
+    marginTop: 2,
+  },
+  amountText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+});

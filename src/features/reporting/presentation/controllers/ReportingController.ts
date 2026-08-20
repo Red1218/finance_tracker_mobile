@@ -1,4 +1,4 @@
-import { ReportingPeriod } from '../../domain';
+import { ReportingPeriod, CategoryBreakdown, MonthlyTrendPoint } from '../../domain';
 import { 
   GetFinancialSummaryUseCase, 
   GetCategoryBreakdownUseCase, 
@@ -85,8 +85,8 @@ export class ReportingController {
       const fullVm = ReportingViewModelMapper.toFullViewModel({
         selectedPeriod: this.state.selectedPeriod,
         summary: summaryDto,
-        categoryBreakdown: categoryBreakdowns as any,
-        monthlyTrend: monthlyTrends as any,
+        categoryBreakdown: categoryBreakdowns as CategoryBreakdown[],
+        monthlyTrend: monthlyTrends as MonthlyTrendPoint[],
       });
 
       this.updateState({
@@ -94,10 +94,11 @@ export class ReportingController {
         isLoading: false,
         error: null,
       });
-    } catch (e: any) {
+    } catch (e: unknown) {
+      const errorMessage = e instanceof Error ? e.message : 'Failed to load reporting data.';
       this.updateState({
         isLoading: false,
-        error: e?.message || 'Failed to load reporting data.',
+        error: errorMessage,
       });
     }
   }

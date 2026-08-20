@@ -1,5 +1,7 @@
 import React, { useMemo } from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import { Card } from '../../../../shared/components/Card';
+import { useTheme } from '../../../../shared/theme';
 import { MonthlyTrendResponse } from '../../application';
 import { MonthlyTrendChartMapper } from '../mappers/MonthlyTrendChartMapper';
 import { TrendLineChart } from './charts/TrendLineChart';
@@ -9,42 +11,48 @@ interface Props {
 }
 
 export const MonthlyTrendCard: React.FC<Props> = ({ data }) => {
+  const theme = useTheme();
   const comparison = data.comparison;
-  const chartViewModel = useMemo(() => MonthlyTrendChartMapper.mapToChartViewModel(data), [data]);
+  const chartViewModel = MonthlyTrendChartMapper.mapToChartViewModel(data);
 
   return (
-    <View className="bg-white rounded-2xl p-4 m-4 shadow-sm">
-      <Text className="text-lg font-semibold text-gray-800 mb-3">Trend & Comparison</Text>
+    <Card variant="elevated" style={styles.card}>
+      <Text style={[styles.title, { color: theme.colors.textPrimary }]}>Trend & Comparison</Text>
 
       {comparison && (
-        <View className="bg-gray-50 rounded-xl p-3 mb-4 border border-gray-100">
-          <Text className="text-xs font-semibold text-gray-500 mb-2">Period Comparison</Text>
-          <View className="flex-row justify-between items-center mb-1">
+        <View style={[styles.comparisonBox, { backgroundColor: theme.colors.surfacePrimary, borderColor: theme.colors.borderSubtle }]}>
+          <Text style={[styles.sectionSubtitle, { color: theme.colors.textMuted }]}>Period Comparison</Text>
+          <View style={styles.comparisonRow}>
             <View>
-              <Text className="text-xs text-gray-400">Current Spend</Text>
-              <Text className="text-sm font-bold text-gray-900">
-                ₹{comparison.currentTotal.toLocaleString()}
+              <Text style={[styles.label, { color: theme.colors.textMuted }]}>Current Spend</Text>
+              <Text style={[styles.value, { color: theme.colors.textPrimary }]}>
+                ₹{comparison.currentTotal.toLocaleString('en-IN')}
               </Text>
             </View>
             <View>
-              <Text className="text-xs text-gray-400 text-right">Previous Spend</Text>
-              <Text className="text-sm font-bold text-gray-700 text-right">
-                ₹{comparison.previousPeriodTotal.toLocaleString()}
+              <Text style={[styles.label, { color: theme.colors.textMuted, textAlign: 'right' }]}>Previous Spend</Text>
+              <Text style={[styles.value, { color: theme.colors.textSecondary, textAlign: 'right' }]}>
+                ₹{comparison.previousPeriodTotal.toLocaleString('en-IN')}
               </Text>
             </View>
             <View>
-              <Text className="text-xs text-gray-400 text-right">Change</Text>
+              <Text style={[styles.label, { color: theme.colors.textMuted, textAlign: 'right' }]}>Change</Text>
               <Text
-                className={`text-sm font-bold text-right ${
-                  comparison.absoluteChange > 0
-                    ? 'text-red-600'
-                    : comparison.absoluteChange < 0
-                    ? 'text-green-600'
-                    : 'text-gray-600'
-                }`}
+                style={[
+                  styles.value,
+                  {
+                    textAlign: 'right',
+                    color:
+                      comparison.absoluteChange > 0
+                        ? theme.colors.error
+                        : comparison.absoluteChange < 0
+                        ? theme.colors.success
+                        : theme.colors.textSecondary,
+                  },
+                ]}
               >
                 {comparison.absoluteChange > 0 ? '+' : ''}₹
-                {comparison.absoluteChange.toLocaleString()} (
+                {comparison.absoluteChange.toLocaleString('en-IN')} (
                 {comparison.percentageChange >= 0 ? '+' : ''}
                 {comparison.percentageChange.toFixed(1)}%)
               </Text>
@@ -56,25 +64,84 @@ export const MonthlyTrendCard: React.FC<Props> = ({ data }) => {
       <TrendLineChart viewModel={chartViewModel} />
 
       {data.items.length === 0 ? (
-        <Text className="text-gray-400 text-sm">No trend data for this period.</Text>
+        <Text style={[styles.emptyText, { color: theme.colors.textMuted }]}>No trend data for this period.</Text>
       ) : (
         data.items.map((point) => (
-          <View key={point.period} className="mb-3 border-b border-gray-100 pb-2">
-            <Text className="text-xs font-semibold text-gray-500 mb-1">{point.period}</Text>
-            <View className="flex-row justify-between">
-              <Text className="text-sm text-green-600">↑ ₹{point.income.toLocaleString()}</Text>
-              <Text className="text-sm text-red-500">↓ ₹{point.expenses.toLocaleString()}</Text>
+          <View key={point.period} style={[styles.itemRow, { borderBottomColor: theme.colors.borderSubtle }]}>
+            <Text style={[styles.periodText, { color: theme.colors.textMuted }]}>{point.period}</Text>
+            <View style={styles.metricsRow}>
+              <Text style={[styles.metricText, { color: theme.colors.success }]}>↑ ₹{point.income.toLocaleString('en-IN')}</Text>
+              <Text style={[styles.metricText, { color: theme.colors.error }]}>↓ ₹{point.expenses.toLocaleString('en-IN')}</Text>
               <Text
-                className={`text-sm font-semibold ${
-                  point.netCashFlow >= 0 ? 'text-blue-600' : 'text-red-700'
-                }`}
+                style={[
+                  styles.metricText,
+                  {
+                    fontWeight: '600',
+                    color: point.netCashFlow >= 0 ? theme.colors.brandPrimary : theme.colors.error,
+                  },
+                ]}
               >
-                Net ₹{point.netCashFlow.toLocaleString()}
+                Net ₹{point.netCashFlow.toLocaleString('en-IN')}
               </Text>
             </View>
           </View>
         ))
       )}
-    </View>
+    </Card>
   );
 };
+
+const styles = StyleSheet.create({
+  card: {
+    marginBottom: 16,
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 12,
+  },
+  comparisonBox: {
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+  },
+  sectionSubtitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  comparisonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  label: {
+    fontSize: 11,
+    marginBottom: 2,
+  },
+  value: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  emptyText: {
+    fontSize: 13,
+    marginTop: 8,
+  },
+  itemRow: {
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+  },
+  periodText: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  metricsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  metricText: {
+    fontSize: 12,
+  },
+});
