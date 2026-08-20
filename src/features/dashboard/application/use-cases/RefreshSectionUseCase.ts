@@ -34,7 +34,7 @@ export class RefreshSectionUseCase {
       switch (command.sectionType) {
         case 'KPI': {
           const period = new ReportingPeriod(snapshot.activeReportingPeriodId as PeriodType, snapshot.startDate, snapshot.endDate);
-          const summary = this.financialSummaryService.calculate([...snapshot.transactions], period, 'USD');
+          const summary = this.financialSummaryService.calculate([...snapshot.transactions], period, 'INR');
           return KPICardMapper.mapToViewModel(summary);
         }
         case 'BudgetHealth': {
@@ -44,7 +44,7 @@ export class RefreshSectionUseCase {
         }
         case 'CategoryBreakdown': {
           const period = new ReportingPeriod(snapshot.activeReportingPeriodId as PeriodType, snapshot.startDate, snapshot.endDate);
-          const categoryBreakdown = this.categoryBreakdownService.calculateBreakdown([...snapshot.categories], [...snapshot.transactions], period, 'USD');
+          const categoryBreakdown = this.categoryBreakdownService.calculateBreakdown([...snapshot.categories], [...snapshot.transactions], period, 'INR');
           return CategoryBreakdownMapper.mapToViewModel(categoryBreakdown, snapshot.categories.reduce((acc, cat) => {
             acc[cat.id] = cat.name;
             return acc;

@@ -40,9 +40,9 @@ export class LoadDashboardUseCase {
 
       // We run all section domain services concurrently
       const [kpiResult, budgetResult, categoryResult, activityResult] = await Promise.allSettled([
-        Promise.resolve(this.financialSummaryService.calculate([...snapshot.transactions], period, 'USD')),
+        Promise.resolve(this.financialSummaryService.calculate([...snapshot.transactions], period, 'INR')),
         Promise.resolve(this.budgetHealthService.calculateStatus([...snapshot.budgets], [...snapshot.transactions], period)),
-        Promise.resolve(this.categoryBreakdownService.calculateBreakdown([...snapshot.categories], [...snapshot.transactions], period, 'USD')),
+        Promise.resolve(this.categoryBreakdownService.calculateBreakdown([...snapshot.categories], [...snapshot.transactions], period, 'INR')),
         Promise.resolve(this.recentActivityService.getRecentActivity([...snapshot.transactions], 10))
       ]);
 

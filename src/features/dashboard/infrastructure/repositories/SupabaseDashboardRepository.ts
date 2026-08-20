@@ -31,7 +31,6 @@ export class SupabaseDashboardRepository implements DashboardReadRepository {
         this.client.from('budgets').select('id, amount, category_id').eq('user_id', userId),
         this.client.from('transactions')
           .select('id, amount, currency_code, occurred_at, category_id, description, type')
-          .eq('type', 'EXPENSE')
           .eq('user_id', userId)
           .gte('occurred_at', firstDay.toISOString())
           .lte('occurred_at', lastDay.toISOString())

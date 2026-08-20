@@ -58,7 +58,7 @@ export class DashboardCrossFeatureIntegration {
       eventBus.subscribe(DashboardIntegrationEvent.CategoryModified, (payload) => {
         this.logger.info(`[DashboardCrossFeatureIntegration] Received ${DashboardIntegrationEvent.CategoryModified}`, payload);
         const userId = payload?.userId || payload?.dashboardId || 'unknown';
-        this.facade.refreshSection({ correlationId: crypto.randomUUID(), userId, sectionType: 'CategoryBreakdown' });
+        this.facade.refreshSection({ correlationId: generateUUID(), userId, sectionType: 'CategoryBreakdown' });
       })
     );
 
