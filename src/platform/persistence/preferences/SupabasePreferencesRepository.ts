@@ -47,9 +47,16 @@ export class SupabasePreferencesRepository extends BaseRepository implements IPr
   public async save(preferences: Preferences): Promise<RepositoryResult<void, RepositoryError>> {
     try {
       const row = PreferencesMapper.toPersistence(preferences);
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(row.id);
+      const payload: Partial<PreferencesRow> = isUuid ? row : { ...row };
+      if (!isUuid) {
+        delete payload.id;
+      }
+
       const { error } = await this.client
         .from(SupabasePreferencesRepository.TABLE)
-        .upsert(row, { onConflict: 'id' });
+        .upsert(payload as PreferencesRow, { onConflict: isUuid ? 'id' : 'user_id' });
+
 
       if (error) {
         return this.handleError(error, { operation: 'save', id: preferences.id.value });
@@ -60,4 +67,5 @@ export class SupabasePreferencesRepository extends BaseRepository implements IPr
       return this.handleError(e, { operation: 'save', id: preferences.id.value });
     }
   }
+
 }

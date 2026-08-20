@@ -32,10 +32,10 @@ export class SupabaseReportingRepository extends BaseRepository implements IRepo
       let query = this.client
         .from(SupabaseReportingRepository.TRANSACTIONS_TABLE)
         .select('type, amount')
-        .is('voided_at', null);
+        .is('archived_at', null);
 
-      if (startDate) query = query.gte('transaction_date', startDate.toISOString());
-      if (endDate) query = query.lte('transaction_date', endDate.toISOString());
+      if (startDate) query = query.gte('occurred_at', startDate.toISOString());
+      if (endDate) query = query.lte('occurred_at', endDate.toISOString());
       if (categoryId) query = query.eq('category_id', categoryId);
 
       const { data, error } = await query;
@@ -80,10 +80,10 @@ export class SupabaseReportingRepository extends BaseRepository implements IRepo
         .from(SupabaseReportingRepository.TRANSACTIONS_TABLE)
         .select('category_id, amount')
         .eq('type', 'EXPENSE')
-        .is('voided_at', null);
+        .is('archived_at', null);
 
-      if (startDate) query = query.gte('transaction_date', startDate.toISOString());
-      if (endDate) query = query.lte('transaction_date', endDate.toISOString());
+      if (startDate) query = query.gte('occurred_at', startDate.toISOString());
+      if (endDate) query = query.lte('occurred_at', endDate.toISOString());
       if (categoryId) query = query.eq('category_id', categoryId);
 
       const { data, error } = await query;
@@ -126,11 +126,11 @@ export class SupabaseReportingRepository extends BaseRepository implements IRepo
     try {
       let query = this.client
         .from(SupabaseReportingRepository.TRANSACTIONS_TABLE)
-        .select('transaction_date, type, amount')
-        .is('voided_at', null);
+        .select('occurred_at, type, amount')
+        .is('archived_at', null);
 
-      if (startDate) query = query.gte('transaction_date', startDate.toISOString());
-      if (endDate) query = query.lte('transaction_date', endDate.toISOString());
+      if (startDate) query = query.gte('occurred_at', startDate.toISOString());
+      if (endDate) query = query.lte('occurred_at', endDate.toISOString());
       if (categoryId) query = query.eq('category_id', categoryId);
 
       const { data, error } = await query;
@@ -138,21 +138,19 @@ export class SupabaseReportingRepository extends BaseRepository implements IRepo
         return this.handleError(error, { operation: 'getMonthlyTrend', period });
       }
 
-      const trendMap = new Map<string, { income: number; expenses: number }>();
-
+      const map = new Map<string, { income: number; expenses: number }>();
       for (const row of data || []) {
-        const pKey = row.transaction_date ? row.transaction_date.substring(0, 7) : 'current';
+        const dateStr = (row as any).occurred_at || (row as any).transaction_date;
+        const pKey = dateStr ? dateStr.substring(0, 7) : 'current';
+        const curr = map.get(pKey) || { income: 0, expenses: 0 };
         const amt = Number(row.amount);
-        const curr = trendMap.get(pKey) || { income: 0, expenses: 0 };
-
         if (row.type === 'INCOME') curr.income += amt;
         else if (row.type === 'EXPENSE') curr.expenses += amt;
-
-        trendMap.set(pKey, curr);
+        map.set(pKey, curr);
       }
 
-      const points: MonthlyTrendPoint[] = Array.from(trendMap.entries()).map(([periodKey, val]) => ({
-        period: periodKey,
+      const points: MonthlyTrendPoint[] = Array.from(map.entries()).map(([month, val]) => ({
+        period: month,
         income: val.income,
         expenses: val.expenses,
         netCashFlow: val.income - val.expenses,
@@ -206,14 +204,14 @@ export class SupabaseReportingRepository extends BaseRepository implements IRepo
     try {
       let query = this.client
         .from(SupabaseReportingRepository.TRANSACTIONS_TABLE)
-        .select('id, description, category_id, amount, transaction_date')
+        .select('id, description, category_id, amount, occurred_at')
         .eq('type', 'EXPENSE')
-        .is('voided_at', null)
+        .is('archived_at', null)
         .order('amount', { ascending: false })
         .limit(5);
 
-      if (startDate) query = query.gte('transaction_date', startDate.toISOString());
-      if (endDate) query = query.lte('transaction_date', endDate.toISOString());
+      if (startDate) query = query.gte('occurred_at', startDate.toISOString());
+      if (endDate) query = query.lte('occurred_at', endDate.toISOString());
       if (categoryId) query = query.eq('category_id', categoryId);
 
       const { data, error } = await query;
@@ -221,12 +219,12 @@ export class SupabaseReportingRepository extends BaseRepository implements IRepo
         return this.handleError(error, { operation: 'getLargestTransactions', period });
       }
 
-      const items: LargestTransaction[] = (data || []).map((row) => ({
+      const items: LargestTransaction[] = (data || []).map((row: any) => ({
         expenseId: row.id,
         merchant: row.description || 'Transaction',
         categoryName: row.category_id ? `Category ${row.category_id}` : 'Uncategorized',
         amount: Number(row.amount),
-        transactionDate: row.transaction_date,
+        transactionDate: row.occurred_at || row.transaction_date,
       }));
 
       return Result.success(items);

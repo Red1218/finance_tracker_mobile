@@ -1,30 +1,53 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
-import { useTheme } from '@/src/shared/theme';
-import { AppBar, FAB, Icon, StatusIndicator } from '@/src/shared/components';
-import { TransactionRow, TransactionSearch, TransactionDateGroup } from '../components';
+import { useTheme } from '../../../../shared/theme';
+import { AppBar, FAB, Icon } from '../../../../shared/components';
+
+import { TransactionRow, TransactionSearch, TransactionDateGroup, TransactionFormModal, TransactionDetailSheet, TransactionFormValues, TransactionFormMode } from '../components';
 import { TransactionViewModel } from '../models/TransactionViewModel';
 
 export interface TransactionsScreenProps {
   transactions?: TransactionViewModel[];
+  accounts?: Array<{ id: string; name: string; isArchived?: boolean }>;
+  categories?: Array<{ id: string; name: string; kind?: 'EXPENSE' | 'INCOME' }>;
   isLoading?: boolean;
   error?: string | null;
   onRefresh?: () => void;
   onSelectTransaction?: (transaction: TransactionViewModel) => void;
   onAddTransaction?: () => void;
+  onFormSubmit?: (values: TransactionFormValues, mode: TransactionFormMode, transactionId?: string) => Promise<void>;
+  onVoidTransaction?: (transactionId: string) => Promise<void>;
 }
 
 export function TransactionsScreen({
   transactions = [],
+  accounts = [{ id: 'acc-default', name: 'Default Account' }],
+  categories = [
+    { id: 'cat-food', name: 'Food & Dining', kind: 'EXPENSE' },
+    { id: 'cat-salary', name: 'Salary', kind: 'INCOME' },
+  ],
   isLoading = false,
   error = null,
   onRefresh,
   onSelectTransaction,
   onAddTransaction,
+  onFormSubmit,
+  onVoidTransaction,
 }: TransactionsScreenProps) {
-  const { colors, typography, spacing } = useTheme();
+  const { colors, typography } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<'ALL' | 'INCOME' | 'EXPENSE'>('ALL');
+
+  // Internal Modal & Sheet States
+  const [isFormVisible, setIsFormVisible] = useState(false);
+  const [formMode, setFormMode] = useState<TransactionFormMode>('expense');
+  const [editingTransaction, setEditingTransaction] = useState<TransactionViewModel | null>(null);
+
+  const [isDetailVisible, setIsDetailVisible] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<TransactionViewModel | null>(null);
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [modalError, setModalError] = useState<string | null>(null);
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter((tx) => {
@@ -33,7 +56,6 @@ export function TransactionsScreen({
         tx.typeLabel.toLowerCase().includes(searchQuery.toLowerCase());
 
       const matchesFilter =
-
         filterType === 'ALL' ||
         (filterType === 'INCOME' && (tx.type === 'INCOME' || tx.type === 'TRANSFER_IN')) ||
         (filterType === 'EXPENSE' && (tx.type === 'EXPENSE' || tx.type === 'TRANSFER_OUT'));
@@ -57,6 +79,72 @@ export function TransactionsScreen({
       data: groups[dateKey],
     }));
   }, [filteredTransactions]);
+
+  const handleRowPress = (tx: TransactionViewModel) => {
+    if (onSelectTransaction) {
+      onSelectTransaction(tx);
+    } else {
+      setSelectedTransaction(tx);
+      setIsDetailVisible(true);
+    }
+  };
+
+  const handleFabPress = () => {
+    if (onAddTransaction) {
+      onAddTransaction();
+    } else {
+      setFormMode('expense');
+      setEditingTransaction(null);
+      setModalError(null);
+      setIsFormVisible(true);
+    }
+  };
+
+  const handleEditPress = (tx: TransactionViewModel) => {
+    setIsDetailVisible(false);
+    setFormMode('edit');
+    setEditingTransaction(tx);
+    setModalError(null);
+    setIsFormVisible(true);
+  };
+
+  const handleModalSubmit = async (values: TransactionFormValues) => {
+    if (!onFormSubmit) {
+      setIsFormVisible(false);
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      setModalError(null);
+      await onFormSubmit(values, formMode, editingTransaction?.id);
+      setIsFormVisible(false);
+      if (onRefresh) onRefresh();
+    } catch (err: any) {
+      setModalError(err?.message || 'Failed to save transaction.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleVoidTransaction = async (txId: string) => {
+    if (!onVoidTransaction) {
+      setIsDetailVisible(false);
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      setModalError(null);
+      await onVoidTransaction(txId);
+      setIsDetailVisible(false);
+      if (onRefresh) onRefresh();
+    } catch (err: any) {
+      setModalError(err?.message || 'Failed to void transaction.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   if (isLoading && transactions.length === 0) {
     return (
@@ -141,7 +229,7 @@ export function TransactionsScreen({
               <TransactionDateGroup dateLabel={item.dateLabel} />
               {item.data.map((tx) => (
                 <View key={tx.id} style={styles.rowSpacing}>
-                  <TransactionRow transaction={tx} onPress={onSelectTransaction} />
+                  <TransactionRow transaction={tx} onPress={handleRowPress} />
                 </View>
               ))}
             </View>
@@ -149,8 +237,39 @@ export function TransactionsScreen({
         />
       )}
 
-      {onAddTransaction && <FAB iconName="Plus" onPress={onAddTransaction} accessibilityLabel="Add transaction" />}
+      <FAB iconName="Plus" onPress={handleFabPress} accessibilityLabel="Add transaction" />
 
+      <TransactionFormModal
+        visible={isFormVisible}
+        mode={formMode}
+        initialValues={
+          editingTransaction
+            ? {
+                accountId: editingTransaction.accountId,
+                amount: editingTransaction.amount,
+                currencyCode: editingTransaction.currencyCode,
+                description: editingTransaction.description,
+                categoryId: editingTransaction.categoryId,
+              }
+            : undefined
+        }
+        accounts={accounts}
+        categories={categories}
+        isLoading={isSubmitting}
+        error={modalError}
+        onSubmit={handleModalSubmit}
+        onClose={() => setIsFormVisible(false)}
+      />
+
+      <TransactionDetailSheet
+        visible={isDetailVisible}
+        transaction={selectedTransaction}
+        isLoading={isSubmitting}
+        error={modalError}
+        onEdit={handleEditPress}
+        onVoid={handleVoidTransaction}
+        onClose={() => setIsDetailVisible(false)}
+      />
     </View>
   );
 }

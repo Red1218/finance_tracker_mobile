@@ -8,8 +8,11 @@ export interface TransactionRow {
   currency_code: string;
   description: string | null;
   transfer_group_id: string | null;
-  transaction_date: string; // ISO string
+  transaction_date?: string; // ISO string
+  occurred_at?: string; // ISO string
   created_at: string; // ISO string
   updated_at: string; // ISO string
-  voided_at: string | null; // ISO string
+  voided_at?: string | null; // ISO string
+  archived_at?: string | null; // ISO string
+
 }

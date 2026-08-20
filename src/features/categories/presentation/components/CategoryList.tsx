@@ -23,10 +23,22 @@ export function CategoryList({ categories, onSelect, onArchive }: CategoryListPr
     );
   }
 
+  const getCategoryKey = (item: Category, index: number): string => {
+    const rawId = item.id as unknown;
+    if (typeof rawId === 'object' && rawId !== null && 'value' in rawId) {
+      return String((rawId as { value: string }).value);
+    }
+    if (rawId) {
+      return String(rawId);
+    }
+    return `category-${index}`;
+  };
+
   return (
     <FlatList
       data={categories}
-      keyExtractor={(item) => item.id.value}
+      keyExtractor={getCategoryKey}
+
       renderItem={({ item }) => {
         const isSystem = item.isSystem;
         return (
