@@ -1,13 +1,13 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { SectionStateContainer } from '../common/SectionStateContainer';
-import { SectionViewModel } from '../../../application/view-models/DashboardViewModel';
+import { BudgetHealthViewModel, BudgetHealthRow } from '../../../application/view-models/BudgetHealthViewModel';
 import { useTheme } from '../../../../../shared/theme';
 import { Card } from '../../../../../shared/components/Card';
 import { EmptyState } from '../common/EmptyState';
 
 interface BudgetHealthSectionProps {
-  viewModel: SectionViewModel<any>;
+  viewModel: BudgetHealthViewModel;
   onRetry: () => void;
 }
 
@@ -28,18 +28,25 @@ export function BudgetHealthSection({ viewModel, onRetry }: BudgetHealthSectionP
         {(!viewModel.content || viewModel.content.length === 0) ? (
           <EmptyState message="No active budgets configured for this period." />
         ) : (
-          viewModel.content.map((budget: any, index: number) => {
-            const percentage = Math.min(Math.max(budget.percentageUsed, 0), 100);
-            const isWarning = percentage >= 80;
+          viewModel.content.map((budget: BudgetHealthRow, index: number) => {
+            const categoryName = (budget as unknown as { categoryName?: string }).categoryName || 'Overall Budget';
+            const spent = budget.amountConsumed || (budget as unknown as { formattedSpent?: string }).formattedSpent || '₹0';
+            const limit = budget.budgetLimit || (budget as unknown as { formattedLimit?: string }).formattedLimit || '₹0';
+            const rawRatio = budget.consumptionRatio !== undefined
+              ? budget.consumptionRatio * 100
+              : ((budget as unknown as { percentageUsed?: number }).percentageUsed ?? 0);
+
+            const percentage = Math.min(Math.max(Math.round(rawRatio * 10) / 10, 0), 100);
+            const isWarning = percentage >= 80 || budget.statusLabel === 'AtRisk' || budget.statusLabel === 'OverBudget';
 
             return (
               <View key={index} style={styles.item}>
                 <View style={styles.header}>
                   <Text style={[styles.label, { color: colors.textPrimary, fontSize: typography.body.fontSize }]}>
-                    {budget.categoryName || 'Overall Budget'}
+                    {categoryName}
                   </Text>
                   <Text style={[styles.value, { color: colors.textSecondary, fontSize: typography.caption.fontSize }]}>
-                    {budget.formattedSpent} / {budget.formattedLimit}
+                    {spent} / {limit}
                   </Text>
                 </View>
                 <View style={[styles.barBackground, { backgroundColor: colors.borderSubtle }]}>

@@ -1,11 +1,11 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { SectionStateContainer } from '../common/SectionStateContainer';
-import { SectionViewModel } from '../../../application/view-models/DashboardViewModel';
+import { KPICardViewModel } from '../../../application/view-models/KPICardViewModel';
 import { KPICard } from './KPICard';
 
 interface KPICardsSectionProps {
-  viewModel: SectionViewModel<any>;
+  viewModel: KPICardViewModel;
   onRetry: () => void;
 }
 

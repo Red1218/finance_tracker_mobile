@@ -1,18 +1,24 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { SectionStateContainer } from '../common/SectionStateContainer';
-import { SectionViewModel } from '../../../application/view-models/DashboardViewModel';
+import { RecentActivityViewModel, RecentActivityRow, RecentActivityData } from '../../../application/view-models/RecentActivityViewModel';
 import { useTheme } from '../../../../../shared/theme';
 import { Card } from '../../../../../shared/components/Card';
 import { EmptyState } from '../common/EmptyState';
 
 interface RecentActivitySectionProps {
-  viewModel: SectionViewModel<any>;
+  viewModel: RecentActivityViewModel;
   onRetry: () => void;
 }
 
 export function RecentActivitySection({ viewModel, onRetry }: RecentActivitySectionProps) {
   const { colors, typography } = useTheme();
+
+  const rows: RecentActivityRow[] = viewModel.content
+    ? Array.isArray(viewModel.content)
+      ? (viewModel.content as RecentActivityRow[])
+      : (viewModel.content as RecentActivityData).rows || []
+    : [];
 
   return (
     <SectionStateContainer
@@ -25,20 +31,24 @@ export function RecentActivitySection({ viewModel, onRetry }: RecentActivitySect
         <Text style={[styles.title, { color: colors.textPrimary, fontSize: typography.heading.fontSize }]} accessibilityRole="header">
           Recent Activity
         </Text>
-        {(!viewModel.content || viewModel.content.length === 0) ? (
+        {rows.length === 0 ? (
           <EmptyState message="No recent activity transactions found." />
         ) : (
-          viewModel.content.map((activity: any, index: number) => {
-            const isIncome = activity.type === 'INCOME' || activity.direction === 'Income';
+          rows.map((activity: RecentActivityRow, index: number) => {
+            const isIncome = activity.direction === 'Income' || (activity as unknown as { type?: string }).type === 'INCOME';
+            const description = activity.description;
+            const categoryName = activity.categoryName || 'General';
+            const dateText = activity.date || (activity as unknown as { formattedDate?: string }).formattedDate || 'Recent';
+            const amountText = activity.amount || (activity as unknown as { formattedAmount?: string }).formattedAmount || '₹0';
 
             return (
               <View key={index} style={[styles.row, { borderBottomColor: colors.borderSubtle }]}>
                 <View style={styles.left}>
                   <Text style={[styles.description, { color: colors.textPrimary, fontSize: typography.body.fontSize }]}>
-                    {activity.description}
+                    {description}
                   </Text>
                   <Text style={[styles.category, { color: colors.textSecondary, fontSize: typography.caption.fontSize }]}>
-                    {activity.categoryName || 'General'} • {activity.formattedDate || 'Recent'}
+                    {categoryName} • {dateText}
                   </Text>
                 </View>
                 <Text
@@ -50,7 +60,7 @@ export function RecentActivitySection({ viewModel, onRetry }: RecentActivitySect
                     },
                   ]}
                 >
-                  {isIncome ? '+' : '-'}{activity.formattedAmount}
+                  {isIncome ? '+' : '-'}{amountText}
                 </Text>
               </View>
             );

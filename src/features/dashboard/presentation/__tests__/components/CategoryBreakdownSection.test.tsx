@@ -1,8 +1,14 @@
-import { describe, it, expect } from 'vitest';
-import { SectionViewModel } from '../../../application/view-models/DashboardViewModel';
+import { describe, it, expect, vi } from 'vitest';
+import { theme } from '../../../../../shared/theme/theme';
 
-describe('CategoryBreakdownSection Presentation Behavior', () => {
-  const mockLoadedViewModel: SectionViewModel<any> = {
+vi.mock('../../../../../shared/theme', () => ({
+  useTheme: () => theme,
+}));
+import { CategoryBreakdownViewModel } from '../../../application/view-models/CategoryBreakdownViewModel';
+import { CategoryBreakdownSection } from '../../components/sections/CategoryBreakdownSection';
+
+describe('CategoryBreakdownSection Component Presentation', () => {
+  const mockLoadedViewModel: CategoryBreakdownViewModel = {
     sectionType: 'CategoryBreakdown',
     status: 'Loaded',
     isLoading: false,
@@ -12,24 +18,95 @@ describe('CategoryBreakdownSection Presentation Behavior', () => {
     lastUpdated: new Date(),
     content: [
       {
-        name: 'Food & Dining',
-        colorCode: '#EF4444',
+        categoryName: 'Food & Dining',
         amountSpent: '₹12,500.00',
         proportion: 0.45,
+        rank: 1,
+        displayIcon: 'utensils',
       },
       {
-        name: 'Shopping',
-        colorCode: '#3B82F6',
+        categoryName: 'Shopping',
         amountSpent: '₹8,000.00',
         proportion: 0.28,
+        rank: 2,
+        displayIcon: 'shopping-bag',
       },
     ],
   };
 
-  it('validates category spending rows and proportion calculations', () => {
-    const categories = mockLoadedViewModel.content;
-    expect(categories).toHaveLength(2);
-    expect(categories[0].name).toBe('Food & Dining');
-    expect(Math.round(categories[0].proportion * 100)).toBe(45);
+  const mockEmptyViewModel: CategoryBreakdownViewModel = {
+    sectionType: 'CategoryBreakdown',
+    status: 'Loaded',
+    isLoading: false,
+    isEmpty: true,
+    error: null,
+    retryToken: null,
+    lastUpdated: new Date(),
+    content: [],
+  };
+
+  const mockErrorViewModel: CategoryBreakdownViewModel = {
+    sectionType: 'CategoryBreakdown',
+    status: 'Error',
+    isLoading: false,
+    isEmpty: false,
+    error: 'Failed to load category breakdown',
+    retryToken: 'retry-categories',
+    lastUpdated: new Date(),
+    content: null,
+  };
+
+  it('renders Card primitive with header and category spending rows', () => {
+    const element = CategoryBreakdownSection({ viewModel: mockLoadedViewModel, onRetry: vi.fn() });
+
+    expect(element.type.name).toBe('SectionStateContainer');
+    expect(element.props.status).toBe('Loaded');
+
+    const card = element.props.children;
+    expect(card.props.variant).toBe('elevated');
+
+    const cardChildren = card.props.children;
+    const title = cardChildren[0];
+    expect(title.props.children).toBe('Top Spending Categories');
+    expect(title.props.accessibilityRole).toBe('header');
+
+    const rows = cardChildren[1];
+    expect(rows).toHaveLength(2);
+
+    // Row 0: Food & Dining
+    const row0Left = rows[0].props.children[0];
+    const row0Right = rows[0].props.children[1];
+
+    expect(row0Left.props.children[1].props.children).toBe('Food & Dining');
+    expect(row0Right.props.children[0].props.children).toBe('₹12,500.00');
+    expect(row0Right.props.children[1].props.children).toBe('45%');
+
+    // Row 1: Shopping
+    const row1Left = rows[1].props.children[0];
+    const row1Right = rows[1].props.children[1];
+
+    expect(row1Left.props.children[1].props.children).toBe('Shopping');
+    expect(row1Right.props.children[0].props.children).toBe('₹8,000.00');
+    expect(row1Right.props.children[1].props.children).toBe('28%');
+  });
+
+  it('renders EmptyState component when category list is empty', () => {
+    const element = CategoryBreakdownSection({ viewModel: mockEmptyViewModel, onRetry: vi.fn() });
+    const cardChildren = element.props.children.props.children;
+    const emptyState = cardChildren[1];
+
+    expect(emptyState.type.name).toBe('EmptyState');
+    expect(emptyState.props.message).toBe('No category spending recorded for this period.');
+  });
+
+  it('passes error state and onRetry callback to SectionStateContainer', () => {
+    const onRetryMock = vi.fn();
+    const element = CategoryBreakdownSection({ viewModel: mockErrorViewModel, onRetry: onRetryMock });
+
+    expect(element.props.status).toBe('Error');
+    expect(element.props.errorMessage).toBe('Failed to load category breakdown');
+
+    element.props.onRetry();
+    expect(onRetryMock).toHaveBeenCalledTimes(1);
   });
 });
