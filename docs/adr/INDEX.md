@@ -23,6 +23,7 @@ For the reusable template, see [ADR_TEMPLATE.md](./ADR_TEMPLATE.md).
 | [ADR-019](./ADR-019-reporting-read-model.md) | Reporting Read Model Architecture | ✅ Approved | 2026-07 | Read-only CQRS separation, IReportingRepository abstraction, SQL aggregations, and domain projections |
 | [ADR-020](./ADR-020-cloud-sync-engine.md) | Cloud Sync Engine Architecture | ✅ Approved | 2026-07 | SyncQueueItem aggregate root, queue state machine, transport & network abstractions, conflict resolution |
 | [ADR-021](./ADR-021-ai-insights.md) | AI Insights Bounded Context Architecture | ✅ Approved | 2026-07 | Read-only analytical consumer, Insight aggregate, ConfidenceScore, provider abstraction with rule-based fallback |
+| [ADR-022](./ADR-022-bills-bounded-context.md) | Bills Bounded Context Architecture | ✅ Approved | 2026-08 | Separate BillPayment entity, calendar anchor recurrence, derived status, IBillTransactionPort, dual idempotency |
 
 ---
 
