@@ -3,7 +3,7 @@ import { BillPayment, BillPaymentProps } from '../entities/BillPayment';
 import { BillPaymentId } from '../value-objects/BillPaymentId';
 import { BillId } from '../value-objects/BillId';
 import { BillAmount } from '../value-objects/BillAmount';
-import { CurrencyCode } from '../../../accounts/domain';
+import { CurrencyCode } from '../value-objects/CurrencyCode';
 import { BillDomainError } from '../errors/BillDomainError';
 
 describe('BillPayment Entity', () => {

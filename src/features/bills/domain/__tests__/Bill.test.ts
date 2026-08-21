@@ -5,7 +5,7 @@ import { BillName } from '../value-objects/BillName';
 import { BillAmount } from '../value-objects/BillAmount';
 import { BillDueDate } from '../value-objects/BillDueDate';
 import { RecurrenceRule } from '../value-objects/RecurrenceRule';
-import { CurrencyCode } from '../../../accounts/domain';
+import { CurrencyCode } from '../value-objects/CurrencyCode';
 import { BillDomainError } from '../errors/BillDomainError';
 
 describe('Bill Aggregate Root', () => {
@@ -55,6 +55,11 @@ describe('Bill Aggregate Root', () => {
       const currency = new CurrencyCode('INR');
       expect(() => new BillAmount(0, currency)).toThrow('Bill amount must be strictly greater than zero.');
       expect(() => new BillAmount(-50, currency)).toThrow('Bill amount must be strictly greater than zero.');
+    });
+
+    it('rejects invalid CurrencyCode', () => {
+      expect(() => new CurrencyCode('')).toThrow(BillDomainError);
+      expect(() => new CurrencyCode('INVALID')).toThrow(BillDomainError);
     });
   });
 

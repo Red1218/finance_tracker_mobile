@@ -6,7 +6,7 @@ import { BillName } from '../value-objects/BillName';
 import { BillAmount } from '../value-objects/BillAmount';
 import { BillDueDate } from '../value-objects/BillDueDate';
 import { RecurrenceRule } from '../value-objects/RecurrenceRule';
-import { CurrencyCode } from '../../../accounts/domain';
+import { CurrencyCode } from '../value-objects/CurrencyCode';
 
 describe('BillSchedulingService Domain Service', () => {
   const asOfDate = new Date('2026-08-21T00:00:00.000Z');

@@ -1,4 +1,4 @@
-import { CurrencyCode } from '../../../accounts/domain';
+import { CurrencyCode } from './CurrencyCode';
 import { BillDomainError } from '../errors/BillDomainError';
 
 export class BillAmount {
