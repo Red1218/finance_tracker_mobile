@@ -311,22 +311,63 @@ The following use cases are explicitly **DEFERRED to Phase 4.3 (Full Bills Manag
 
 ---
 
-## 12. Repository Port Interface
+## 12. Repository Port Interfaces
+
+### Intentional Design Decision: Decomposed Payment Repository (Implemented Refinement)
+
+During Phase 4.2B implementation, the initial single `IBillRepository` specification was intentionally decomposed into two separate port interfaces. This is an architectural refinement over the original spec, not a deviation from intent.
+
+#### Rationale for Decomposition
+
+1. **Separate Entity, Separate Port**: `BillPayment` is a separate aggregate entity with its own lifecycle and persistence concerns. Mixing payment query operations into the Bill aggregate's repository violates the Single Responsibility Principle at the port level.
+2. **Symmetry with Domain Model**: The domain models `Bill` and `BillPayment` as distinct entities. Ports should mirror this boundary.
+3. **Cleaner Infrastructure Implementations**: A `SupabaseBillRepository` implementing only bill-level operations is simpler and more focused than one that also manages payment history queries.
+4. **Atomic Boundary Preserved**: The atomic persistence invariant (payment creation + bill advancement in a single transaction) is explicitly encoded in `IBillRepository.savePaymentAndBill(payment, updatedBill)` — a dedicated method that crosses the entity boundary atomically. `MarkBillPaidUseCase` exclusively uses this method and never calls payment and bill saves independently.
+
+### `IBillRepository`
+
+Resides in `src/features/bills/application/ports/IBillRepository.ts`.
 
 ```typescript
 export interface IBillRepository {
-  save(bill: Bill): Promise<void>;
-  findById(id: BillId): Promise<Bill | null>;
-  findAllByUser(userId: string): Promise<Bill[]>;
-  findUpcoming(userId: string, windowDays: number, asOf: Date): Promise<Bill[]>;
-  savePayment(payment: BillPayment): Promise<void>;
-  findPaymentsByBill(billId: BillId): Promise<BillPayment[]>;
-  findPaymentByOccurrence(billId: BillId, occurrenceKey: string): Promise<BillPayment | null>;
-  delete(id: BillId): Promise<void>;
+  findById(id: BillId): Promise<RepositoryResult<Bill | null, RepositoryError>>;
+  findUpcoming(
+    userId: string,
+    windowDays: number,
+    asOf: Date
+  ): Promise<RepositoryResult<Bill[], RepositoryError>>;
+  save(bill: Bill): Promise<RepositoryResult<void, RepositoryError>>;
+  savePaymentAndBill(
+    payment: BillPayment,
+    updatedBill: Bill
+  ): Promise<RepositoryResult<void, RepositoryError>>;
 }
 ```
 
-Resides in `src/features/bills/application/ports/IBillRepository.ts`.
+**`savePaymentAndBill` is the sole atomic persistence boundary.** Infrastructure implementations MUST execute both the payment insert and the bill update within a single database transaction.
+
+### `IBillPaymentRepository`
+
+Resides in `src/features/bills/application/ports/IBillPaymentRepository.ts`.
+
+```typescript
+export interface IBillPaymentRepository {
+  findPaymentByOccurrence(
+    billId: BillId,
+    occurrenceKey: string
+  ): Promise<RepositoryResult<BillPayment | null, RepositoryError>>;
+  save(payment: BillPayment): Promise<RepositoryResult<void, RepositoryError>>;
+}
+```
+
+`IBillPaymentRepository.save()` is available for future read-path or stand-alone payment query use cases (Phase 4.3). It is **not used** by `MarkBillPaidUseCase` — that use case exclusively calls `IBillRepository.savePaymentAndBill()` to preserve atomicity.
+
+### Phase 4.3 Deferred Payment Queries
+
+The following payment query operations are deferred to Phase 4.3 Full Bills Management:
+- `findPaymentsByBill(billId: BillId)` — payment history listing
+- `findAllByUser(userId: string)` — full bill listing
+- `delete(id: BillId)` — hard delete (archival is the soft-delete path)
 
 ---
 
@@ -387,21 +428,35 @@ ON public.bill_payments(bill_id, paid_at);
 - Upcoming bills represent absolute future calendar commitments relative to `today` (e.g. "due in 5 days").
 - Re-filtering bills when a user views "Last Month" history would incorrectly clear or distort future commitments.
 
-### Dashboard Projection DTO (`UpcomingBillsReadModel`)
+### Dashboard Projection DTO (`UpcomingBillDTO`)
+
+#### Intentional Design Decision: Raw Monetary Data, Not Pre-Formatted Strings (Implemented Refinement)
+
+The initial spec used `formattedAmount: string` and `currency: string`. During Phase 4.2B implementation this was corrected to expose raw monetary data (`amount: number`, `currencyCode: string`). This is an intentional architectural improvement.
+
+**Rationale — Monetary Formatting is a Presentation Responsibility:**
+- Currency formatting is locale-sensitive (e.g., `₹1,000.00` vs `INR 1000.00` vs `1.000,00 ₹`).
+- The Application layer has no knowledge of the user's locale or display preferences.
+- Pre-formatting in a use case would couple the Application layer to Presentation concerns, violating Clean Architecture.
+- The Presentation layer receives raw `amount` and `currencyCode` and applies locale-aware formatting (e.g., `Intl.NumberFormat`).
 
 ```typescript
-export interface UpcomingBillsReadModel {
+export interface UpcomingBillDTO {
   readonly billId: string;
   readonly billName: string;
-  readonly formattedAmount: string;
-  readonly currency: string;
-  readonly nextDueDate: string; // ISO string
-  readonly dueDateLabel: string; // 'Due Today', 'Tomorrow', 'In 5 days', 'Overdue by 2 days'
-  readonly status: 'Upcoming' | 'DueToday' | 'Overdue' | 'Archived';
+  readonly amount: number;          // raw numeric — Presentation applies locale formatting
+  readonly currencyCode: string;    // ISO-4217 code, e.g. 'INR', 'USD'
+  readonly nextDueDate: string;     // ISO-8601 UTC string
+  readonly dueDateLabel: string;    // 'Due Today', 'Tomorrow', 'In 5 days', 'Overdue by 2 days'
+  readonly status: 'Upcoming' | 'DueToday' | 'Overdue'; // 'Archived' excluded: archived bills are filtered before DTO construction
   readonly urgency: 'critical' | 'high' | 'medium' | 'low';
+  readonly categoryId: string | null;
   readonly categoryName: string | null;
+  readonly recurrenceType: string;  // RecurrenceType string — 'NONE' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'YEARLY'
 }
 ```
+
+Resides in `src/features/bills/application/dto/UpcomingBillDTO.ts`.
 
 ---
 
