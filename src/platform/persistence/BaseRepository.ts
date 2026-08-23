@@ -18,7 +18,14 @@ export abstract class BaseRepository {
       return Result.failure(error);
     }
 
-    // A real implementation would map Supabase PostgREST errors to RepositoryErrorCode
+    // Map Supabase PostgREST Postgres error codes to RepositoryErrorCode
+    if (error && typeof error === 'object' && 'code' in error && (error as { code?: string }).code === '23505') {
+      const message = (error as { message?: string }).message ?? 'Unique constraint violation occurred.';
+      return Result.failure(
+        new RepositoryError('UNIQUE_VIOLATION', message, context, error)
+      );
+    }
+
     console.error('Raw database error:', error);
     const repositoryError = new RepositoryError(
       'UNKNOWN_PERSISTENCE_ERROR',
@@ -28,5 +35,6 @@ export abstract class BaseRepository {
     );
 
     return Result.failure(repositoryError);
+
   }
 }
