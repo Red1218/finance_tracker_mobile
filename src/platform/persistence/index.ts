@@ -6,3 +6,4 @@ export * from './BaseRepository';
 export * from './categories';
 export * from './accounts';
 export * from './transactions';
+export * from './bills';
