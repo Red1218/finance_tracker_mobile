@@ -46,10 +46,14 @@ export class InMemoryBillRepository implements IBillRepository {
     payment: BillPayment,
     updatedBill: Bill
   ): Promise<RepositoryResult<void, RepositoryError>> {
-    this.bills.set(updatedBill.id.value, updatedBill);
     if (this.paymentRepo) {
-      await this.paymentRepo.save(payment);
+      const paymentResult = await this.paymentRepo.save(payment);
+      if (!paymentResult.success) {
+        return Result.failure(paymentResult.error);
+      }
     }
+
+    this.bills.set(updatedBill.id.value, updatedBill);
     return Result.success(undefined);
   }
 

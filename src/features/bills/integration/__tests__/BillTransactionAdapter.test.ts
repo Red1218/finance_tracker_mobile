@@ -84,6 +84,16 @@ describe('BillTransactionAdapter', () => {
         expect(result.data).toBe('tx-gen-123');
       }
       expect(mockCreateExpenseUseCase.execute).toHaveBeenCalledOnce();
+      expect(mockCreateExpenseUseCase.execute).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: expect.any(String),
+          accountId: 'acc-123',
+          amount: 500,
+          currencyCode: 'INR',
+          description: 'Electricity Bill',
+          categoryId: 'cat-util',
+        })
+      );
     });
 
     it('maps thrown error to Result.failure(RepositoryError)', async () => {

@@ -1,3 +1,4 @@
+import { generateUUID } from '../../../core/utils/uuid';
 import { Result, RepositoryResult, RepositoryError } from '../../../platform/persistence';
 import {
   IBillTransactionPort,
@@ -21,7 +22,7 @@ export class BillTransactionAdapter implements IBillTransactionPort {
     params: CreateExpenseTransactionPortParams
   ): Promise<RepositoryResult<string, RepositoryError>> {
     try {
-      const transactionId = crypto.randomUUID();
+      const transactionId = generateUUID();
 
       const transaction = await this.createExpenseUseCase.execute({
         id: transactionId,

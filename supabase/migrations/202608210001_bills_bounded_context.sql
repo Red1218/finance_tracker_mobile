@@ -34,7 +34,8 @@ CREATE TABLE IF NOT EXISTS public.bill_payments (
     currency_code TEXT NOT NULL DEFAULT 'INR',
     linked_transaction_id UUID NULL REFERENCES public.transactions(id) ON DELETE SET NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    CONSTRAINT uq_bill_payment_occurrence UNIQUE (bill_id, occurrence_key)
+    CONSTRAINT uq_bill_payment_occurrence UNIQUE (bill_id, occurrence_key),
+    CONSTRAINT chk_bill_payments_amount_positive CHECK (amount > 0)
 );
 
 -- Partial Unique Index for Linked Transaction (allows multiple NULLs, enforces uniqueness when non-null)
