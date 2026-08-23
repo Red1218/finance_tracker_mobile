@@ -517,7 +517,78 @@ Resides in `src/features/bills/application/dto/UpcomingBillDTO.ts`.
 
 ---
 
-## 19. Open Questions
+## 19. Transaction Compensation Architecture (AUTO_CREATE Rollback)
+
+### Problem
+
+`MarkBillPaidUseCase` executes in a fixed two-phase sequence:
+
+1. **Phase 1** — `IBillTransactionPort.createExpenseTransaction()` → writes to `public.transactions`.
+2. **Phase 2** — `IBillRepository.savePaymentAndBill()` → atomically writes `public.bill_payments` + updates `public.bills`.
+
+If Phase 2 fails, Phase 1 has already committed an expense transaction to the ledger. Without compensation, this produces an **orphan transaction**: a real expense entry with no corresponding `BillPayment`, and a `Bill` whose `nextDueDate` has not advanced.
+
+### Resolution: Compensation via `rollbackExpenseTransaction()`
+
+`IBillTransactionPort` gains one additional method:
+
+```typescript
+rollbackExpenseTransaction(
+  transactionId: string
+): Promise<RepositoryResult<void, RepositoryError>>;
+```
+
+`MarkBillPaidUseCase` calls this method in the `savePaymentAndBill()` failure branch, exclusively for `AUTO_CREATE` mode:
+
+```typescript
+const saveResult = await this.billRepository.savePaymentAndBill(payment, updatedBill);
+if (!saveResult.success) {
+  if (command.executionMode === 'AUTO_CREATE' && linkedTransactionId) {
+    await this.billTransactionPort.rollbackExpenseTransaction(linkedTransactionId);
+  }
+  throw new BillApplicationError('REPOSITORY_ERROR', `Atomic payment persistence failed: ${saveResult.error.message}`);
+}
+```
+
+`BillTransactionAdapter.rollbackExpenseTransaction()` delegates to `VoidTransactionUseCase` from the Transactions bounded context.
+
+### Compensation Flow
+
+```
+AUTO_CREATE
+  ↓
+createExpenseTransaction()     → INSERT public.transactions ✅
+  ↓
+savePaymentAndBill()
+  ├── SUCCESS → System consistent ✅
+  └── FAILURE
+        ↓
+      rollbackExpenseTransaction(transactionId)
+        └── VoidTransactionUseCase → sets voidedAt on transaction ✅
+      System returned to pre-call state
+      throw BillApplicationError('REPOSITORY_ERROR')
+```
+
+### Scope
+
+- **`LINK_EXISTING` mode**: Rollback MUST NOT be called — the transaction belongs to the user, not to this call.
+- **`UNLINKED` mode**: Rollback MUST NOT be called — no transaction was created.
+- **Double-failure (rollback also fails)**: The original `REPOSITORY_ERROR` is still thrown. The orphan transaction survives and is available for manual reconciliation. The rollback failure is logged at the adapter level. The user can use `LINK_EXISTING` on retry.
+
+### Architecture Boundary Preservation
+
+- `MarkBillPaidUseCase` (Application) depends only on `IBillTransactionPort` — no Transactions implementation knowledge.
+- `BillTransactionAdapter` (Integration) implements `rollbackExpenseTransaction()` using `VoidTransactionUseCase` from the Transactions context.
+- The Bills bounded context does NOT write to `public.transactions` directly.
+- The Transactions bounded context remains the sole authority for all ledger mutations.
+
+### ADR Gate
+
+This change was reviewed and approved at the **Phase 4.2B Infrastructure Architecture Review Gate** (Revision 2). Changes are strictly additive to `IBillTransactionPort` and `MarkBillPaidUseCase`. Zero domain changes. Zero breaking changes.
+
+---
+
+## 20. Open Questions
 
 1. Should `BillTransactionAdapter` auto-select a default payment account if `AUTO_CREATE` is invoked without an explicit `accountId`? (Recommended: Default account from `Accounts` context).
 

@@ -48,6 +48,7 @@ describe('MarkBillPaidUseCase', () => {
     mockTxPort = {
       createExpenseTransaction: vi.fn(),
       verifyTransactionExists: vi.fn(),
+      rollbackExpenseTransaction: vi.fn(),
     };
   });
 
@@ -347,5 +348,115 @@ describe('MarkBillPaidUseCase', () => {
     await expect(useCase.execute(command)).rejects.toThrow(
       new BillApplicationError('REPOSITORY_ERROR', 'Atomic payment persistence failed: Atomic transaction write failed')
     );
+  });
+
+  // ─── Compensation / Rollback Tests (ADR-022 § 19) ────────────────────────────
+
+  it('AUTO_CREATE: calls rollbackExpenseTransaction when savePaymentAndBill fails', async () => {
+    const bill = createTestBill('bill-100');
+    vi.mocked(mockBillRepo.findById).mockResolvedValue({ success: true, data: bill });
+    vi.mocked(mockPaymentRepo.findPaymentByOccurrence).mockResolvedValue({ success: true, data: null });
+    vi.mocked(mockTxPort.createExpenseTransaction).mockResolvedValue({ success: true, data: 'tx-rollback-001' });
+    vi.mocked(mockBillRepo.savePaymentAndBill).mockResolvedValue({
+      success: false,
+      error: new RepositoryError('UNKNOWN_PERSISTENCE_ERROR', 'RPC write failed'),
+    });
+    vi.mocked(mockTxPort.rollbackExpenseTransaction).mockResolvedValue({ success: true, data: undefined });
+
+    const useCase = new MarkBillPaidUseCase(mockBillRepo, mockPaymentRepo, mockTxPort);
+    const command: MarkBillPaidCommand = {
+      billId: 'bill-100',
+      amount: 500,
+      currencyCode: 'INR',
+      executionMode: 'AUTO_CREATE',
+      accountId: 'acc-1',
+    };
+
+    await expect(useCase.execute(command)).rejects.toThrow(
+      new BillApplicationError('REPOSITORY_ERROR', 'Atomic payment persistence failed: RPC write failed')
+    );
+
+    expect(mockTxPort.rollbackExpenseTransaction).toHaveBeenCalledOnce();
+    expect(mockTxPort.rollbackExpenseTransaction).toHaveBeenCalledWith('tx-rollback-001');
+  });
+
+  it('AUTO_CREATE: still throws REPOSITORY_ERROR when both savePaymentAndBill and rollback fail', async () => {
+    const bill = createTestBill('bill-100');
+    vi.mocked(mockBillRepo.findById).mockResolvedValue({ success: true, data: bill });
+    vi.mocked(mockPaymentRepo.findPaymentByOccurrence).mockResolvedValue({ success: true, data: null });
+    vi.mocked(mockTxPort.createExpenseTransaction).mockResolvedValue({ success: true, data: 'tx-double-fail' });
+    vi.mocked(mockBillRepo.savePaymentAndBill).mockResolvedValue({
+      success: false,
+      error: new RepositoryError('UNKNOWN_PERSISTENCE_ERROR', 'RPC write failed'),
+    });
+    vi.mocked(mockTxPort.rollbackExpenseTransaction).mockResolvedValue({
+      success: false,
+      error: new RepositoryError('UNKNOWN_PERSISTENCE_ERROR', 'Void also failed'),
+    });
+
+    const useCase = new MarkBillPaidUseCase(mockBillRepo, mockPaymentRepo, mockTxPort);
+    const command: MarkBillPaidCommand = {
+      billId: 'bill-100',
+      amount: 500,
+      currencyCode: 'INR',
+      executionMode: 'AUTO_CREATE',
+      accountId: 'acc-1',
+    };
+
+    // Original REPOSITORY_ERROR is preserved regardless of rollback outcome
+    await expect(useCase.execute(command)).rejects.toThrow(
+      new BillApplicationError('REPOSITORY_ERROR', 'Atomic payment persistence failed: RPC write failed')
+    );
+
+    expect(mockTxPort.rollbackExpenseTransaction).toHaveBeenCalledOnce();
+    expect(mockTxPort.rollbackExpenseTransaction).toHaveBeenCalledWith('tx-double-fail');
+  });
+
+  it('LINK_EXISTING: does NOT call rollbackExpenseTransaction when savePaymentAndBill fails', async () => {
+    const bill = createTestBill('bill-100');
+    vi.mocked(mockBillRepo.findById).mockResolvedValue({ success: true, data: bill });
+    vi.mocked(mockPaymentRepo.findPaymentByOccurrence).mockResolvedValue({ success: true, data: null });
+    vi.mocked(mockTxPort.verifyTransactionExists).mockResolvedValue({ success: true, data: true });
+    vi.mocked(mockBillRepo.savePaymentAndBill).mockResolvedValue({
+      success: false,
+      error: new RepositoryError('UNKNOWN_PERSISTENCE_ERROR', 'RPC write failed'),
+    });
+
+    const useCase = new MarkBillPaidUseCase(mockBillRepo, mockPaymentRepo, mockTxPort);
+    const command: MarkBillPaidCommand = {
+      billId: 'bill-100',
+      amount: 500,
+      currencyCode: 'INR',
+      executionMode: 'LINK_EXISTING',
+      transactionId: 'tx-user-owned',
+    };
+
+    await expect(useCase.execute(command)).rejects.toThrow(BillApplicationError);
+
+    // Must NOT void a transaction that the user owns independently
+    expect(mockTxPort.rollbackExpenseTransaction).not.toHaveBeenCalled();
+  });
+
+  it('UNLINKED: does NOT call rollbackExpenseTransaction when savePaymentAndBill fails', async () => {
+    const bill = createTestBill('bill-100');
+    vi.mocked(mockBillRepo.findById).mockResolvedValue({ success: true, data: bill });
+    vi.mocked(mockPaymentRepo.findPaymentByOccurrence).mockResolvedValue({ success: true, data: null });
+    vi.mocked(mockBillRepo.savePaymentAndBill).mockResolvedValue({
+      success: false,
+      error: new RepositoryError('UNKNOWN_PERSISTENCE_ERROR', 'RPC write failed'),
+    });
+
+    const useCase = new MarkBillPaidUseCase(mockBillRepo, mockPaymentRepo, mockTxPort);
+    const command: MarkBillPaidCommand = {
+      billId: 'bill-100',
+      amount: 500,
+      currencyCode: 'INR',
+      executionMode: 'UNLINKED',
+    };
+
+    await expect(useCase.execute(command)).rejects.toThrow(BillApplicationError);
+
+    // No transaction was created — nothing to void
+    expect(mockTxPort.rollbackExpenseTransaction).not.toHaveBeenCalled();
   });
 });

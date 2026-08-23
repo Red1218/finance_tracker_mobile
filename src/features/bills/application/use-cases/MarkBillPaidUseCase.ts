@@ -156,6 +156,14 @@ export class MarkBillPaidUseCase {
     // Step 8 — Atomic Persistence Transaction
     const saveResult = await this.billRepository.savePaymentAndBill(payment, updatedBill);
     if (!saveResult.success) {
+      // Compensation (ADR-022 § 19): if bill-payment persistence fails after an AUTO_CREATE
+      // transaction was written, void the orphan transaction so the ledger stays consistent.
+      // LINK_EXISTING and UNLINKED modes must NOT trigger rollback — those transactions are
+      // either owned by the user independently or do not exist.
+      if (command.executionMode === 'AUTO_CREATE' && linkedTransactionId) {
+        // Fire-and-await: rollback failure is non-fatal — original error always surfaces.
+        await this.billTransactionPort.rollbackExpenseTransaction(linkedTransactionId);
+      }
       throw new BillApplicationError(
         'REPOSITORY_ERROR',
         `Atomic payment persistence failed: ${saveResult.error.message}`
