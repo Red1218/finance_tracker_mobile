@@ -11,7 +11,6 @@ export interface UpcomingBillItemViewModel {
   readonly status: BillPaymentStatus;
   readonly urgency: BillUrgencyLevel;
   readonly categoryName: string | null;
-  readonly canMarkPaid: boolean;
 }
 
 export type SectionLoadingStatus = 'IDLE' | 'LOADING' | 'SUCCESS' | 'ERROR';

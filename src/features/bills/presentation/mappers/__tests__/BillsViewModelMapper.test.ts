@@ -37,7 +37,6 @@ describe('BillsViewModelMapper', () => {
       status: 'Upcoming',
       urgency: 'medium',
       categoryName: 'Utilities',
-      canMarkPaid: true,
     });
   });
 

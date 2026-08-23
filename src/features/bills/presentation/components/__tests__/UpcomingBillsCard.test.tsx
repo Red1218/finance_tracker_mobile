@@ -13,7 +13,6 @@ describe('UpcomingBillsCard Component Structure', () => {
     status: 'Upcoming',
     urgency: 'high',
     categoryName: 'Utilities',
-    canMarkPaid: true,
   };
 
   it('instantiates UpcomingBillsCard component cleanly', () => {

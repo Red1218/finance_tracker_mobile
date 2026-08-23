@@ -84,7 +84,7 @@ export function UpcomingBillsCard({
             {bill.formattedAmount}
           </Text>
 
-          {bill.canMarkPaid && onMarkPaidPress ? (
+          {onMarkPaidPress ? (
             <TouchableOpacity
               style={[styles.payButton, { backgroundColor: colors.brandPrimary }]}
               onPress={() => onMarkPaidPress(bill.billId)}

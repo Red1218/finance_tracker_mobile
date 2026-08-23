@@ -28,7 +28,6 @@ export class BillsViewModelMapper {
       status: dto.status,
       urgency: dto.urgency,
       categoryName: dto.categoryName,
-      canMarkPaid: dto.status !== 'Overdue' || true, // All non-archived upcoming bills can be marked paid
     };
   }
 

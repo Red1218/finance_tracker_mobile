@@ -17,7 +17,6 @@ describe('UpcomingBillsSection Component Structure', () => {
           status: 'DueToday',
           urgency: 'high',
           categoryName: 'Utilities',
-          canMarkPaid: true,
         },
       ],
       errorMessage: null,

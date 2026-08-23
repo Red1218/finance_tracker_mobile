@@ -16,7 +16,6 @@ describe('useUpcomingBills State Logic', () => {
       status: 'Upcoming',
       urgency: 'medium',
       categoryName: 'Utilities',
-      canMarkPaid: true,
     },
   ];
 
