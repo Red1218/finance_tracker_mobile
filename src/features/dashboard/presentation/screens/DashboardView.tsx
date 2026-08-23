@@ -19,6 +19,7 @@ interface DashboardViewProps {
   onChangePeriod: (periodId: string) => void;
   onExecuteQuickAction: (actionId: string, payload: unknown) => void;
   onTogglePeriodSelector: () => void;
+  upcomingBillsSection?: React.ReactNode;
 }
 
 export function DashboardView({
@@ -27,7 +28,8 @@ export function DashboardView({
   onRefreshSection,
   onChangePeriod,
   onExecuteQuickAction,
-  onTogglePeriodSelector
+  onTogglePeriodSelector,
+  upcomingBillsSection,
 }: DashboardViewProps) {
   const { colors } = useTheme();
   const { viewModel, isRefreshing, isPeriodSelectorOpen } = state;
@@ -80,6 +82,12 @@ export function DashboardView({
           onRetry={() => onRefreshSection('BudgetHealth')} 
         />
       </View>
+
+      {upcomingBillsSection ? (
+        <View style={styles.zonalSpacing}>
+          {upcomingBillsSection}
+        </View>
+      ) : null}
 
       <View style={styles.zonalSpacing}>
         <CategoryBreakdownSection 
