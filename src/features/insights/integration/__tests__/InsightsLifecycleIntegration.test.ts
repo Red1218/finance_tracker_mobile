@@ -3,7 +3,7 @@ import { InsightsModule } from '../../composition/InsightsModule';
 import { RuleBasedAIInsightsProvider } from '../../infrastructure/providers/RuleBasedAIInsightsProvider';
 import { InMemoryInsightsReadRepository } from '../../../../platform/persistence/insights';
 import { Result } from '../../../../platform/persistence';
-import { IReportingRepository } from '../../../reporting/domain';
+import { IReportingRepository, MonthOverMonthComparison } from '../../../reporting/domain';
 
 class MockReportingRepository implements IReportingRepository {
   public async getDashboardSummary() {
@@ -56,6 +56,23 @@ class MockReportingRepository implements IReportingRepository {
   }
 
   public async getLargestTransactions() {
+    return Result.success([]);
+  }
+
+  public async getMonthOverMonthComparison() {
+    return Result.success(
+      new MonthOverMonthComparison({
+        currentIncome: 10000,
+        currentExpense: 6000,
+        currentNetSavings: 4000,
+        previousIncome: 8000,
+        previousExpense: 5000,
+        previousNetSavings: 3000,
+      })
+    );
+  }
+
+  public async getFilteredLedgerRows() {
     return Result.success([]);
   }
 }

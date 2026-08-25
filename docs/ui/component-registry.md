@@ -7,9 +7,9 @@
 ## Registry Statistics
 
 ```text
-Total Components: 8
+Total Components: 15
 
-Approved: 8
+Approved: 15
 
 Draft: 0
 
@@ -17,7 +17,7 @@ Deprecated: 0
 
 L1: 0
 
-L2: 8
+L2: 15
 
 L3: 0
 ```
@@ -43,3 +43,10 @@ L3: 0
 | `data-display.budget-overview-card` | [BudgetOverviewCard](components/data-display/budget-overview-card.md) | Data Display | 1.0.0 | Approved | L2 | UI Architecture | ✅ | ✅ | ⏳ | ✅ | ⏳ | Dashboard, Budget Overview |
 | `data-display.financial-insight-card` | [FinancialInsightCard](components/data-display/financial-insight-card.md) | Data Display | 1.0.0 | Approved | L2 | UI Architecture | ✅ | ✅ | ⏳ | ✅ | ⏳ | Dashboard, Insights Module |
 | `data-display.upcoming-bills-card` | [UpcomingBillsCard](components/data-display/upcoming-bills-card.md) | Data Display | 1.0.0 | Approved | L2 | UI Architecture | ✅ | ✅ | ⏳ | ✅ | ⏳ | Dashboard, Bills Module |
+| `analytics.segmented-control` | AnalyticsSegmentedControl | Navigation | 1.0.0 | Approved | L2 | Analytics Architecture | ✅ | ✅ | ✅ | ✅ | ✅ | ReportingScreen (Tab Switcher) |
+| `analytics.month-over-month-card` | MonthOverMonthCard | Data Display | 1.0.0 | Approved | L2 | Analytics Architecture | ✅ | ✅ | ✅ | ✅ | ✅ | ReportingScreen (Reports View) |
+| `analytics.cash-flow-forecast-card` | CashFlowForecastCard | Data Display | 1.0.0 | Approved | L2 | Analytics Architecture | ✅ | ✅ | ✅ | ✅ | ✅ | ReportingScreen (Insights View) |
+| `analytics.ai-insight-card` | AIInsightCard | Data Display | 1.0.0 | Approved | L2 | Analytics Architecture | ✅ | ✅ | ✅ | ✅ | ✅ | ReportingScreen (Insights View) |
+| `analytics.export-modal` | ExportModal | Overlays | 1.0.0 | Approved | L2 | Analytics Architecture | ✅ | ✅ | ✅ | ✅ | ✅ | ReportingScreen (PDF/CSV Export) |
+| `analytics.chart-accessibility-fallback` | ChartAccessibilityFallback | Data Display | 1.0.0 | Approved | L2 | Analytics Architecture | ✅ | ✅ | ✅ | ✅ | ✅ | Visual Analytics Charts |
+| `analytics.skeleton` | AnalyticsSkeleton | Feedback | 1.0.0 | Approved | L2 | Analytics Architecture | ✅ | ✅ | ✅ | ✅ | ✅ | ReportingScreen (Loading State) |

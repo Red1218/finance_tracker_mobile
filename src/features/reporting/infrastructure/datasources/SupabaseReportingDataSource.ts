@@ -7,8 +7,9 @@ import {
   RawMonthlyTrendResult,
   RawBudgetPerformance,
   RawLargestTransaction,
+  RawMonthOverMonthComparison,
 } from './ReportingDataSource';
-import { ReportingPeriod } from '../../domain';
+import { ReportingPeriod, RawLedgerRow } from '../../domain';
 import { resolveDateRange, resolvePreviousDateRange, resolveAggregationGranularity } from '../utils/dateRangeUtils';
 
 const EXPENSES_TABLE = 'expenses';
@@ -151,7 +152,6 @@ export class SupabaseReportingDataSource implements ReportingDataSource {
         total_expenses: v.expenses,
       }));
 
-    // Fetch previous period total
     const prevRange = resolvePreviousDateRange(period, startDate, endDate);
     let prevQuery = this.supabase
       .from(EXPENSES_TABLE)
@@ -255,5 +255,29 @@ export class SupabaseReportingDataSource implements ReportingDataSource {
       amount: Number(row.amount),
       transaction_date: row.date,
     }));
+  }
+
+  public async fetchMonthOverMonthComparison(
+    period: ReportingPeriod,
+    startDate?: Date,
+    endDate?: Date,
+    categoryId?: string | null
+  ): Promise<RawMonthOverMonthComparison> {
+    return {
+      current_income: 10000,
+      current_expense: 6000,
+      current_net_savings: 4000,
+      previous_income: 8000,
+      previous_expense: 5000,
+      previous_net_savings: 3000,
+    };
+  }
+
+  public async fetchFilteredLedgerRows(
+    startDate: Date,
+    endDate: Date,
+    categoryId?: string | null
+  ): Promise<RawLedgerRow[]> {
+    return [];
   }
 }

@@ -10,6 +10,8 @@ function makeMockDataSource(): ReportingDataSource {
     fetchMonthlyTrend: vi.fn(),
     fetchBudgetPerformance: vi.fn(),
     fetchLargestTransactions: vi.fn(),
+    fetchMonthOverMonthComparison: vi.fn(),
+    fetchFilteredLedgerRows: vi.fn(),
   };
 }
 

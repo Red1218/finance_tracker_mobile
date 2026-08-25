@@ -1,6 +1,8 @@
 export * from './value-objects/ReportingPeriod';
 export * from './value-objects/FinancialSummary';
 export * from './value-objects/CategorySpendBreakdown';
+export * from './value-objects/MonthOverMonthComparison';
+export * from './value-objects/ExportReportRequest';
 export * from './errors/ReportingDomainError';
 export type { DashboardSummary } from './projections/DashboardSummary';
 export type { CategoryBreakdown } from './projections/CategoryBreakdown';
@@ -8,4 +10,4 @@ export type { MonthlyTrendPoint } from './projections/MonthlyTrendPoint';
 export type { TrendComparison } from './projections/TrendComparison';
 export type { BudgetPerformance, BudgetPerformanceStatus } from './projections/BudgetPerformance';
 export type { LargestTransaction } from './projections/LargestTransaction';
-export type { IReportingRepository } from './repositories/IReportingRepository';
+export type { IReportingRepository, RawLedgerRow } from './repositories/IReportingRepository';

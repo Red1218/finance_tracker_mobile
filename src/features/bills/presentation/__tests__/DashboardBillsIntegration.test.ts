@@ -67,22 +67,22 @@ describe('DashboardBillsIntegration Structural Verification', () => {
     expect(React.isValidElement(vnode)).toBe(true);
 
     // 2. Inspect layout children array
-    const layoutChildren = React.Children.toArray((vnode.props as { children?: React.ReactNode }).children);
+    const layoutChildren = React.Children.toArray((vnode.props as any).children);
 
     // 3. Find the container wrapping upcomingBillsSection node
     const upcomingSectionWrapper = layoutChildren.find((child: unknown) => {
-      if (!React.isValidElement<{ children?: React.ReactNode }>(child)) return false;
-      const childrenArr = React.Children.toArray(child.props.children);
-      return childrenArr.some((c: unknown) => React.isValidElement(c) && c.type === UpcomingBillsSection);
+      if (!React.isValidElement(child)) return false;
+      const childrenArr = React.Children.toArray((child.props as any)?.children);
+      return childrenArr.some((c: unknown) => React.isValidElement(c) && (c as any).type === UpcomingBillsSection);
     });
 
     expect(upcomingSectionWrapper).toBeDefined();
 
     // 4. Verify structural position: BudgetHealth -> UpcomingBillsSection -> CategoryBreakdown
     const innerComponentTypes = layoutChildren.map((child: unknown) => {
-      if (!React.isValidElement<{ children?: React.ReactNode }>(child)) return null;
-      const inner = React.Children.toArray(child.props.children)[0];
-      return React.isValidElement(inner) ? inner.type : null;
+      if (!React.isValidElement(child)) return null;
+      const inner = React.Children.toArray((child.props as any)?.children)[0];
+      return React.isValidElement(inner) ? (inner as any).type : null;
     });
 
     const budgetHealthIndex = innerComponentTypes.indexOf(BudgetHealthSection);

@@ -1,4 +1,4 @@
-import { ReportingPeriod } from '../../domain';
+import { ReportingPeriod, RawLedgerRow } from '../../domain';
 
 export interface RawDashboardSummary {
   total_income: number;
@@ -40,6 +40,15 @@ export interface RawLargestTransaction {
   transaction_date: string;
 }
 
+export interface RawMonthOverMonthComparison {
+  current_income: number;
+  current_expense: number;
+  current_net_savings: number;
+  previous_income: number;
+  previous_expense: number;
+  previous_net_savings: number;
+}
+
 export interface ReportingDataSource {
   fetchDashboardSummary(
     period: ReportingPeriod,
@@ -75,4 +84,17 @@ export interface ReportingDataSource {
     endDate?: Date,
     categoryId?: string | null
   ): Promise<RawLargestTransaction[]>;
+
+  fetchMonthOverMonthComparison(
+    period: ReportingPeriod,
+    startDate?: Date,
+    endDate?: Date,
+    categoryId?: string | null
+  ): Promise<RawMonthOverMonthComparison>;
+
+  fetchFilteredLedgerRows(
+    startDate: Date,
+    endDate: Date,
+    categoryId?: string | null
+  ): Promise<RawLedgerRow[]>;
 }

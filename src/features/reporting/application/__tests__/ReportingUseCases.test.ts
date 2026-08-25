@@ -17,6 +17,8 @@ function makeMockRepo(): IReportingRepository {
     getMonthlyTrend: vi.fn(),
     getBudgetPerformance: vi.fn(),
     getLargestTransactions: vi.fn(),
+    getMonthOverMonthComparison: vi.fn(),
+    getFilteredLedgerRows: vi.fn(),
   };
 }
 

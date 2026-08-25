@@ -12,6 +12,11 @@ vi.mock('expo-secure-store', () => ({
   deleteItemAsync: vi.fn(),
 }));
 
+// Mock lucide-react-native
+vi.mock('lucide-react-native', () => new Proxy({}, {
+  get: () => () => null,
+}));
+
 // Mock environment variables for config validation
 process.env.EXPO_PUBLIC_SUPABASE_URL = 'https://mock.supabase.co';
 process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY = 'mock-key';

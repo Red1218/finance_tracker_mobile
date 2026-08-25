@@ -44,6 +44,14 @@ vi.mock('../../hooks/useReporting', () => ({
   }),
 }));
 
+vi.mock('react', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react')>();
+  return {
+    ...actual,
+    useState: (initial: any) => [typeof initial === 'function' ? initial() : initial, vi.fn()],
+  };
+});
+
 import { ReportingScreen } from '../../screens/ReportingScreen';
 
 describe('ReportingScreen Component Presentation', () => {
@@ -67,10 +75,7 @@ describe('ReportingScreen Component Presentation', () => {
     const header = element.props.children?.[0];
     const headerTop = header?.props?.children?.[0];
     const titleText = headerTop?.props?.children?.[0];
-    expect(titleText?.props?.children).toBe('Reports & Analytics');
-
-    const refreshButton = headerTop?.props?.children?.[1];
-    expect(refreshButton?.props?.accessibilityLabel).toBe('Refresh report data');
+    expect(titleText?.props?.children).toBe('Analytics & Reporting');
 
     const scrollContent = element.props.children?.[1];
     expect(scrollContent?.props?.contentContainerStyle?.padding).toBe(16);

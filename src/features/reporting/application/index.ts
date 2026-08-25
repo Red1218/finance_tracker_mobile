@@ -12,3 +12,12 @@ export { GetBudgetPerformanceUseCase } from './use-cases/GetBudgetPerformanceUse
 export { GetLargestTransactionsUseCase } from './use-cases/GetLargestTransactionsUseCase';
 export { GetFinancialSummaryUseCase } from './use-cases/GetFinancialSummaryUseCase';
 export type { GetFinancialSummaryCommand, FinancialSummaryDTO } from './use-cases/GetFinancialSummaryUseCase';
+
+export { GetMonthOverMonthComparisonUseCase } from './use-cases/GetMonthOverMonthComparisonUseCase';
+export { GetSpendingForecastUseCase } from './use-cases/GetSpendingForecastUseCase';
+export { ExportReportUseCase } from './use-cases/ExportReportUseCase';
+export type { ExportReportResponse } from './use-cases/ExportReportUseCase';
+
+export type { IPdfReportGenerator, PdfReportData } from './ports/IPdfReportGenerator';
+export type { ICsvReportGenerator } from './ports/ICsvReportGenerator';
+export type { IShareProvider } from './ports/IShareProvider';

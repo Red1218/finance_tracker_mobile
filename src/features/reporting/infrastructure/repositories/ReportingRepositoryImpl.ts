@@ -1,4 +1,4 @@
-import { IReportingRepository, ReportingPeriod, DashboardSummary, CategoryBreakdown, MonthlyTrendPoint, BudgetPerformance, LargestTransaction } from '../../domain';
+import { IReportingRepository, ReportingPeriod, DashboardSummary, CategoryBreakdown, MonthlyTrendPoint, BudgetPerformance, LargestTransaction, MonthOverMonthComparison, RawLedgerRow } from '../../domain';
 import { ReportingDataSource, RawCategoryBreakdown } from '../datasources/ReportingDataSource';
 import { RepositoryResult, RepositoryError, Result } from '../../../../platform/persistence';
 import { DashboardSummaryInfraMapper } from '../mappers/DashboardSummaryInfraMapper';
@@ -86,6 +86,42 @@ export class ReportingRepositoryImpl implements IReportingRepository {
       return Result.success(LargestTransactionInfraMapper.toDomain(raw));
     } catch (err) {
       return Result.failure(new RepositoryError('UNKNOWN_PERSISTENCE_ERROR', 'Failed to fetch largest transactions', undefined, err as Error));
+    }
+  }
+
+  public async getMonthOverMonthComparison(
+    period: ReportingPeriod,
+    startDate?: Date,
+    endDate?: Date,
+    categoryId?: string | null
+  ): Promise<RepositoryResult<MonthOverMonthComparison, RepositoryError>> {
+    try {
+      const raw = await this.dataSource.fetchMonthOverMonthComparison(period, startDate, endDate, categoryId);
+      return Result.success(
+        new MonthOverMonthComparison({
+          currentIncome: raw.current_income,
+          currentExpense: raw.current_expense,
+          currentNetSavings: raw.current_net_savings,
+          previousIncome: raw.previous_income,
+          previousExpense: raw.previous_expense,
+          previousNetSavings: raw.previous_net_savings,
+        })
+      );
+    } catch (err) {
+      return Result.failure(new RepositoryError('UNKNOWN_PERSISTENCE_ERROR', 'Failed to fetch month over month comparison', undefined, err as Error));
+    }
+  }
+
+  public async getFilteredLedgerRows(
+    startDate: Date,
+    endDate: Date,
+    categoryId?: string | null
+  ): Promise<RepositoryResult<RawLedgerRow[], RepositoryError>> {
+    try {
+      const raw = await this.dataSource.fetchFilteredLedgerRows(startDate, endDate, categoryId);
+      return Result.success(raw);
+    } catch (err) {
+      return Result.failure(new RepositoryError('UNKNOWN_PERSISTENCE_ERROR', 'Failed to fetch filtered ledger rows', undefined, err as Error));
     }
   }
 }
