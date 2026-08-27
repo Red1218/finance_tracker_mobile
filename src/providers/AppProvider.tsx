@@ -1,6 +1,7 @@
 import type { ComponentType, ReactNode } from 'react';
 import { ReactQueryProvider } from './ReactQueryProvider';
 import { ThemeProvider } from '../shared/theme';
+import { AuthSessionProvider } from './AuthSessionProvider';
 
 /**
  * Ordered list of providers wrapping the application.
@@ -9,6 +10,7 @@ import { ThemeProvider } from '../shared/theme';
  */
 const providers: readonly ComponentType<{ children: ReactNode }>[] = Object.freeze([
   ThemeProvider,
+  AuthSessionProvider,
   ReactQueryProvider,
 ]);
 
