@@ -56,7 +56,7 @@ describe('CategoryBreakdownSection Component Presentation', () => {
     content: null,
   };
 
-  it('renders Card primitive with header and category spending rows', () => {
+  it('renders Card primitive with header and horizontal progress bar category rows', () => {
     const element = CategoryBreakdownSection({ viewModel: mockLoadedViewModel, onRetry: vi.fn() });
 
     expect(element.type.name).toBe('SectionStateContainer');
@@ -70,24 +70,19 @@ describe('CategoryBreakdownSection Component Presentation', () => {
     expect(title.props.children).toBe('Top Spending Categories');
     expect(title.props.accessibilityRole).toBe('header');
 
-    const rows = cardChildren[1];
-    expect(rows).toHaveLength(2);
+    const blocks = cardChildren[1];
+    expect(blocks).toHaveLength(2);
 
-    // Row 0: Food & Dining
-    const row0Left = rows[0].props.children[0];
-    const row0Right = rows[0].props.children[1];
+    // Block 0: Food & Dining
+    const row0 = blocks[0].props.children[0];
+    const bar0 = blocks[0].props.children[1];
 
-    expect(row0Left.props.children[1].props.children).toBe('Food & Dining');
-    expect(row0Right.props.children[0].props.children).toBe('₹12,500.00');
-    expect(row0Right.props.children[1].props.children).toBe('45%');
+    expect(row0.props.children[0].props.children).toBe('Food & Dining');
+    expect(row0.props.children[1].props.children[0].props.children).toBe('45%');
+    expect(row0.props.children[1].props.children[1].props.children).toBe('₹12,500.00');
 
-    // Row 1: Shopping
-    const row1Left = rows[1].props.children[0];
-    const row1Right = rows[1].props.children[1];
-
-    expect(row1Left.props.children[1].props.children).toBe('Shopping');
-    expect(row1Right.props.children[0].props.children).toBe('₹8,000.00');
-    expect(row1Right.props.children[1].props.children).toBe('28%');
+    expect(bar0.props.accessibilityRole).toBe('progressbar');
+    expect(bar0.props.accessibilityValue).toEqual({ min: 0, max: 100, now: 45 });
   });
 
   it('renders EmptyState component when category list is empty', () => {

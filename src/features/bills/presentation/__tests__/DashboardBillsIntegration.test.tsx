@@ -1,5 +1,12 @@
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
+
+vi.mock('expo-router', () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+  }),
+}));
+
 import { DashboardView } from '../../../dashboard/presentation/screens/DashboardView';
 import { BudgetHealthSection } from '../../../dashboard/presentation/components/sections/BudgetHealthSection';
 import { CategoryBreakdownSection } from '../../../dashboard/presentation/components/sections/CategoryBreakdownSection';
@@ -64,7 +71,8 @@ describe('DashboardBillsIntegration Structural Verification', () => {
 
     expect(React.isValidElement(vnode)).toBe(true);
 
-    const layoutChildren = React.Children.toArray((vnode.props as { children: React.ReactNode }).children);
+    const dashboardLayout = React.Children.toArray((vnode.props as { children: React.ReactNode }).children)[0] as React.ReactElement;
+    const layoutChildren = React.Children.toArray((dashboardLayout.props as { children: React.ReactNode }).children);
 
     const upcomingSectionWrapper = layoutChildren.find((child: React.ReactNode) => {
       if (!React.isValidElement(child)) return false;

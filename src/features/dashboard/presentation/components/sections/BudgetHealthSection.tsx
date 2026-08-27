@@ -5,6 +5,7 @@ import { BudgetHealthViewModel, BudgetHealthRow } from '../../../application/vie
 import { useTheme } from '../../../../../shared/theme';
 import { Card } from '../../../../../shared/components/Card';
 import { EmptyState } from '../common/EmptyState';
+import { StatusIndicator } from '../../../../../shared/components/StatusIndicator';
 
 interface BudgetHealthSectionProps {
   viewModel: BudgetHealthViewModel;
@@ -29,7 +30,6 @@ export function BudgetHealthSection({ viewModel, onRetry }: BudgetHealthSectionP
           <EmptyState message="No active budgets configured for this period." />
         ) : (
           viewModel.content.map((budget: BudgetHealthRow, index: number) => {
-            const categoryName = (budget as unknown as { categoryName?: string }).categoryName || 'Overall Budget';
             const spent = budget.amountConsumed || (budget as unknown as { formattedSpent?: string }).formattedSpent || '₹0';
             const limit = budget.budgetLimit || (budget as unknown as { formattedLimit?: string }).formattedLimit || '₹0';
             const rawRatio = budget.consumptionRatio !== undefined
@@ -38,18 +38,34 @@ export function BudgetHealthSection({ viewModel, onRetry }: BudgetHealthSectionP
 
             const percentage = Math.min(Math.max(Math.round(rawRatio * 10) / 10, 0), 100);
             const isWarning = percentage >= 80 || budget.statusLabel === 'AtRisk' || budget.statusLabel === 'OverBudget';
+            const statusType = budget.statusLabel === 'OverBudget' ? 'error' : isWarning ? 'warning' : 'success';
 
             return (
               <View key={index} style={styles.item}>
-                <View style={styles.header}>
-                  <Text style={[styles.label, { color: colors.textPrimary, fontSize: typography.body.fontSize }]}>
-                    {categoryName}
+                {/* Header Row: Title & Percentage Status Badge */}
+                <View style={styles.headerRow}>
+                  <Text style={[styles.title, { color: colors.textPrimary, fontSize: typography.heading.fontSize }]} accessibilityRole="header">
+                    Budget Health
                   </Text>
-                  <Text style={[styles.value, { color: colors.textSecondary, fontSize: typography.caption.fontSize }]}>
-                    {spent} / {limit}
-                  </Text>
+                  <StatusIndicator
+                    status={statusType}
+                    label={`${Math.round(percentage)}%`}
+                  />
                 </View>
-                <View style={[styles.barBackground, { backgroundColor: colors.borderSubtle }]}>
+
+                {/* Subtitle Row: spent of limit */}
+                <Text style={[styles.spentText, { color: colors.textSecondary, fontSize: typography.body.fontSize }]}>
+                  {spent} spent of {limit}
+                </Text>
+
+                {/* Progress Bar Track */}
+                <View
+                  style={[styles.barBackground, { backgroundColor: colors.borderSubtle }]}
+                  accessible={true}
+                  accessibilityRole="progressbar"
+                  accessibilityLabel={`Budget consumption ${percentage}%`}
+                  accessibilityValue={{ min: 0, max: 100, now: percentage }}
+                >
                   <View
                     style={[
                       styles.barFill,
@@ -57,6 +73,11 @@ export function BudgetHealthSection({ viewModel, onRetry }: BudgetHealthSectionP
                     ]}
                   />
                 </View>
+
+                {/* Footer Row: Status */}
+                <Text style={[styles.footerText, { color: colors.textSecondary, fontSize: typography.caption.fontSize }]}>
+                  {budget.statusLabel === 'OverBudget' ? 'Over budget limit' : 'Budget on track'}
+                </Text>
               </View>
             );
           })
@@ -70,32 +91,33 @@ const styles = StyleSheet.create({
   cardContainer: {
     padding: 16,
   },
-  title: {
-    fontWeight: '700',
-    marginBottom: 16,
-  },
-  item: {
-    marginBottom: 14,
-  },
-  header: {
+  headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: 4,
   },
-  label: {
-    fontWeight: '600',
+  title: {
+    fontWeight: '700',
   },
-  value: {
+  spentText: {
     fontWeight: '500',
+    marginBottom: 12,
   },
   barBackground: {
     height: 8,
     borderRadius: 4,
     overflow: 'hidden',
+    marginBottom: 8,
   },
   barFill: {
     height: '100%',
     borderRadius: 4,
+  },
+  footerText: {
+    fontWeight: '500',
+  },
+  item: {
+    marginBottom: 0,
   },
 });

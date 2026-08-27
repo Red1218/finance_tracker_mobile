@@ -23,12 +23,6 @@ describe('BudgetHealthSection Component Presentation', () => {
         budgetLimit: '₹15,000.00',
         consumptionRatio: 0.933,
       },
-      {
-        statusLabel: 'OnTrack',
-        amountConsumed: '₹3,000.00',
-        budgetLimit: '₹10,000.00',
-        consumptionRatio: 0.30,
-      },
     ],
   };
 
@@ -54,7 +48,7 @@ describe('BudgetHealthSection Component Presentation', () => {
     content: null,
   };
 
-  it('renders Card primitive with section header and budget rows', () => {
+  it('renders Card primitive with header, status badge, spent/limit details, and progress bar', () => {
     const element = BudgetHealthSection({ viewModel: mockLoadedViewModel, onRetry: vi.fn() });
 
     expect(element.type.name).toBe('SectionStateContainer');
@@ -63,29 +57,18 @@ describe('BudgetHealthSection Component Presentation', () => {
     const card = element.props.children;
     expect(card.props.variant).toBe('elevated');
 
-    const cardChildren = card.props.children;
-    const headerTitle = cardChildren[0];
-    expect(headerTitle.props.children).toBe('Budget Health');
-    expect(headerTitle.props.accessibilityRole).toBe('header');
+    const items = card.props.children[1];
+    const item = items[0];
+    const headerRow = item.props.children[0];
+    const spentText = item.props.children[1];
+    const progressBar = item.props.children[2];
 
-    const items = cardChildren[1];
-    expect(items).toHaveLength(2);
+    expect(headerRow.props.children[0].props.children).toBe('Budget Health');
+    expect(headerRow.props.children[1].props.label).toBe('93%');
+    expect(spentText.props.children.join('')).toBe('₹14,000.00 spent of ₹15,000.00');
 
-    // Row 0: OverBudget (near/above 80% threshold)
-    const row0 = items[0];
-    const header0 = row0.props.children[0];
-    expect(header0.props.children[0].props.children).toBe('Overall Budget');
-    expect(header0.props.children[1].props.children.join('')).toBe('₹14,000.00 / ₹15,000.00');
-
-    const barFill0 = row0.props.children[1].props.children;
-    expect(barFill0.props.style[1].width).toBe('93.3%');
-    expect(barFill0.props.style[1].backgroundColor).toBe('#EF4444');
-
-    // Row 1: OnTrack (below 80% threshold)
-    const row1 = items[1];
-    const barFill1 = row1.props.children[1].props.children;
-    expect(barFill1.props.style[1].width).toBe('30%');
-    expect(barFill1.props.style[1].backgroundColor).toBe('#10B981');
+    expect(progressBar.props.accessibilityRole).toBe('progressbar');
+    expect(progressBar.props.accessibilityValue).toEqual({ min: 0, max: 100, now: 93.3 });
   });
 
   it('renders EmptyState component when budget list is empty', () => {

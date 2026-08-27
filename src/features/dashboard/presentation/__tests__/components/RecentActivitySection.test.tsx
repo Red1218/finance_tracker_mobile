@@ -1,6 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
 import { theme } from '../../../../../shared/theme/theme';
 
+vi.mock('expo-router', () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+  }),
+}));
 vi.mock('../../../../../shared/theme', () => ({
   useTheme: () => theme,
 }));
@@ -32,8 +37,22 @@ describe('RecentActivitySection Component Presentation', () => {
           amount: '₹3,200.00',
           direction: 'Expense',
         },
+        {
+          description: 'Uber Ride',
+          categoryName: 'Transport',
+          date: 'Aug 06, 2026',
+          amount: '₹420.00',
+          direction: 'Expense',
+        },
+        {
+          description: 'Coffee Shop',
+          categoryName: 'Food',
+          date: 'Aug 07, 2026',
+          amount: '₹150.00',
+          direction: 'Expense',
+        },
       ],
-      hasMore: false,
+      hasMore: true,
     },
   };
 
@@ -62,8 +81,9 @@ describe('RecentActivitySection Component Presentation', () => {
     content: null,
   };
 
-  it('renders Card primitive with section header and recent transaction rows', () => {
-    const element = RecentActivitySection({ viewModel: mockLoadedViewModel, onRetry: vi.fn() });
+  it('renders Card primitive with section header, See All action, and exactly 3 recent transaction rows', () => {
+    const onSeeAllMock = vi.fn();
+    const element = RecentActivitySection({ viewModel: mockLoadedViewModel, onRetry: vi.fn(), onSeeAll: onSeeAllMock });
 
     expect(element.type.name).toBe('SectionStateContainer');
     expect(element.props.status).toBe('Loaded');
@@ -72,28 +92,34 @@ describe('RecentActivitySection Component Presentation', () => {
     expect(card.props.variant).toBe('elevated');
 
     const cardChildren = card.props.children;
-    const title = cardChildren[0];
-    expect(title.props.children).toBe('Recent Activity');
-    expect(title.props.accessibilityRole).toBe('header');
+    const headerRow = cardChildren[0];
+    expect(headerRow.props.children[0].props.children).toBe('Recent Activity');
+
+    const seeAllButton = headerRow.props.children[1];
+    expect(seeAllButton.props.accessibilityLabel).toBe('See all transactions');
+
+    seeAllButton.props.onPress();
+    expect(onSeeAllMock).toHaveBeenCalledTimes(1);
 
     const rows = cardChildren[1];
-    expect(rows).toHaveLength(2);
+    // Must be sliced to exactly 3 items even though 4 were in mock input
+    expect(rows).toHaveLength(3);
 
     // Row 0: Income
-    const row0Left = rows[0].props.children[0];
-    const row0Right = rows[0].props.children[1];
+    const row0LeftGroup = rows[0].props.children[0];
+    const row0RightAmount = rows[0].props.children[1];
 
-    expect(row0Left.props.children[0].props.children).toBe('Monthly Salary');
-    expect(row0Left.props.children[1].props.children.join('')).toBe('Income • Aug 01, 2026');
-    expect(row0Right.props.children.join('')).toBe('+₹50,000.00');
+    expect(row0LeftGroup.props.children[1].props.children[0].props.children).toBe('Monthly Salary');
+    expect(row0LeftGroup.props.children[1].props.children[1].props.children.join('')).toBe('Aug 01, 2026 · Income');
+    expect(row0RightAmount.props.children.join('')).toBe('+₹50,000.00');
 
     // Row 1: Expense
-    const row1Left = rows[1].props.children[0];
-    const row1Right = rows[1].props.children[1];
+    const row1LeftGroup = rows[1].props.children[0];
+    const row1RightAmount = rows[1].props.children[1];
 
-    expect(row1Left.props.children[0].props.children).toBe('Supermarket Groceries');
-    expect(row1Left.props.children[1].props.children.join('')).toBe('Food • Aug 05, 2026');
-    expect(row1Right.props.children.join('')).toBe('-₹3,200.00');
+    expect(row1LeftGroup.props.children[1].props.children[0].props.children).toBe('Supermarket Groceries');
+    expect(row1LeftGroup.props.children[1].props.children[1].props.children.join('')).toBe('Aug 05, 2026 · Food');
+    expect(row1RightAmount.props.children.join('')).toBe('-₹3,200.00');
   });
 
   it('renders EmptyState component when activity list is empty', () => {

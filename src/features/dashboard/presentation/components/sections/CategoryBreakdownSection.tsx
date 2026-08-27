@@ -14,6 +14,8 @@ interface CategoryBreakdownSectionProps {
 export function CategoryBreakdownSection({ viewModel, onRetry }: CategoryBreakdownSectionProps) {
   const { colors, typography } = useTheme();
 
+  const topCategories = viewModel.content ? viewModel.content.slice(0, 4) : [];
+
   return (
     <SectionStateContainer
       status={viewModel.status}
@@ -25,29 +27,46 @@ export function CategoryBreakdownSection({ viewModel, onRetry }: CategoryBreakdo
         <Text style={[styles.title, { color: colors.textPrimary, fontSize: typography.heading.fontSize }]} accessibilityRole="header">
           Top Spending Categories
         </Text>
-        {(!viewModel.content || viewModel.content.length === 0) ? (
+        {topCategories.length === 0 ? (
           <EmptyState message="No category spending recorded for this period." />
         ) : (
-          viewModel.content.map((category: CategoryBreakdownRow, index: number) => {
+          topCategories.map((category: CategoryBreakdownRow, index: number) => {
             const name = category.categoryName || (category as unknown as { name?: string }).name || 'Category';
             const color = (category as unknown as { colorCode?: string }).colorCode || colors.brandPrimary;
-            const percentageText = `${Math.round(category.proportion * 100)}%`;
+            const percentageVal = Math.round(category.proportion * 100);
+            const percentageText = `${percentageVal}%`;
 
             return (
-              <View key={index} style={[styles.row, { borderBottomColor: colors.borderSubtle }]}>
-                <View style={styles.left}>
-                  <View style={[styles.dot, { backgroundColor: color }]} />
+              <View key={index} style={styles.categoryBlock}>
+                {/* Category Name, Percentage, and Amount Row */}
+                <View style={styles.row}>
                   <Text style={[styles.name, { color: colors.textPrimary, fontSize: typography.body.fontSize }]}>
                     {name}
                   </Text>
+                  <View style={styles.rightValues}>
+                    <Text style={[styles.percentage, { color: colors.textSecondary, fontSize: typography.caption.fontSize }]}>
+                      {percentageText}
+                    </Text>
+                    <Text style={[styles.amount, { color: colors.textPrimary, fontSize: typography.body.fontSize }]}>
+                      {category.amountSpent}
+                    </Text>
+                  </View>
                 </View>
-                <View style={styles.right}>
-                  <Text style={[styles.amount, { color: colors.textPrimary, fontSize: typography.body.fontSize }]}>
-                    {category.amountSpent}
-                  </Text>
-                  <Text style={[styles.percentage, { color: colors.textSecondary, fontSize: typography.caption.fontSize }]}>
-                    {percentageText}
-                  </Text>
+
+                {/* Horizontal Progress Bar */}
+                <View
+                  style={[styles.barBackground, { backgroundColor: colors.borderSubtle }]}
+                  accessible={true}
+                  accessibilityRole="progressbar"
+                  accessibilityLabel={`${name} spending share ${percentageText}`}
+                  accessibilityValue={{ min: 0, max: 100, now: percentageVal }}
+                >
+                  <View
+                    style={[
+                      styles.barFill,
+                      { width: `${percentageVal}%`, backgroundColor: color },
+                    ]}
+                  />
                 </View>
               </View>
             );
@@ -64,35 +83,38 @@ const styles = StyleSheet.create({
   },
   title: {
     fontWeight: '700',
-    marginBottom: 12,
+    marginBottom: 16,
+  },
+  categoryBlock: {
+    marginBottom: 14,
   },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-  },
-  left: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginRight: 10,
+    marginBottom: 6,
   },
   name: {
-    fontWeight: '500',
+    fontWeight: '600',
   },
-  right: {
-    alignItems: 'flex-end',
+  rightValues: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  percentage: {
+    fontWeight: '500',
   },
   amount: {
     fontWeight: '600',
   },
-  percentage: {
-    marginTop: 2,
+  barBackground: {
+    height: 6,
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  barFill: {
+    height: '100%',
+    borderRadius: 3,
   },
 });

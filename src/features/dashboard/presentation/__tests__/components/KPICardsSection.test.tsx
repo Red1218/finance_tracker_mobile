@@ -6,9 +6,8 @@ vi.mock('../../../../../shared/theme', () => ({
 }));
 import { KPICardViewModel } from '../../../application/view-models/KPICardViewModel';
 import { KPICardsSection } from '../../components/sections/KPICardsSection';
-import { KPICard } from '../../components/sections/KPICard';
 
-describe('KPICardsSection & KPICard Presentation Behavior', () => {
+describe('KPICardsSection Hero Financial Card Presentation Behavior', () => {
   const mockLoadedViewModel: KPICardViewModel = {
     sectionType: 'KPI',
     status: 'Loaded',
@@ -38,52 +37,28 @@ describe('KPICardsSection & KPICard Presentation Behavior', () => {
     content: null,
   };
 
-  it('renders all 4 core KPI cards within SectionStateContainer', () => {
+  it('renders Hero Financial Card with Net Balance dominant and Income/Expenses sub-metrics', () => {
     const element = KPICardsSection({ viewModel: mockLoadedViewModel, onRetry: vi.fn() });
 
     expect(element.type.name).toBe('SectionStateContainer');
     expect(element.props.status).toBe('Loaded');
 
-    const grid = element.props.children;
-    const cards = grid.props.children;
+    const card = element.props.children;
+    expect(card.props.variant).toBe('elevated');
 
-    expect(cards).toHaveLength(4);
+    const cardChildren = card.props.children;
+    // 0: NET BALANCE label
+    expect(cardChildren[0].props.children).toBe('NET BALANCE');
+    // 1: Net Balance Value
+    expect(cardChildren[1].props.children).toBe('₹1,50,000.00');
 
-    // 1. Total Balance
-    expect(cards[0].props.title).toBe('Total Balance');
-    expect(cards[0].props.amount).toBe('₹1,50,000.00');
+    // 3: Metrics Row
+    const metricsRow = cardChildren[3];
+    const incomeCol = metricsRow.props.children[0];
+    const expenseCol = metricsRow.props.children[1];
 
-    // 2. Period Income
-    expect(cards[1].props.title).toBe('Period Income');
-    expect(cards[1].props.amount).toBe('₹60,000.00');
-
-    // 3. Period Expenses
-    expect(cards[2].props.title).toBe('Period Expenses');
-    expect(cards[2].props.amount).toBe('₹20,000.00');
-
-    // 4. Net Cash Flow
-    expect(cards[3].props.title).toBe('Net Cash Flow');
-    expect(cards[3].props.amount).toBe('₹40,000.00');
-  });
-
-  it('renders individual KPICard component with title, amount, and trend badge', () => {
-    const cardElement = KPICard({
-      title: 'Total Balance',
-      amount: '₹1,50,000.00',
-      trend: { direction: 'Positive', label: '+12.5%', accessibilityLabel: 'Increased' },
-    });
-
-    const cardContainer = cardElement.props.children;
-    const cardContent = cardContainer.props.children;
-
-    // Label
-    expect(cardContent[0].props.children).toBe('Total Balance');
-    // Amount
-    expect(cardContent[1].props.children).toBe('₹1,50,000.00');
-    expect(cardContent[1].props.accessibilityLabel).toBe('Total Balance is ₹1,50,000.00');
-    // Trend
-    const trendText = cardContent[2].props.children.props.children;
-    expect(trendText.join('')).toBe('▲ +12.5%');
+    expect(incomeCol.props.children[1].props.children).toBe('₹60,000.00');
+    expect(expenseCol.props.children[1].props.children).toBe('₹20,000.00');
   });
 
   it('passes error state and onRetry callback to SectionStateContainer', () => {
