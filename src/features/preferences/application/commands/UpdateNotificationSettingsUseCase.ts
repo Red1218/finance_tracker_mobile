@@ -14,7 +14,7 @@ export class UpdateNotificationSettingsUseCase {
   }
 
   public async execute(command: UpdateNotificationSettingsCommand): Promise<PreferencesDTO> {
-    const getResult = await this.preferencesRepository.get();
+    const getResult = await this.preferencesRepository.get(command.userId);
     if (!getResult.success || !getResult.data) {
       throw new PreferencesNotFoundError();
     }

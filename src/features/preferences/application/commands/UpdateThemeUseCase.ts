@@ -11,7 +11,7 @@ export class UpdateThemeUseCase {
   }
 
   public async execute(command: UpdateThemeCommand): Promise<PreferencesDTO> {
-    const getResult = await this.preferencesRepository.get();
+    const getResult = await this.preferencesRepository.get(command.userId);
     if (!getResult.success || !getResult.data) {
       throw new PreferencesNotFoundError();
     }

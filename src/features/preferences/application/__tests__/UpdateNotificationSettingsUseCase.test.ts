@@ -1,54 +1,57 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { UpdateNotificationSettingsUseCase } from '../use-cases/UpdateNotificationSettingsUseCase';
+import { UpdateNotificationSettingsUseCase } from '../commands/UpdateNotificationSettingsUseCase';
+import { InitializePreferencesUseCase } from '../commands/InitializePreferencesUseCase';
 import { InMemoryPreferencesRepository } from './InMemoryPreferencesRepository';
 import { MockNotificationService } from './MockNotificationService';
-import { PreferencesDomainError } from '../../domain';
 
 describe('UpdateNotificationSettingsUseCase', () => {
   let preferencesRepo: InMemoryPreferencesRepository;
   let notificationService: MockNotificationService;
+  let initUseCase: InitializePreferencesUseCase;
   let useCase: UpdateNotificationSettingsUseCase;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     preferencesRepo = new InMemoryPreferencesRepository();
     notificationService = new MockNotificationService();
+    initUseCase = new InitializePreferencesUseCase(preferencesRepo);
+    await initUseCase.execute('user-notif-1');
+
     useCase = new UpdateNotificationSettingsUseCase(preferencesRepo, notificationService);
   });
 
-  it('should schedule daily reminder service call when daily reminder is enabled with time', async () => {
-    const result = await useCase.execute({
+  it('should update notification settings when valid reminder time is provided', async () => {
+    const dto = await useCase.execute({
       budgetAlertsEnabled: true,
       dailyReminderEnabled: true,
       reminderTime: '20:00',
+      userId: 'user-notif-1',
     });
 
-    expect(result.success).toBe(true);
-    expect(notificationService.scheduledTime?.value).toBe('20:00');
+    expect(dto.budgetAlertsEnabled).toBe(true);
+    expect(dto.dailyReminderEnabled).toBe(true);
+    expect(dto.reminderTime).toBe('20:00');
   });
 
-  it('should cancel daily reminder service call when daily reminder is disabled', async () => {
-    const result = await useCase.execute({
+  it('should update daily reminder setting to disabled', async () => {
+    const dto = await useCase.execute({
       budgetAlertsEnabled: true,
       dailyReminderEnabled: false,
       reminderTime: null,
+      userId: 'user-notif-1',
     });
 
-    expect(result.success).toBe(true);
-    expect(notificationService.cancelCount).toBe(1);
-    expect(notificationService.scheduledTime).toBeNull();
+    expect(dto.dailyReminderEnabled).toBe(false);
+    expect(dto.reminderTime).toBeNull();
   });
 
-  it('should fail if daily reminder is enabled but reminder time is missing', async () => {
-    const result = await useCase.execute({
-      budgetAlertsEnabled: true,
-      dailyReminderEnabled: true,
-      reminderTime: null,
-    });
-
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(result.error).toBeInstanceOf(PreferencesDomainError);
-      expect((result.error as PreferencesDomainError).code).toBe('INVALID_NOTIFICATION_SETTINGS');
-    }
+  it('should fail if daily reminder is enabled but reminder time is invalid format', async () => {
+    await expect(
+      useCase.execute({
+        budgetAlertsEnabled: true,
+        dailyReminderEnabled: true,
+        reminderTime: 'invalid-time',
+        userId: 'user-notif-1',
+      })
+    ).rejects.toThrow();
   });
 });

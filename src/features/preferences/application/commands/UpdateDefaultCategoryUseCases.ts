@@ -2,6 +2,7 @@ import { CategoryValidationService } from '../../../categories/application/servi
 import { ICategoryRepository } from '../../../categories/application/repositories/ICategoryRepository';
 import { IPreferencesRepository } from '../repositories/IPreferencesRepository';
 import { DefaultSettings } from '../../domain';
+import { CategoryId } from '../../../categories/domain';
 import { PreferencesDTO } from '../dto/PreferencesDTO';
 import { PreferencesDTOMapper } from '../mappers/PreferencesDTOMapper';
 import { PreferencesNotFoundError } from '../errors/PreferencesApplicationError';
@@ -32,14 +33,14 @@ export class UpdateDefaultExpenseCategoryUseCase {
       await this.categoryValidationService.validateCategoryForKind(command.categoryId, 'EXPENSE');
     }
 
-    const getResult = await this.preferencesRepository.get();
+    const getResult = await this.preferencesRepository.get(command.userId);
     if (!getResult.success || !getResult.data) {
       throw new PreferencesNotFoundError();
     }
 
     const currentDefaults = getResult.data.defaults;
     const updatedDefaults = new DefaultSettings({
-      defaultExpenseCategoryId: command.categoryId ? (command.categoryId as any) : null,
+      defaultExpenseCategoryId: command.categoryId ? new CategoryId(command.categoryId) : null,
       defaultIncomeCategoryId: currentDefaults.defaultIncomeCategoryId,
     });
 
@@ -74,7 +75,7 @@ export class UpdateDefaultIncomeCategoryUseCase {
       await this.categoryValidationService.validateCategoryForKind(command.categoryId, 'INCOME');
     }
 
-    const getResult = await this.preferencesRepository.get();
+    const getResult = await this.preferencesRepository.get(command.userId);
     if (!getResult.success || !getResult.data) {
       throw new PreferencesNotFoundError();
     }
@@ -82,7 +83,7 @@ export class UpdateDefaultIncomeCategoryUseCase {
     const currentDefaults = getResult.data.defaults;
     const updatedDefaults = new DefaultSettings({
       defaultExpenseCategoryId: currentDefaults.defaultExpenseCategoryId,
-      defaultIncomeCategoryId: command.categoryId ? (command.categoryId as any) : null,
+      defaultIncomeCategoryId: command.categoryId ? new CategoryId(command.categoryId) : null,
     });
 
     const updated = getResult.data.updateDefaults(updatedDefaults);

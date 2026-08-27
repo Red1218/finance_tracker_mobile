@@ -46,6 +46,13 @@ export class SupabasePreferencesRepository extends BaseRepository implements IPr
 
   public async save(preferences: Preferences): Promise<RepositoryResult<void, RepositoryError>> {
     try {
+      if (!preferences.userId) {
+        return this.handleError(
+          new Error('Cannot persist preferences: user_id is missing or null.'),
+          { operation: 'save', id: preferences.id.value }
+        );
+      }
+
       const row = PreferencesMapper.toPersistence(preferences);
       const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(row.id);
       const payload: Partial<PreferencesRow> = isUuid ? row : { ...row };

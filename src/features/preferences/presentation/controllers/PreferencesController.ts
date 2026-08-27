@@ -8,7 +8,10 @@ import {
   UpdateDefaultExpenseCategoryUseCase,
   UpdateDefaultIncomeCategoryUseCase,
   UpdateNotificationSettingsUseCase,
+  GetNotificationPermissionStatusUseCase,
+  RequestNotificationPermissionUseCase,
 } from '../../application';
+import { PermissionStatus } from '../../application/ports/INotificationPermissionPort';
 import { ListCategoriesUseCase } from '../../../categories/application/use-cases/ListCategoriesUseCase';
 import { Theme, WeekStart, DecimalPrecision } from '../../domain';
 import { Category } from '../../../categories/domain';
@@ -29,7 +32,9 @@ export class PreferencesController {
     public readonly updateDefaultExpenseCategoryUseCase: UpdateDefaultExpenseCategoryUseCase,
     public readonly updateDefaultIncomeCategoryUseCase: UpdateDefaultIncomeCategoryUseCase,
     public readonly updateNotificationSettingsUseCase: UpdateNotificationSettingsUseCase,
-    public readonly listCategoriesUseCase: ListCategoriesUseCase
+    public readonly listCategoriesUseCase: ListCategoriesUseCase,
+    public readonly getNotificationPermissionStatusUseCase?: GetNotificationPermissionStatusUseCase,
+    public readonly requestNotificationPermissionUseCase?: RequestNotificationPermissionUseCase
   ) {
     this.appInfoProvider = new AppInfoProvider();
     Object.freeze(this);
@@ -82,5 +87,19 @@ export class PreferencesController {
     userId?: string
   ): Promise<void> {
     await this.updateNotificationSettingsUseCase.execute({ ...data, userId });
+  }
+
+  public async checkNotificationPermission(): Promise<PermissionStatus> {
+    if (this.getNotificationPermissionStatusUseCase) {
+      return await this.getNotificationPermissionStatusUseCase.execute();
+    }
+    return 'NOT_REQUESTED';
+  }
+
+  public async requestNotificationPermission(): Promise<PermissionStatus> {
+    if (this.requestNotificationPermissionUseCase) {
+      return await this.requestNotificationPermissionUseCase.execute();
+    }
+    return 'DENIED';
   }
 }

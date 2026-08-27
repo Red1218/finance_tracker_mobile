@@ -15,7 +15,8 @@ export * from './commands/UpdateNotificationSettingsCommand';
 export * from './commands/UpdateNotificationSettingsUseCase';
 export * from './commands/UpdateDefaultCategoryUseCases';
 export * from './queries/LoadPreferencesQueryUseCase';
+export * from './use-cases/GetNotificationPermissionStatusUseCase';
+export * from './use-cases/RequestNotificationPermissionUseCase';
 
 // Backward compatibility re-export
 export { LoadPreferencesQueryUseCase as LoadPreferencesUseCase } from './queries/LoadPreferencesQueryUseCase';
-

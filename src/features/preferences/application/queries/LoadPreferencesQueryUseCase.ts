@@ -8,8 +8,8 @@ export class LoadPreferencesQueryUseCase {
     Object.freeze(this);
   }
 
-  public async execute(): Promise<PreferencesDTO> {
-    const result = await this.preferencesRepository.get();
+  public async execute(userId?: string): Promise<PreferencesDTO> {
+    const result = await this.preferencesRepository.get(userId);
     if (!result.success || !result.data) {
       throw new PreferencesNotFoundError();
     }

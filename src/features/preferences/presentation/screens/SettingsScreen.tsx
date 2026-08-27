@@ -1,22 +1,31 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { useTheme } from '../../../../shared/theme';
 import { PreferencesModule } from '../../composition/PreferencesModule';
 import { usePreferences } from '../hooks/usePreferences';
 import { useUpdatePreference } from '../hooks/useUpdatePreference';
+import { useNotificationPermission } from '../hooks/useNotificationPermission';
 import { AppearanceSection } from '../components/AppearanceSection';
 import { FinanceSection } from '../components/FinanceSection';
 import { DefaultsSection } from '../components/DefaultsSection';
-import { NotificationSection } from '../components/NotificationSection';
+import { NotificationPreferencesSection } from '../components/NotificationPreferencesSection';
+import { BackupRestoreSection } from '../../../backup/presentation/components/BackupRestoreSection';
+import { SyncStatusSection } from '../../../sync/presentation/components/SyncStatusSection';
 import { AboutSection } from '../components/AboutSection';
+import { SyncModule, syncModule as defaultSyncModule } from '../../../sync/composition/SyncModule';
+import { useSync } from '../../../sync/presentation/hooks/useSync';
 
 interface SettingsScreenProps {
   module?: PreferencesModule;
+  syncModule?: SyncModule;
 }
 
 const defaultModule = new PreferencesModule();
 
-export function SettingsScreen({ module = defaultModule }: SettingsScreenProps) {
+export function SettingsScreen({
+  module = defaultModule,
+  syncModule = defaultSyncModule,
+}: SettingsScreenProps) {
   const { colors, spacing, typography } = useTheme();
 
   const { viewModel, categories, isLoading, error, refresh } = usePreferences(
@@ -36,6 +45,22 @@ export function SettingsScreen({ module = defaultModule }: SettingsScreenProps) 
     module.controller,
     refresh
   );
+
+  // Real Clean Architecture Sync hook
+  const { viewModel: syncViewModel, isSyncing, error: syncError, triggerSync } = useSync(
+    syncModule.syncController
+  );
+
+  // Real Clean Architecture Notification Permission hook (consuming controller/application boundary)
+  const { permissionState, requestPermission, openSystemSettings } = useNotificationPermission(module.controller);
+
+  const handleBackupNotice = (actionType: 'export' | 'restore') => {
+    Alert.alert(
+      'Backup & Restore Deferred',
+      `Platform encryption and file providers are ready, but automated database ${actionType} orchestration is deferred for an upcoming phase.`,
+      [{ text: 'OK' }]
+    );
+  };
 
   if (isLoading && !viewModel) {
     return (
@@ -94,14 +119,66 @@ export function SettingsScreen({ module = defaultModule }: SettingsScreenProps) 
         disabled={isUpdating}
       />
 
-      {/* 4. Notifications Section */}
-      <NotificationSection
-        viewModel={viewModel.notifications}
-        onUpdateNotifications={updateNotificationSettings}
-        disabled={isUpdating}
+      {/* 4. Notification Preferences Section (Real Application & Infrastructure Flow) */}
+      <NotificationPreferencesSection
+        viewModel={{
+          billRemindersEnabled: viewModel.notifications.dailyReminderEnabled,
+          billReminderLeadTimeDays: 3,
+          budgetAlertsEnabled: viewModel.notifications.budgetAlertsEnabled,
+          dailyDigestEnabled: viewModel.notifications.dailyReminderEnabled,
+          dailyDigestTime: viewModel.notifications.reminderTime ?? '20:00',
+          permissionState,
+        }}
+        onToggleBillReminders={(enabled) =>
+          updateNotificationSettings({
+            budgetAlertsEnabled: viewModel.notifications.budgetAlertsEnabled,
+            dailyReminderEnabled: enabled,
+            reminderTime: viewModel.notifications.reminderTime ?? '20:00',
+          })
+        }
+        onChangeLeadTimeDays={() => {}}
+        onToggleBudgetAlerts={(enabled) =>
+          updateNotificationSettings({
+            budgetAlertsEnabled: enabled,
+            dailyReminderEnabled: viewModel.notifications.dailyReminderEnabled,
+            reminderTime: viewModel.notifications.reminderTime,
+          })
+        }
+        onToggleDailyDigest={(enabled) =>
+          updateNotificationSettings({
+            budgetAlertsEnabled: viewModel.notifications.budgetAlertsEnabled,
+            dailyReminderEnabled: enabled,
+            reminderTime: viewModel.notifications.reminderTime ?? '20:00',
+          })
+        }
+        onChangeDigestTime={(time) =>
+          updateNotificationSettings({
+            budgetAlertsEnabled: viewModel.notifications.budgetAlertsEnabled,
+            dailyReminderEnabled: true,
+            reminderTime: time,
+          })
+        }
+        onRequestPermission={requestPermission}
+        onOpenSystemSettings={openSystemSettings}
       />
 
-      {/* 5. About Section */}
+      {/* 5. Data & Backup Section (Explicit Deferred Boundary) */}
+      <BackupRestoreSection
+        onExportPress={() => handleBackupNotice('export')}
+        onRestorePress={() => handleBackupNotice('restore')}
+        isExporting={false}
+        isRestoring={false}
+      />
+
+      {/* 6. Network & Synchronization Section (Real Application & Controller Flow) */}
+      <SyncStatusSection
+        viewModel={syncViewModel}
+        isSyncing={isSyncing}
+        error={syncError}
+        onManualSyncPress={triggerSync}
+      />
+
+      {/* About Section */}
       <AboutSection viewModel={viewModel.about} />
     </ScrollView>
   );

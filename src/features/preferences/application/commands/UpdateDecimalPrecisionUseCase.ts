@@ -11,7 +11,7 @@ export class UpdateDecimalPrecisionUseCase {
   }
 
   public async execute(command: UpdateDecimalPrecisionCommand): Promise<PreferencesDTO> {
-    const getResult = await this.preferencesRepository.get();
+    const getResult = await this.preferencesRepository.get(command.userId);
     if (!getResult.success || !getResult.data) {
       throw new PreferencesNotFoundError();
     }

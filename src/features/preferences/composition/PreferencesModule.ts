@@ -8,6 +8,8 @@ import {
   UpdateDefaultExpenseCategoryUseCase,
   UpdateDefaultIncomeCategoryUseCase,
   UpdateNotificationSettingsUseCase,
+  GetNotificationPermissionStatusUseCase,
+  RequestNotificationPermissionUseCase,
   IPreferencesRepository,
 } from '../application';
 import { SupabasePreferencesRepository } from '../../../platform/persistence/preferences/SupabasePreferencesRepository';
@@ -29,6 +31,8 @@ export class PreferencesModule {
   public readonly updateDefaultExpenseCategoryUseCase: UpdateDefaultExpenseCategoryUseCase;
   public readonly updateDefaultIncomeCategoryUseCase: UpdateDefaultIncomeCategoryUseCase;
   public readonly updateNotificationSettingsUseCase: UpdateNotificationSettingsUseCase;
+  public readonly getNotificationPermissionStatusUseCase: GetNotificationPermissionStatusUseCase;
+  public readonly requestNotificationPermissionUseCase: RequestNotificationPermissionUseCase;
   public readonly listCategoriesUseCase: ListCategoriesUseCase;
 
   constructor() {
@@ -54,6 +58,12 @@ export class PreferencesModule {
       this.preferencesRepository,
       notificationService
     );
+    this.getNotificationPermissionStatusUseCase = new GetNotificationPermissionStatusUseCase(
+      notificationService
+    );
+    this.requestNotificationPermissionUseCase = new RequestNotificationPermissionUseCase(
+      notificationService
+    );
     this.listCategoriesUseCase = new ListCategoriesUseCase(categoryRepository);
 
     this.controller = new PreferencesController(
@@ -66,7 +76,9 @@ export class PreferencesModule {
       this.updateDefaultExpenseCategoryUseCase,
       this.updateDefaultIncomeCategoryUseCase,
       this.updateNotificationSettingsUseCase,
-      this.listCategoriesUseCase
+      this.listCategoriesUseCase,
+      this.getNotificationPermissionStatusUseCase,
+      this.requestNotificationPermissionUseCase
     );
 
     Object.freeze(this);
