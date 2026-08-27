@@ -3,3 +3,4 @@ export * from './FinanceSection';
 export * from './DefaultsSection';
 export * from './NotificationSection';
 export * from './AboutSection';
+export * from './AccountSecuritySection';

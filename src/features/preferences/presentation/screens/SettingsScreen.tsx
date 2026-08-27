@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { useTheme } from '../../../../shared/theme';
 import { PreferencesModule } from '../../composition/PreferencesModule';
@@ -9,11 +9,13 @@ import { AppearanceSection } from '../components/AppearanceSection';
 import { FinanceSection } from '../components/FinanceSection';
 import { DefaultsSection } from '../components/DefaultsSection';
 import { NotificationPreferencesSection } from '../components/NotificationPreferencesSection';
+import { AccountSecuritySection } from '../components/AccountSecuritySection';
 import { BackupRestoreSection } from '../../../backup/presentation/components/BackupRestoreSection';
 import { SyncStatusSection } from '../../../sync/presentation/components/SyncStatusSection';
 import { AboutSection } from '../components/AboutSection';
 import { SyncModule, syncModule as defaultSyncModule } from '../../../sync/composition/SyncModule';
 import { useSync } from '../../../sync/presentation/hooks/useSync';
+import { useAppAuth } from '../../../auth/presentation/hooks/useAppAuth';
 
 interface SettingsScreenProps {
   module?: PreferencesModule;
@@ -27,6 +29,9 @@ export function SettingsScreen({
   syncModule = defaultSyncModule,
 }: SettingsScreenProps) {
   const { colors, spacing, typography } = useTheme();
+
+  const { user, logout, loading: isAuthLoading } = useAppAuth();
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   const { viewModel, categories, isLoading, error, refresh } = usePreferences(
     module.controller
@@ -53,6 +58,33 @@ export function SettingsScreen({
 
   // Real Clean Architecture Notification Permission hook (consuming controller/application boundary)
   const { permissionState, requestPermission, openSystemSettings } = useNotificationPermission(module.controller);
+
+  const handleSignOutPress = () => {
+    Alert.alert(
+      'Sign out?',
+      'Are you sure you want to sign out of Finance Tracker?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Sign Out',
+          style: 'destructive',
+          onPress: async () => {
+            setIsSigningOut(true);
+            try {
+              await logout();
+            } catch (e: any) {
+              Alert.alert('Sign Out Failed', e?.message || 'An error occurred while signing out.');
+            } finally {
+              setIsSigningOut(false);
+            }
+          },
+        },
+      ]
+    );
+  };
 
   const handleBackupNotice = (actionType: 'export' | 'restore') => {
     Alert.alert(
@@ -94,6 +126,13 @@ export function SettingsScreen({
           <Text style={[{ color: colors.error }, typography.caption]}>{updateError}</Text>
         </View>
       )}
+
+      {/* 0. Account & Security Section */}
+      <AccountSecuritySection
+        userEmail={user?.email ?? null}
+        onSignOut={handleSignOutPress}
+        disabled={isSigningOut || isAuthLoading}
+      />
 
       {/* 1. Appearance Section */}
       <AppearanceSection
