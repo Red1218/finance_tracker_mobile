@@ -4,12 +4,13 @@ import { ErrorBoundary } from './ErrorBoundary';
 
 export type BootstrapProps = Readonly<{
   children: ReactNode;
+  onThemeInitialized?: () => void;
 }>;
 
-export function Bootstrap({ children }: BootstrapProps) {
+export function Bootstrap({ children, onThemeInitialized }: BootstrapProps) {
   return (
     <ErrorBoundary>
-      <AppProvider>
+      <AppProvider onThemeInitialized={onThemeInitialized}>
         {children}
       </AppProvider>
     </ErrorBoundary>

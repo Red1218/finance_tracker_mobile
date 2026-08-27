@@ -1,15 +1,16 @@
 import "../global.css";
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { ThemeProvider as NavigationThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import 'react-native-reanimated';
 
-import { useColorScheme } from '@/components/useColorScheme';
-
+import { useTheme } from '@/src/shared/theme';
 import { Bootstrap } from '@/src/bootstrap';
 import { NavigationContainer } from '@/src/navigation';
+import { OfflineStatusBanner } from '@/src/features/sync/presentation/components/OfflineStatusBanner';
+import { NetInfoNetworkStatusProvider } from '@/src/platform/persistence/sync/NetInfoNetworkStatusProvider';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -20,31 +21,36 @@ export const unstable_settings = {
   initialRouteName: '(tabs)',
 };
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
+// Prevent the splash screen from auto-hiding before asset loading and theme restoration are complete.
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function RootLayout() {
-  const [loaded, error] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
+  const [isThemeInitialized, setIsThemeInitialized] = useState(false);
 
   // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
-    if (error) throw error;
-  }, [error]);
+    if (fontError) throw fontError;
+  }, [fontError]);
+
+  const handleThemeInitialized = useCallback(() => {
+    setIsThemeInitialized(true);
+  }, []);
 
   useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
+    if (fontsLoaded && isThemeInitialized) {
+      SplashScreen.hideAsync().catch(() => {});
     }
-  }, [loaded]);
+  }, [fontsLoaded, isThemeInitialized]);
 
-  if (!loaded) {
+  if (!fontsLoaded) {
     return null;
   }
 
   return (
-    <Bootstrap>
+    <Bootstrap onThemeInitialized={handleThemeInitialized}>
       <NavigationContainer>
         <RootLayoutNav />
       </NavigationContainer>
@@ -53,14 +59,22 @@ export default function RootLayout() {
 }
 
 function RootLayoutNav() {
-  const colorScheme = useColorScheme();
+  const { navigationTheme } = useTheme();
+  const [isOffline, setIsOffline] = useState(false);
+
+  useEffect(() => {
+    const provider = new NetInfoNetworkStatusProvider();
+    provider.isOnline().then((online) => setIsOffline(!online));
+    const unsubscribe = provider.subscribe((online) => setIsOffline(!online));
+    return unsubscribe;
+  }, []);
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <NavigationThemeProvider value={navigationTheme}>
+      <OfflineStatusBanner isVisible={isOffline} />
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-
       </Stack>
-    </ThemeProvider>
+    </NavigationThemeProvider>
   );
 }
