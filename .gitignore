@@ -42,3 +42,6 @@ yarn-error.*
 /coverage
 supabase/.temp/
 .env
+
+# IDE metadata
+.idea/

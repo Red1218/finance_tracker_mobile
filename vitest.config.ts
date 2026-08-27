@@ -12,12 +12,10 @@ export default defineConfig({
       EXPO_PUBLIC_SUPABASE_URL: 'https://mock.supabase.co',
       EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'mock-key',
     },
-    deps: {
-      optimizer: {
-        web: {
-          include: ['react-native', 'react-native-url-polyfill'],
-        }
-      }
-    }
+    server: {
+      deps: {
+        inline: ['react-native-gifted-charts', 'react-native-svg', 'lucide-react-native'],
+      },
+    },
   },
 });

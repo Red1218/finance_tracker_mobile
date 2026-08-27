@@ -52,7 +52,6 @@ describe('DashboardBillsIntegration Structural Verification', () => {
       onMarkPaidPress: vi.fn(),
     });
 
-    // Invoke pure DashboardView component function to inspect returned React VNode tree
     const vnode = DashboardView({
       state: mockDashboardState,
       onRefresh: vi.fn(),
@@ -63,26 +62,24 @@ describe('DashboardBillsIntegration Structural Verification', () => {
       upcomingBillsSection: sectionNode,
     });
 
-    // 1. Verify DashboardView returns a valid React element
     expect(React.isValidElement(vnode)).toBe(true);
 
-    // 2. Inspect layout children array
-    const layoutChildren = React.Children.toArray((vnode.props as any).children);
+    const layoutChildren = React.Children.toArray((vnode.props as { children: React.ReactNode }).children);
 
-    // 3. Find the container wrapping upcomingBillsSection node
-    const upcomingSectionWrapper = layoutChildren.find((child: unknown) => {
+    const upcomingSectionWrapper = layoutChildren.find((child: React.ReactNode) => {
       if (!React.isValidElement(child)) return false;
-      const childrenArr = React.Children.toArray((child.props as any)?.children);
-      return childrenArr.some((c: unknown) => React.isValidElement(c) && (c as any).type === UpcomingBillsSection);
+      const props = child.props as { children?: React.ReactNode };
+      const childrenArr = React.Children.toArray(props.children);
+      return childrenArr.some((c: React.ReactNode) => React.isValidElement(c) && c.type === UpcomingBillsSection);
     });
 
     expect(upcomingSectionWrapper).toBeDefined();
 
-    // 4. Verify structural position: BudgetHealth -> UpcomingBillsSection -> CategoryBreakdown
-    const innerComponentTypes = layoutChildren.map((child: unknown) => {
+    const innerComponentTypes = layoutChildren.map((child: React.ReactNode) => {
       if (!React.isValidElement(child)) return null;
-      const inner = React.Children.toArray((child.props as any)?.children)[0];
-      return React.isValidElement(inner) ? (inner as any).type : null;
+      const props = child.props as { children?: React.ReactNode };
+      const inner = React.Children.toArray(props.children)[0];
+      return React.isValidElement(inner) ? inner.type : null;
     });
 
     const budgetHealthIndex = innerComponentTypes.indexOf(BudgetHealthSection);
