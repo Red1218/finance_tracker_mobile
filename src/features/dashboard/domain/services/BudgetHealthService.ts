@@ -36,7 +36,8 @@ export class BudgetHealthService {
       return new BudgetHealthStatus(
         budget.id,
         new MonetaryAmount(consumed, budget.limit.currency),
-        budget.limit
+        budget.limit,
+        budget.categoryId
       );
     });
   }

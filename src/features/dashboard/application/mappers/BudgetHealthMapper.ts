@@ -2,17 +2,40 @@ import { BudgetHealthStatus } from '../../domain/value-objects/BudgetHealthStatu
 import { BudgetHealthViewModel, BudgetHealthRow } from '../view-models/BudgetHealthViewModel';
 
 export class BudgetHealthMapper {
-  static mapToViewModel(healthStatuses: BudgetHealthStatus[]): BudgetHealthViewModel {
+  static mapToViewModel(
+    healthStatuses: BudgetHealthStatus[],
+    categoriesMap?: Record<string, string>
+  ): BudgetHealthViewModel {
     if (healthStatuses.length === 0) {
       return this.mapEmpty();
     }
 
-    const rows: BudgetHealthRow[] = healthStatuses.map(status => ({
-      statusLabel: status.status,
-      amountConsumed: status.amountConsumed.format(),
-      budgetLimit: status.limit.format(),
-      consumptionRatio: status.consumptionRatio,
-    }));
+    const rows: BudgetHealthRow[] = healthStatuses.map(status => {
+      const isOverall =
+        status.categoryId === undefined ||
+        status.categoryId === null ||
+        status.budgetId === 'overall' ||
+        status.budgetId === 'global';
+
+      const catName = isOverall
+        ? 'Overall'
+        : status.categoryId && categoriesMap
+          ? categoriesMap[status.categoryId]
+          : status.budgetId && categoriesMap
+            ? categoriesMap[status.budgetId]
+            : undefined;
+
+      return {
+        statusLabel: status.status,
+        amountConsumed: status.amountConsumed.format(),
+        budgetLimit: status.limit.format(),
+        remainingAmount: status.remainingAmount ? status.remainingAmount.format() : undefined,
+        consumptionRatio: status.consumptionRatio,
+        categoryId: status.categoryId,
+        categoryName: catName,
+        isOverall,
+      };
+    });
 
     return {
       sectionType: 'BudgetHealth',

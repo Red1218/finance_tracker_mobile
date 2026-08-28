@@ -57,10 +57,10 @@ export function RecentActivitySection({ viewModel, onRetry, onSeeAll }: RecentAc
             style={({ pressed }) => [styles.seeAllButton, pressed && styles.pressed]}
             accessible={true}
             accessibilityRole="button"
-            accessibilityLabel="See all transactions"
+            accessibilityLabel="View all transactions"
           >
             <Text style={[styles.seeAllText, { color: colors.brandPrimary, fontSize: typography.label.fontSize }]}>
-              See All
+              View All
             </Text>
           </Pressable>
         </View>

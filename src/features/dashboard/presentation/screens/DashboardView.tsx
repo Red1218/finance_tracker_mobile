@@ -5,12 +5,12 @@ import { DashboardScreenState } from '../models/DashboardScreenState';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { DashboardHeader } from '../components/layout/DashboardHeader';
 import { ReportingPeriodSelector } from '../components/layout/ReportingPeriodSelector';
-import { KPICardsSection } from '../components/sections/KPICardsSection';
 import { BudgetHealthSection } from '../components/sections/BudgetHealthSection';
-import { CategoryBreakdownSection } from '../components/sections/CategoryBreakdownSection';
 import { RecentActivitySection } from '../components/sections/RecentActivitySection';
 import { LoadingSkeleton } from '../components/common/LoadingSkeleton';
 import { FAB } from '../../../../shared/components/FAB';
+
+import { useRouter } from 'expo-router';
 
 interface DashboardViewProps {
   state: DashboardScreenState;
@@ -20,7 +20,13 @@ interface DashboardViewProps {
   onExecuteQuickAction: (actionId: string, payload: unknown) => void;
   onTogglePeriodSelector: () => void;
   upcomingBillsSection?: React.ReactNode;
+  userAvatarUrl?: string;
+  userEmail?: string;
+  onAvatarPress?: () => void;
+  onNotificationsPress?: () => void;
   onNavigateToSpends?: () => void;
+  onNavigateToBudgets?: () => void;
+  onNavigateToCreateTransaction?: () => void;
 }
 
 export function DashboardView({
@@ -31,10 +37,33 @@ export function DashboardView({
   onExecuteQuickAction,
   onTogglePeriodSelector,
   upcomingBillsSection,
+  userAvatarUrl,
+  userEmail,
+  onAvatarPress,
+  onNotificationsPress,
   onNavigateToSpends,
+  onNavigateToBudgets,
+  onNavigateToCreateTransaction,
 }: DashboardViewProps) {
   const { colors } = useTheme();
   const { viewModel, isRefreshing, isPeriodSelectorOpen } = state;
+
+  let router: ReturnType<typeof useRouter> | null = null;
+  try {
+    router = useRouter();
+  } catch {
+    router = null;
+  }
+
+  const handleFabPress = () => {
+    if (onNavigateToCreateTransaction) {
+      onNavigateToCreateTransaction();
+    } else if (router) {
+      router.push({ pathname: '/spends', params: { openModal: 'true' } });
+    } else {
+      onExecuteQuickAction('ADD_TRANSACTION', {});
+    }
+  };
 
   // Initial load skeleton
   if (!viewModel) {
@@ -54,7 +83,11 @@ export function DashboardView({
         onRefresh={onRefresh}
         header={
           <DashboardHeader
-            title="Dashboard"
+            title="Home"
+            userAvatarUrl={userAvatarUrl}
+            userEmail={userEmail}
+            onAvatarPress={onAvatarPress}
+            onNotificationsPress={onNotificationsPress}
             selector={
               <ReportingPeriodSelector
                 currentPeriodId={viewModel.activeReportingPeriodId}
@@ -66,38 +99,23 @@ export function DashboardView({
           />
         }
       >
-        {/* 1. Hero Financial Card */}
+        {/* 1. Monthly Budget Card / Budget Health */}
         <View style={styles.sectionContainer}>
-          <KPICardsSection
-            viewModel={viewModel.kpiSection}
-            onRetry={() => onRefreshSection('KPICards')}
-          />
-        </View>
-
-        {/* 2. Compact Budget Health Card */}
-        <View style={styles.zonalSpacing}>
           <BudgetHealthSection
             viewModel={viewModel.budgetHealthSection}
             onRetry={() => onRefreshSection('BudgetHealth')}
+            onNavigateToBudgets={onNavigateToBudgets}
           />
         </View>
 
-        {/* 3. Upcoming Bills (Preserved Cross-Context Contract Slot) */}
+        {/* 2. Upcoming Bills (Preserved Cross-Context Contract Slot) */}
         {upcomingBillsSection ? (
           <View style={styles.zonalSpacing}>
             {upcomingBillsSection}
           </View>
         ) : null}
 
-        {/* 4. Top Spending Categories (Horizontal Bars) */}
-        <View style={styles.zonalSpacing}>
-          <CategoryBreakdownSection
-            viewModel={viewModel.categoryBreakdownSection}
-            onRetry={() => onRefreshSection('CategoryBreakdown')}
-          />
-        </View>
-
-        {/* 5. Recent Activity (3 Items + See All) */}
+        {/* 3. Recent Activity (3 Items + View All) */}
         <View style={styles.zonalSpacing}>
           <RecentActivitySection
             viewModel={viewModel.recentActivitySection}
@@ -113,7 +131,7 @@ export function DashboardView({
       {/* Floating Action Button (FAB) */}
       <FAB
         iconName="Plus"
-        onPress={() => onExecuteQuickAction('ADD_TRANSACTION', {})}
+        onPress={handleFabPress}
         accessibilityLabel="Add transaction"
         style={styles.fab}
       />

@@ -11,6 +11,13 @@ import type { DashboardFacade } from '../application/facade/DashboardFacade';
 interface DashboardModuleProps {
   userId: string;
   enableMockData?: boolean;
+  userAvatarUrl?: string;
+  userEmail?: string;
+  onAvatarPress?: () => void;
+  onNotificationsPress?: () => void;
+  onNavigateToSpends?: () => void;
+  onNavigateToBudgets?: () => void;
+  onNavigateToCreateTransaction?: () => void;
 }
 
 /**
@@ -18,7 +25,17 @@ interface DashboardModuleProps {
  * Lazily bootstraps the Dashboard dependency graph (idempotent) and
  * renders the DashboardScreen once the facade is ready.
  */
-export function DashboardModule({ userId, enableMockData }: DashboardModuleProps) {
+export function DashboardModule({
+  userId,
+  enableMockData,
+  userAvatarUrl,
+  userEmail,
+  onAvatarPress,
+  onNotificationsPress,
+  onNavigateToSpends,
+  onNavigateToBudgets,
+  onNavigateToCreateTransaction,
+}: DashboardModuleProps) {
   const [facade, setFacade] = useState<DashboardFacade | null>(null);
 
   useEffect(() => {
@@ -49,6 +66,17 @@ export function DashboardModule({ userId, enableMockData }: DashboardModuleProps
     );
   }
 
-  return <DashboardScreen userId={userId} facade={facade} />;
+  return (
+    <DashboardScreen
+      userId={userId}
+      facade={facade}
+      userAvatarUrl={userAvatarUrl}
+      userEmail={userEmail}
+      onAvatarPress={onAvatarPress}
+      onNotificationsPress={onNotificationsPress}
+      onNavigateToSpends={onNavigateToSpends}
+      onNavigateToBudgets={onNavigateToBudgets}
+      onNavigateToCreateTransaction={onNavigateToCreateTransaction}
+    />
+  );
 }
-

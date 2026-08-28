@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { SectionStateContainer } from '../../../dashboard/presentation/components/common/SectionStateContainer';
 import { UpcomingBillsSectionState, UpcomingBillItemViewModel } from '../view-models/UpcomingBillsViewModel';
 import { UpcomingBillsCard } from './UpcomingBillsCard';
@@ -11,6 +11,7 @@ export interface UpcomingBillsSectionProps {
   readonly onRetry: () => void;
   readonly onMarkPaidPress?: (billId: string) => void;
   readonly onBillPress?: (billId: string) => void;
+  readonly onViewAll?: () => void;
 }
 
 export function UpcomingBillsSection({
@@ -18,6 +19,7 @@ export function UpcomingBillsSection({
   onRetry,
   onMarkPaidPress,
   onBillPress,
+  onViewAll,
 }: UpcomingBillsSectionProps) {
   const { colors, typography } = useTheme();
 
@@ -43,7 +45,19 @@ export function UpcomingBillsSection({
           <Text style={[styles.sectionTitle, { color: colors.textPrimary, fontSize: typography.heading.fontSize }]} accessibilityRole="header">
             Upcoming Bills
           </Text>
-          {state.bills.length > 0 ? (
+          {onViewAll ? (
+            <Pressable
+              onPress={onViewAll}
+              style={({ pressed }) => [styles.viewAllButton, pressed && styles.pressed]}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel="View all upcoming bills"
+            >
+              <Text style={[styles.viewAllText, { color: colors.brandPrimary, fontSize: typography.label.fontSize }]}>
+                View All
+              </Text>
+            </Pressable>
+          ) : state.bills.length > 0 ? (
             <Text style={[styles.billCount, { color: colors.textSecondary, fontSize: typography.caption.fontSize }]}>
               {state.bills.length} upcoming
             </Text>
@@ -83,5 +97,15 @@ const styles = StyleSheet.create({
   },
   billCount: {
     fontWeight: '500',
+  },
+  viewAllButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  viewAllText: {
+    fontWeight: '700',
+  },
+  pressed: {
+    opacity: 0.6,
   },
 });

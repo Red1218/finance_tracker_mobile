@@ -9,7 +9,7 @@ vi.mock('expo-router', () => ({
 
 import { DashboardView } from '../../../dashboard/presentation/screens/DashboardView';
 import { BudgetHealthSection } from '../../../dashboard/presentation/components/sections/BudgetHealthSection';
-import { CategoryBreakdownSection } from '../../../dashboard/presentation/components/sections/CategoryBreakdownSection';
+import { RecentActivitySection } from '../../../dashboard/presentation/components/sections/RecentActivitySection';
 import { UpcomingBillsSection } from '../components/UpcomingBillsSection';
 import { UpcomingBillsSectionState } from '../view-models/UpcomingBillsViewModel';
 import { DashboardScreenState } from '../../../dashboard/presentation/models/DashboardScreenState';
@@ -92,10 +92,10 @@ describe('DashboardBillsIntegration Structural Verification', () => {
 
     const budgetHealthIndex = innerComponentTypes.indexOf(BudgetHealthSection);
     const upcomingIndex = upcomingSectionWrapper ? layoutChildren.indexOf(upcomingSectionWrapper) : -1;
-    const categoryBreakdownIndex = innerComponentTypes.indexOf(CategoryBreakdownSection);
+    const recentActivityIndex = innerComponentTypes.indexOf(RecentActivitySection);
 
     expect(budgetHealthIndex).toBeGreaterThan(-1);
     expect(upcomingIndex).toBeGreaterThan(budgetHealthIndex);
-    expect(categoryBreakdownIndex).toBeGreaterThan(upcomingIndex);
+    expect(recentActivityIndex).toBeGreaterThan(upcomingIndex);
   });
 });

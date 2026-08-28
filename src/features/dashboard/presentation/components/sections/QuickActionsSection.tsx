@@ -4,12 +4,51 @@ import { useTheme } from '../../../../../shared/theme';
 import { Card } from '../../../../../shared/components/Card';
 import { Icon } from '../../../../../shared/components/Icon';
 
+import { useRouter } from 'expo-router';
+
 export interface QuickActionsSectionProps {
-  onAction: (actionType: string) => void;
+  onAction?: (actionType: string) => void;
+  onNavigateToCreateTransaction?: () => void;
+  onNavigateToBudgets?: () => void;
 }
 
-export function QuickActionsSection({ onAction }: QuickActionsSectionProps) {
+export function QuickActionsSection({
+  onAction,
+  onNavigateToCreateTransaction,
+  onNavigateToBudgets,
+}: QuickActionsSectionProps) {
   const { colors, typography } = useTheme();
+
+  let router: ReturnType<typeof useRouter> | null = null;
+  try {
+    router = useRouter();
+  } catch {
+    router = null;
+  }
+
+  const handleActionPress = (actionId: string) => {
+    if (actionId === 'ADD_TRANSACTION') {
+      if (onNavigateToCreateTransaction) {
+        onNavigateToCreateTransaction();
+      } else if (router) {
+        router.push({ pathname: '/spends', params: { openModal: 'true' } });
+      } else if (onAction) {
+        onAction(actionId);
+      }
+    } else if (actionId === 'MANAGE_BUDGETS') {
+      if (onNavigateToBudgets) {
+        onNavigateToBudgets();
+      } else if (router) {
+        router.push('/budgets');
+      } else if (onAction) {
+        onAction(actionId);
+      }
+    } else if (onAction) {
+      onAction(actionId);
+    }
+  };
+
+
 
   const actions = [
     { id: 'ADD_TRANSACTION', label: 'Add Transaction', iconName: 'PlusCircle' },
@@ -23,7 +62,7 @@ export function QuickActionsSection({ onAction }: QuickActionsSectionProps) {
           <Pressable
             key={action.id}
             style={({ pressed }) => [styles.button, pressed && styles.pressed]}
-            onPress={() => onAction(action.id)}
+            onPress={() => handleActionPress(action.id)}
             accessible={true}
             accessibilityRole="button"
             accessibilityLabel={action.label}
@@ -40,6 +79,7 @@ export function QuickActionsSection({ onAction }: QuickActionsSectionProps) {
     </Card>
   );
 }
+
 
 const styles = StyleSheet.create({
   cardContainer: {

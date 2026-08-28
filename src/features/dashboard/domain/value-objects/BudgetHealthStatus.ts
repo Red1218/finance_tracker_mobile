@@ -5,11 +5,13 @@ export type BudgetStatus = 'OnTrack' | 'AtRisk' | 'OverBudget';
 export class BudgetHealthStatus {
   public readonly status: BudgetStatus;
   public readonly consumptionRatio: number;
+  public readonly remainingAmount: MonetaryAmount;
 
   constructor(
     public readonly budgetId: string,
     public readonly amountConsumed: MonetaryAmount,
-    public readonly limit: MonetaryAmount
+    public readonly limit: MonetaryAmount,
+    public readonly categoryId?: string
   ) {
     if (amountConsumed.currency !== limit.currency) {
       throw new Error('Currencies must match to calculate budget health');
@@ -20,6 +22,8 @@ export class BudgetHealthStatus {
     }
 
     this.consumptionRatio = (amountConsumed.amount / limit.amount) * 100;
+    const remaining = Math.max(limit.amount - amountConsumed.amount, 0);
+    this.remainingAmount = new MonetaryAmount(remaining, limit.currency);
 
     // INV-008: BudgetHealthStatus thresholds are fixed: OnTrack <= 80%, AtRisk > 80% and <= 100%, OverBudget > 100%.
     if (this.consumptionRatio <= 80) {

@@ -16,13 +16,14 @@ export class QuickActionGatewayAdapter implements QuickActionGateway {
     try {
       // Simulate mapping an actionType to a specific external bounded context endpoint
       let endpoint = '';
-      if (actionType === 'AddTransaction') {
+      if (actionType === 'AddTransaction' || actionType === 'ADD_TRANSACTION') {
         endpoint = '/api/transactions';
-      } else if (actionType === 'UpdateBudget' || actionType === 'AdjustBudget') {
+      } else if (actionType === 'UpdateBudget' || actionType === 'AdjustBudget' || actionType === 'MANAGE_BUDGETS') {
         endpoint = '/api/budgets';
       } else {
         throw new Error(`Unsupported action type: ${actionType}`);
       }
+
 
       const targetUrl = `${this.baseUrl}${endpoint}`;
       

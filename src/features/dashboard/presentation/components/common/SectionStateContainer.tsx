@@ -3,6 +3,7 @@ import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { LoadingSkeleton } from './LoadingSkeleton';
 import { RetryButton } from './RetryButton';
 import { EmptyState } from './EmptyState';
+import { useTheme } from '../../../../../shared/theme';
 
 type LoadStatus = 'Loading' | 'Loaded' | 'Empty' | 'Error' | 'Refreshing';
 
@@ -24,6 +25,8 @@ export function SectionStateContainer({
   children,
   skeletonHeight = 150
 }: SectionStateContainerProps) {
+  const { colors } = useTheme();
+
   if (status === 'Loading') {
     return (
       <View style={styles.container}>
@@ -53,8 +56,8 @@ export function SectionStateContainer({
     <View style={styles.container}>
       {children}
       {status === 'Refreshing' && (
-        <View style={styles.overlay}>
-          <ActivityIndicator size="small" color="#0000ff" />
+        <View style={[styles.overlay, { backgroundColor: colors.overlay }]}>
+          <ActivityIndicator size="small" color={colors.brandPrimary} />
         </View>
       )}
     </View>
@@ -64,20 +67,11 @@ export function SectionStateContainer({
 const styles = StyleSheet.create({
   container: {
     position: 'relative',
-    minHeight: 100, // Enforce a minimum touch/display area
-    marginBottom: 16,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 2,
+    minHeight: 40,
+    marginBottom: 0,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 8,

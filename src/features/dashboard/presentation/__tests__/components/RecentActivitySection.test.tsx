@@ -96,7 +96,7 @@ describe('RecentActivitySection Component Presentation', () => {
     expect(headerRow.props.children[0].props.children).toBe('Recent Activity');
 
     const seeAllButton = headerRow.props.children[1];
-    expect(seeAllButton.props.accessibilityLabel).toBe('See all transactions');
+    expect(seeAllButton.props.accessibilityLabel).toBe('View all transactions');
 
     seeAllButton.props.onPress();
     expect(onSeeAllMock).toHaveBeenCalledTimes(1);

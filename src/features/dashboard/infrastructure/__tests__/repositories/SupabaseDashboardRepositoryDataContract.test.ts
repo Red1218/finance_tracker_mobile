@@ -27,7 +27,8 @@ describe('SupabaseDashboardRepository Data Contract Tests', () => {
         }
         return {
           select: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+          eq: vi.fn().mockReturnThis(),
+          is: vi.fn().mockResolvedValue({ data: [], error: null }),
         };
       }),
     } as unknown as SupabaseClient;

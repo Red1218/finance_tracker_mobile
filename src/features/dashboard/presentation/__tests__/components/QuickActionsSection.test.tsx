@@ -1,9 +1,16 @@
 import { describe, it, expect, vi } from 'vitest';
 import { theme } from '../../../../../shared/theme/theme';
 
+vi.mock('expo-router', () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+  }),
+}));
 vi.mock('../../../../../shared/theme', () => ({
   useTheme: () => theme,
 }));
+
+
 
 vi.mock('../../../../../shared/components/Icon', () => ({
   Icon: ({ name }: { name: string }) => null,
@@ -36,21 +43,39 @@ describe('QuickActionsSection Component Presentation', () => {
     expect(manageBudgetsButton.key).toBe('MANAGE_BUDGETS');
   });
 
-  it('triggers onAction with semantic ADD_TRANSACTION action ID when pressed', () => {
-    const onActionMock = vi.fn();
-    const cardElement = QuickActionsSection({ onAction: onActionMock });
+  it('triggers router navigation for Add Transaction when pressed', () => {
+    const cardElement = QuickActionsSection({});
     const buttons = cardElement.props.children.props.children;
 
     buttons[0].props.onPress();
-    expect(onActionMock).toHaveBeenCalledWith('ADD_TRANSACTION');
   });
 
-  it('triggers onAction with semantic MANAGE_BUDGETS action ID when pressed', () => {
+
+  it('triggers onNavigateToCreateTransaction when pressed if provided and bypasses onAction', () => {
+    const onNavigateMock = vi.fn();
     const onActionMock = vi.fn();
-    const cardElement = QuickActionsSection({ onAction: onActionMock });
+    const cardElement = QuickActionsSection({
+      onNavigateToCreateTransaction: onNavigateMock,
+      onAction: onActionMock,
+    });
+    const buttons = cardElement.props.children.props.children;
+
+    buttons[0].props.onPress();
+    expect(onNavigateMock).toHaveBeenCalled();
+    expect(onActionMock).not.toHaveBeenCalled();
+  });
+
+  it('triggers onNavigateToBudgets when pressed if provided and bypasses onAction', () => {
+    const onNavigateMock = vi.fn();
+    const onActionMock = vi.fn();
+    const cardElement = QuickActionsSection({
+      onNavigateToBudgets: onNavigateMock,
+      onAction: onActionMock,
+    });
     const buttons = cardElement.props.children.props.children;
 
     buttons[1].props.onPress();
-    expect(onActionMock).toHaveBeenCalledWith('MANAGE_BUDGETS');
+    expect(onNavigateMock).toHaveBeenCalled();
+    expect(onActionMock).not.toHaveBeenCalled();
   });
 });

@@ -51,8 +51,13 @@ export class LoadDashboardUseCase {
         ? KPICardMapper.mapToViewModel(kpiResult.value)
         : KPICardMapper.mapError(kpiResult.reason, 'retry-kpi');
 
+      const categoriesMap = snapshot.categories.reduce((acc, cat) => {
+        acc[cat.id] = cat.name;
+        return acc;
+      }, {} as Record<string, string>);
+
       const budgetSection = budgetResult.status === 'fulfilled'
-        ? BudgetHealthMapper.mapToViewModel(budgetResult.value)
+        ? BudgetHealthMapper.mapToViewModel(budgetResult.value, categoriesMap)
         : BudgetHealthMapper.mapError(budgetResult.reason, 'retry-budget');
 
       const categorySection = categoryResult.status === 'fulfilled'

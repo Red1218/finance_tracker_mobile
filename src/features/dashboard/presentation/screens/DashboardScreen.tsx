@@ -3,18 +3,32 @@ import { DashboardView } from './DashboardView';
 import { useDashboardState } from '../hooks/useDashboardState';
 import { DashboardFacade } from '../../application/facade/DashboardFacade';
 
-// Normally this facade would be injected via Context (e.g. useFacade() hook) 
-// or DI container. We accept it as a prop here for demonstration/simplicity,
-// but assume it's provided by a higher-order component.
 interface DashboardScreenProps {
   userId: string;
-  facade: DashboardFacade; 
+  facade: DashboardFacade;
+  userAvatarUrl?: string;
+  userEmail?: string;
+  onAvatarPress?: () => void;
+  onNotificationsPress?: () => void;
+  onNavigateToSpends?: () => void;
+  onNavigateToBudgets?: () => void;
+  onNavigateToCreateTransaction?: () => void;
 }
 
 /**
  * Container component that wires the Use Cases / Facade to the pure DashboardView.
  */
-export function DashboardScreen({ userId, facade }: DashboardScreenProps) {
+export function DashboardScreen({
+  userId,
+  facade,
+  userAvatarUrl,
+  userEmail,
+  onAvatarPress,
+  onNotificationsPress,
+  onNavigateToSpends,
+  onNavigateToBudgets,
+  onNavigateToCreateTransaction,
+}: DashboardScreenProps) {
   const { state, actions } = useDashboardState(userId, facade);
 
   return (
@@ -25,6 +39,13 @@ export function DashboardScreen({ userId, facade }: DashboardScreenProps) {
       onChangePeriod={actions.handleChangePeriod}
       onExecuteQuickAction={actions.handleExecuteQuickAction}
       onTogglePeriodSelector={actions.togglePeriodSelector}
+      userAvatarUrl={userAvatarUrl}
+      userEmail={userEmail}
+      onAvatarPress={onAvatarPress}
+      onNotificationsPress={onNotificationsPress}
+      onNavigateToSpends={onNavigateToSpends}
+      onNavigateToBudgets={onNavigateToBudgets}
+      onNavigateToCreateTransaction={onNavigateToCreateTransaction}
     />
   );
 }

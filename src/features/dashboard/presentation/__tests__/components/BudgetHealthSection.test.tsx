@@ -1,14 +1,44 @@
 import { describe, it, expect, vi } from 'vitest';
 import { theme } from '../../../../../shared/theme/theme';
 
+vi.mock('react-native-svg', () => {
+  const React = require('react');
+  return {
+    default: (props: any) => React.createElement('Svg', props, props.children),
+    Circle: (props: any) => React.createElement('Circle', props),
+  };
+});
+
 vi.mock('../../../../../shared/theme', () => ({
   useTheme: () => theme,
 }));
+
 import { BudgetHealthViewModel } from '../../../application/view-models/BudgetHealthViewModel';
 import { BudgetHealthSection } from '../../components/sections/BudgetHealthSection';
 
 describe('BudgetHealthSection Component Presentation', () => {
-  const mockLoadedViewModel: BudgetHealthViewModel = {
+  const mockGlobalBudgetViewModel: BudgetHealthViewModel = {
+    sectionType: 'BudgetHealth',
+    status: 'Loaded',
+    isLoading: false,
+    isEmpty: false,
+    error: null,
+    retryToken: null,
+    lastUpdated: new Date(),
+    content: [
+      {
+        statusLabel: 'OnTrack',
+        amountConsumed: '₹1,400.00',
+        budgetLimit: '₹2,000.00',
+        remainingAmount: '₹600.00',
+        consumptionRatio: 70,
+        categoryId: undefined,
+        isOverall: true,
+      } as any,
+    ],
+  };
+
+  const mockCategoryBudgetsViewModel: BudgetHealthViewModel = {
     sectionType: 'BudgetHealth',
     status: 'Loaded',
     isLoading: false,
@@ -21,8 +51,12 @@ describe('BudgetHealthSection Component Presentation', () => {
         statusLabel: 'OverBudget',
         amountConsumed: '₹14,000.00',
         budgetLimit: '₹15,000.00',
-        consumptionRatio: 0.933,
-      },
+        remainingAmount: '₹1,000.00',
+        consumptionRatio: 93,
+        categoryId: 'cat-1',
+        categoryName: 'Groceries',
+        isOverall: false,
+      } as any,
     ],
   };
 
@@ -48,33 +82,50 @@ describe('BudgetHealthSection Component Presentation', () => {
     content: null,
   };
 
-  it('renders Card primitive with header, status badge, spent/limit details, and progress bar', () => {
-    const element = BudgetHealthSection({ viewModel: mockLoadedViewModel, onRetry: vi.fn() });
+  it('renders MonthlyBudgetCard when global/overall budget exists', () => {
+    const element = BudgetHealthSection({ viewModel: mockGlobalBudgetViewModel, onRetry: vi.fn() });
 
-    expect(element.type.name).toBe('SectionStateContainer');
     expect(element.props.status).toBe('Loaded');
+    const child = element.props.children;
+    expect(child.type.name).toBe('MonthlyBudgetCard');
+    expect(child.props.budget.consumptionRatio).toBe(70);
+    expect(child.props.budget.remainingAmount).toBe('₹600.00');
+  });
 
+  it('renders MonthlyBudgetCard when categoryId is undefined or null (canonical overall representation)', () => {
+    const canonicalViewModel: BudgetHealthViewModel = {
+      ...mockGlobalBudgetViewModel,
+      content: [
+        {
+          statusLabel: 'OnTrack',
+          amountConsumed: '₹140.00',
+          budgetLimit: '₹200.00',
+          remainingAmount: '₹60.00',
+          consumptionRatio: 70,
+          categoryId: undefined,
+        } as any,
+      ],
+    };
+
+    const element = BudgetHealthSection({ viewModel: canonicalViewModel, onRetry: vi.fn() });
+    const child = element.props.children;
+    expect(child.type.name).toBe('MonthlyBudgetCard');
+  });
+
+  it('renders linear category list when category-only budgets exist', () => {
+    const element = BudgetHealthSection({ viewModel: mockCategoryBudgetsViewModel, onRetry: vi.fn() });
     const card = element.props.children;
     expect(card.props.variant).toBe('elevated');
 
-    const items = card.props.children[1];
-    const item = items[0];
+    const item = card.props.children[1][0];
     const headerRow = item.props.children[0];
-    const spentText = item.props.children[1];
-    const progressBar = item.props.children[2];
-
-    expect(headerRow.props.children[0].props.children).toBe('Budget Health');
-    expect(headerRow.props.children[1].props.label).toBe('93%');
-    expect(spentText.props.children.join('')).toBe('₹14,000.00 spent of ₹15,000.00');
-
-    expect(progressBar.props.accessibilityRole).toBe('progressbar');
-    expect(progressBar.props.accessibilityValue).toEqual({ min: 0, max: 100, now: 93.3 });
+    expect(headerRow.props.children[0].props.children).toBe('Groceries');
   });
 
   it('renders EmptyState component when budget list is empty', () => {
     const element = BudgetHealthSection({ viewModel: mockEmptyViewModel, onRetry: vi.fn() });
-    const cardChildren = element.props.children.props.children;
-    const emptyState = cardChildren[1];
+    const emptyContainer = element.props.children.props.children[1];
+    const emptyState = emptyContainer.props.children[0];
 
     expect(emptyState.type.name).toBe('EmptyState');
     expect(emptyState.props.message).toBe('No active budgets configured for this period.');
