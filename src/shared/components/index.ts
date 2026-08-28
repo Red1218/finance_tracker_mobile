@@ -8,3 +8,4 @@ export * from './StatusIndicator';
 export * from './AppBar';
 export * from './BottomNavigation';
 export * from './FAB';
+export * from './CircularProgress';

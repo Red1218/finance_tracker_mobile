@@ -5,7 +5,7 @@ import { BudgetRow } from '../../../features/budgets/contracts/BudgetRow';
 
 export class BudgetMapper {
   public static toDomain(row: BudgetRow): Budget {
-    const periodKindStr = row.period_kind || row.period_type || 'MONTHLY';
+    const periodKindStr = row.period_kind ?? 'MONTHLY';
     return new Budget({
       id: new BudgetId(row.id),
       categoryId: row.category_id ? new CategoryId(row.category_id) : null,
@@ -28,11 +28,9 @@ export class BudgetMapper {
       amount: budget.amount.value,
       currency_code: budget.currency.value,
       period_kind: budget.period.kind,
-      period_type: budget.period.kind,
       start_date: budget.startDate.toISOString(),
       end_date: budget.endDate.toISOString(),
       archived_at: budget.archivedAt ? budget.archivedAt.toISOString() : null,
     };
   }
-
 }

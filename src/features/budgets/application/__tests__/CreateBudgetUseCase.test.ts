@@ -38,7 +38,9 @@ describe('CreateBudgetUseCase', () => {
     expect(dto.amount).toBe(10000);
     expect(dto.currencyCode).toBe('INR');
     expect(dto.isOverall).toBe(true);
+    expect(dto.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
   });
+
 
   it('should throw BudgetOverlapError on date range collision for same scope', async () => {
     await useCase.execute({

@@ -15,6 +15,8 @@ import { BudgetDTOMapper } from '../mappers/BudgetDTOMapper';
 import { CategoryNotFoundError } from '../../../categories/application/errors/CategoryApplicationError';
 import { BudgetOverlapError } from '../errors/BudgetApplicationError';
 
+import { generateUUID } from '../../../../core/utils/uuid';
+
 export class CreateBudgetUseCase {
   constructor(
     private readonly budgetRepository: IBudgetRepository,
@@ -59,12 +61,13 @@ export class CreateBudgetUseCase {
     }
 
     const budget = Budget.create({
-      id: new BudgetId(command.id || crypto.randomUUID()),
+      id: new BudgetId(command.id || generateUUID()),
       categoryId,
       amount: new BudgetAmount(command.amount),
       currency: new CurrencyCode(command.currencyCode),
       period,
     });
+
 
     const saveResult = await this.budgetRepository.save(budget);
     if (!saveResult.success) {

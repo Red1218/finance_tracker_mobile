@@ -2,7 +2,8 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Card } from '../../../../shared/components';
 import { useTheme } from '../../../../shared/theme';
-import { BudgetProgressBar } from './BudgetProgressBar';
+
+import { BudgetCircularProgress } from './BudgetCircularProgress';
 import { BudgetStatusBadge } from './BudgetStatusBadge';
 
 export interface BudgetSummaryCardProps {
@@ -11,6 +12,7 @@ export interface BudgetSummaryCardProps {
   totalRemaining: number;
   currencyCode?: string;
   overallHealthStatus?: string;
+  periodKind?: string;
 }
 
 export function BudgetSummaryCard({
@@ -19,49 +21,59 @@ export function BudgetSummaryCard({
   totalRemaining,
   currencyCode = 'INR',
   overallHealthStatus = 'ON_TRACK',
+  periodKind,
 }: BudgetSummaryCardProps) {
   const { colors, typography } = useTheme();
 
   const percentageUsed = totalBudgeted > 0 ? (totalSpent / totalBudgeted) * 100 : 0;
 
+  let periodTitle = 'Monthly Budget';
+  if (periodKind === 'WEEKLY') {
+    periodTitle = 'Weekly Budget';
+  } else if (periodKind === 'YEARLY') {
+    periodTitle = 'Yearly Budget';
+  } else if (periodKind === 'CUSTOM') {
+    periodTitle = 'Budget Summary';
+  }
+
+  const currencySymbol = currencyCode === 'INR' || currencyCode === '₹' ? '₹' : `${currencyCode} `;
+
   return (
     <Card style={styles.cardContainer}>
       <View style={styles.headerRow}>
         <Text style={[styles.title, { color: colors.textPrimary, fontSize: typography.title.fontSize }]}>
-          Overall Budget Progress
+          {periodTitle}
         </Text>
         <BudgetStatusBadge status={overallHealthStatus} />
       </View>
 
-      <View style={styles.amountContainer}>
-        <Text style={[styles.spentAmount, { color: colors.textPrimary, fontSize: typography.heading.fontSize, fontVariant: ['tabular-nums'] }]}>
-          ₹{totalSpent.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-        </Text>
-        <Text style={[styles.budgetTotal, { color: colors.textSecondary, fontSize: typography.caption.fontSize }]}>
-          of ₹{totalBudgeted.toLocaleString('en-IN', { minimumFractionDigits: 2 })} budgeted
-        </Text>
+      <View style={styles.circularContainer}>
+        <BudgetCircularProgress
+          percentageUsed={percentageUsed}
+          status={overallHealthStatus}
+          size={128}
+          strokeWidth={10}
+        />
       </View>
 
-      <BudgetProgressBar percentage={percentageUsed} status={overallHealthStatus} />
-
-      <View style={styles.footerRow}>
-        <Text style={[styles.remainingLabel, { color: colors.textSecondary, fontSize: typography.caption.fontSize }]}>
-          Remaining Allowance
-        </Text>
-        <Text
-          style={[
-            styles.remainingValue,
-            {
-              color: totalRemaining >= 0 ? colors.success : colors.error,
-              fontSize: typography.caption.fontSize,
-              fontVariant: ['tabular-nums'],
-            },
-          ]}
-        >
-          {totalRemaining >= 0
-            ? `₹${totalRemaining.toLocaleString('en-IN', { minimumFractionDigits: 2 })} left`
-            : `₹${Math.abs(totalRemaining).toLocaleString('en-IN', { minimumFractionDigits: 2 })} over`}
-        </Text>
+      <View style={styles.promptContainer}>
+        {totalRemaining >= 0 ? (
+          <Text style={[styles.promptText, { color: colors.textSecondary, fontSize: typography.body.fontSize }]}>
+            You have{' '}
+            <Text style={{ color: colors.success, fontWeight: '700', fontVariant: ['tabular-nums'] }}>
+              {currencySymbol}{totalRemaining.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+            </Text>{' '}
+            left of {currencySymbol}{totalBudgeted.toLocaleString('en-IN', { maximumFractionDigits: 0 })} budgeted
+          </Text>
+        ) : (
+          <Text style={[styles.promptText, { color: colors.textSecondary, fontSize: typography.body.fontSize }]}>
+            You are{' '}
+            <Text style={{ color: colors.error, fontWeight: '700', fontVariant: ['tabular-nums'] }}>
+              {currencySymbol}{Math.abs(totalRemaining).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+            </Text>{' '}
+            over your {currencySymbol}{totalBudgeted.toLocaleString('en-IN', { maximumFractionDigits: 0 })} budget
+          </Text>
+        )}
       </View>
     </Card>
   );
@@ -70,33 +82,29 @@ export function BudgetSummaryCard({
 const styles = StyleSheet.create({
   cardContainer: {
     marginBottom: 16,
+    padding: 20,
+    borderRadius: 20,
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
   },
   title: {
     fontWeight: '700',
   },
-  amountContainer: {
-    marginBottom: 12,
-  },
-  spentAmount: {
-    fontWeight: '700',
-  },
-  budgetTotal: {
-    marginTop: 2,
-  },
-  footerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  circularContainer: {
     alignItems: 'center',
-    marginTop: 10,
+    justifyContent: 'center',
+    marginVertical: 12,
   },
-  remainingLabel: {},
-  remainingValue: {
-    fontWeight: '700',
+  promptContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 14,
+  },
+  promptText: {
+    textAlign: 'center',
   },
 });

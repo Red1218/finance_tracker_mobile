@@ -19,8 +19,9 @@ describe('SupabaseBudgetRepository Unit & Query Logic', () => {
     category_id: validCategoryId,
     amount: 15000,
     currency_code: 'INR',
-    period_type: 'MONTHLY',
+    period_kind: 'MONTHLY',
     start_date: startDate.toISOString(),
+
     end_date: endDate.toISOString(),
     created_at: '2026-06-01T00:00:00Z',
     updated_at: '2026-06-01T00:00:00Z',

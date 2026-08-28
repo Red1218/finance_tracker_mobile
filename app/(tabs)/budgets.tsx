@@ -1,5 +1,5 @@
-import { BudgetsScreen } from '@/src/features/budgets/presentation';
+import { BudgetsRouteContainer } from '@/src/features/budgets/integration/BudgetsRouteContainer';
 
 export default function BudgetsRoute() {
-  return <BudgetsScreen />;
+  return <BudgetsRouteContainer />;
 }

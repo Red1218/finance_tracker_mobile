@@ -17,9 +17,15 @@ import { CreateBudgetFormData } from '../validation/budgetSchema';
 import { BudgetsModule } from '../../composition/BudgetsModule';
 import { BudgetPeriod } from '../../domain';
 
-const budgetsModule = new BudgetsModule();
+const defaultModule = new BudgetsModule();
 
-export const BudgetsScreen: React.FC = () => {
+export interface BudgetsScreenProps {
+  module?: BudgetsModule;
+}
+
+export const BudgetsScreen: React.FC<BudgetsScreenProps> = ({ module }) => {
+  const budgetsModule = useMemo(() => module || defaultModule, [module]);
+
   const { colors, typography } = useTheme();
   const { budgets, isLoading, error, refresh } = useBudgets(budgetsModule.listBudgetsUseCase);
   const { createBudget, isLoading: isCreating, error: createError } = useCreateBudget(budgetsModule.createBudgetUseCase);
@@ -42,11 +48,16 @@ export const BudgetsScreen: React.FC = () => {
   }, [categories]);
 
   // Aggregated summary calculation across active budgets
-  const { totalBudgeted, totalSpent, totalRemaining, overallHealthStatus } = useMemo(() => {
+  const { totalBudgeted, totalSpent, totalRemaining, overallHealthStatus, dominantPeriodKind } = useMemo(() => {
     let budgeted = 0;
     let spent = 0;
     let hasOverBudget = false;
     let hasNearLimit = false;
+    let periodKind = 'MONTHLY';
+
+    if (budgets.length > 0) {
+      periodKind = budgets[0].periodKind || 'MONTHLY';
+    }
 
     budgets.forEach((b) => {
       budgeted += b.amount;
@@ -66,8 +77,10 @@ export const BudgetsScreen: React.FC = () => {
       totalSpent: spent,
       totalRemaining: remaining,
       overallHealthStatus: health,
+      dominantPeriodKind: periodKind,
     };
   }, [budgets]);
+
 
   const handleAddBudget = () => {
     setEditingBudget(null);
@@ -155,12 +168,20 @@ export const BudgetsScreen: React.FC = () => {
             totalSpent={totalSpent}
             totalRemaining={totalRemaining}
             overallHealthStatus={overallHealthStatus}
+            periodKind={dominantPeriodKind}
           />
+        )}
+
+        {budgets.length > 0 && (
+          <Text style={[styles.sectionHeader, { color: colors.textPrimary, fontSize: typography.heading.fontSize }]}>
+            Category Budgets
+          </Text>
         )}
 
         {budgets.length === 0 ? (
           <EmptyBudgetState />
         ) : (
+
           budgets.map((b) => {
             const catName = b.isOverall
               ? 'Overall Budget'
@@ -289,6 +310,11 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 16,
     paddingBottom: 80,
+  },
+  sectionHeader: {
+    fontWeight: '700',
+    marginTop: 8,
+    marginBottom: 12,
   },
   dialogBackdrop: {
     flex: 1,

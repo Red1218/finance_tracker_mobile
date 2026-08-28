@@ -44,11 +44,12 @@ describe('BudgetMapper Round-Trip Symmetry', () => {
       category_id: null,
       amount: 50000,
       currency_code: 'INR',
-      period_type: 'MONTHLY',
+      period_kind: 'MONTHLY',
       start_date: startDate.toISOString(),
       end_date: endDate.toISOString(),
       archived_at: null,
     };
+
 
     const budget = BudgetMapper.toDomain(row);
     expect(budget.isOverall).toBe(true);

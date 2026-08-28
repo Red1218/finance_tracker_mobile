@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { useTheme } from '@/src/shared/theme';
+import { useTheme } from '../../../../shared/theme';
+
 
 export interface BudgetProgressBarProps {
   percentage: number;
@@ -11,9 +12,9 @@ export function BudgetProgressBar({ percentage, status }: BudgetProgressBarProps
   const { colors, radius } = useTheme();
   const cappedPercentage = Math.min(Math.max(percentage, 0), 100);
 
-  let fillColor: string = colors.success;
-  if (status === 'AtRisk' || status === 'NEAR_LIMIT') fillColor = colors.warning;
-  if (status === 'Overbudget' || status === 'OVER_BUDGET') fillColor = colors.error;
+  let fillColor: string = colors.brandPrimary;
+  if (status === 'AtRisk' || status === 'NEAR_LIMIT' || status === 'Near Limit') fillColor = colors.warning;
+  if (status === 'Overbudget' || status === 'OVER_BUDGET' || status === 'Limit Reached' || status === 'Over Budget') fillColor = colors.error;
 
 
   return (
