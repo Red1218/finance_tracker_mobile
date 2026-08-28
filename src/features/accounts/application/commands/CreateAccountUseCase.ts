@@ -12,6 +12,8 @@ import { AccountDTO } from '../dto/AccountDTO';
 import { AccountDTOMapper } from '../mappers/AccountDTOMapper';
 import { DuplicateAccountNameError } from '../errors/AccountApplicationError';
 
+import { generateUUID } from '../../../../core/utils/uuid';
+
 export class CreateAccountUseCase {
   constructor(private readonly accountRepository: IAccountRepository) {
     Object.freeze(this);
@@ -24,7 +26,8 @@ export class CreateAccountUseCase {
     }
 
     const account = new Account({
-      id: new AccountId(command.id || crypto.randomUUID()),
+      id: new AccountId(command.id || generateUUID()),
+
       name: new AccountName(command.name),
       type: new AccountType(command.type as any),
       currencyCode: new CurrencyCode(command.currencyCode ?? 'INR'),

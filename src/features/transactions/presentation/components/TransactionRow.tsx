@@ -13,10 +13,27 @@ export function TransactionRow({ transaction, onPress }: TransactionRowProps) {
   const { colors, typography } = useTheme();
 
   const isPositive = transaction.type === 'INCOME' || transaction.type === 'TRANSFER_IN';
-  const amountColor = isPositive ? colors.success : colors.textPrimary;
+  const isTransfer = transaction.type === 'TRANSFER_OUT' || transaction.type === 'TRANSFER_IN';
 
-  const iconName = isPositive ? 'ArrowDownLeft' : 'ArrowUpRight';
-  const iconBg = isPositive ? 'rgba(16, 185, 129, 0.15)' : colors.surfaceSecondary;
+  let iconName: 'ArrowDownLeft' | 'ArrowUpRight' | 'ArrowRightLeft' = isPositive
+    ? 'ArrowDownLeft'
+    : 'ArrowUpRight';
+  if (isTransfer) {
+    iconName = 'ArrowRightLeft';
+  }
+
+  let amountColor = isPositive ? colors.success : colors.textPrimary;
+  if (transaction.isVoided) {
+    amountColor = colors.textMuted;
+  }
+
+  let iconColor = isPositive ? colors.success : colors.error;
+  if (isTransfer) {
+    iconColor = colors.brandPrimary;
+  }
+  if (transaction.isVoided) {
+    iconColor = colors.textMuted;
+  }
 
   return (
     <TouchableOpacity
@@ -27,8 +44,8 @@ export function TransactionRow({ transaction, onPress }: TransactionRowProps) {
       accessibilityRole="button"
       accessibilityLabel={`${transaction.description || 'Transaction'}, ${transaction.formattedAmount}`}
     >
-      <View style={[styles.iconContainer, { backgroundColor: iconBg }]}>
-        <Icon name={iconName} size={20} color={amountColor} />
+      <View style={[styles.iconContainer, { backgroundColor: colors.surfaceSecondary }]}>
+        <Icon name={iconName} size={20} color={iconColor} />
       </View>
 
       <View style={styles.detailsContainer}>
@@ -40,9 +57,18 @@ export function TransactionRow({ transaction, onPress }: TransactionRowProps) {
         </Text>
       </View>
 
-
       <View style={styles.amountContainer}>
-        <Text style={[styles.amount, { color: amountColor, fontSize: typography.numeric.fontSize, fontVariant: ['tabular-nums'] }]}>
+        <Text
+          style={[
+            styles.amount,
+            {
+              color: amountColor,
+              fontSize: typography.numeric.fontSize,
+              fontVariant: ['tabular-nums'],
+              textDecorationLine: transaction.isVoided ? 'line-through' : 'none',
+            },
+          ]}
+        >
           {transaction.formattedAmount}
         </Text>
       </View>
@@ -54,10 +80,10 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 14,
+    padding: 12,
     borderRadius: 12,
     borderWidth: 1,
-    minHeight: 56,
+    minHeight: 64,
   },
   iconContainer: {
     width: 40,

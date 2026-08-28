@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TextInput, StyleSheet } from 'react-native';
+import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTheme } from '@/src/shared/theme';
 import { Icon } from '@/src/shared/components';
 
@@ -23,6 +23,16 @@ export function TransactionSearch({ value, onChangeText, placeholder = 'Search t
         placeholderTextColor={colors.textMuted}
         accessibilityLabel="Search transactions input"
       />
+      {value.length > 0 && (
+        <TouchableOpacity
+          onPress={() => onChangeText('')}
+          style={styles.clearBtn}
+          accessibilityRole="button"
+          accessibilityLabel="Clear search input"
+        >
+          <Icon name="X" size={18} color={colors.textMuted} />
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -42,5 +52,12 @@ const styles = StyleSheet.create({
     flex: 1,
     height: '100%',
     padding: 0,
+  },
+  clearBtn: {
+    minWidth: 44,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: -8,
   },
 });

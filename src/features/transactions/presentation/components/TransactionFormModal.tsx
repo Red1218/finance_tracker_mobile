@@ -35,7 +35,7 @@ export interface TransactionFormModalProps {
   categories: Array<{ id: string; name: string; kind?: 'EXPENSE' | 'INCOME' }>;
   isLoading?: boolean;
   error?: string | null;
-  onSubmit: (values: TransactionFormValues) => Promise<void>;
+  onSubmit: (values: TransactionFormValues, mode: TransactionFormMode) => Promise<void>;
   onClose: () => void;
 }
 
@@ -139,7 +139,7 @@ export function TransactionFormModal({
       transactionDate: initialValues?.transactionDate || new Date(),
     };
 
-    await onSubmit(values);
+    await onSubmit(values, activeMode);
   };
 
   const handleClose = () => {
@@ -166,7 +166,7 @@ export function TransactionFormModal({
         <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={handleClose} />
 
         <View style={[styles.modalContent, { backgroundColor: colors.surfacePrimary, borderColor: colors.border }]}>
-          <View style={styles.handleBar} />
+          <View style={[styles.handleBar, { backgroundColor: colors.borderSubtle }]} />
 
           <View style={styles.headerRow}>
             <Text style={[styles.headerTitle, { color: colors.textPrimary, fontSize: typography.title.fontSize }]}>
@@ -210,7 +210,7 @@ export function TransactionFormModal({
                     <Text
                       style={[
                         styles.segmentPillText,
-                        { color: isActive ? '#FFFFFF' : colors.textSecondary },
+                        { color: isActive ? colors.textPrimary : colors.textSecondary },
                       ]}
                     >
                       {m.charAt(0).toUpperCase() + m.slice(1)}
@@ -225,7 +225,7 @@ export function TransactionFormModal({
             <View
               style={[
                 styles.errorBanner,
-                { backgroundColor: 'rgba(239, 68, 68, 0.15)', borderColor: colors.error },
+                { backgroundColor: colors.surfaceSecondary, borderColor: colors.error },
               ]}
               accessibilityLiveRegion="polite"
             >

@@ -17,15 +17,13 @@ export interface TransactionsScreenProps {
   onAddTransaction?: () => void;
   onFormSubmit?: (values: TransactionFormValues, mode: TransactionFormMode, transactionId?: string) => Promise<void>;
   onVoidTransaction?: (transactionId: string) => Promise<void>;
+  autoOpenForm?: boolean;
 }
 
 export function TransactionsScreen({
   transactions = [],
-  accounts = [{ id: 'acc-default', name: 'Default Account' }],
-  categories = [
-    { id: 'cat-food', name: 'Food & Dining', kind: 'EXPENSE' },
-    { id: 'cat-salary', name: 'Salary', kind: 'INCOME' },
-  ],
+  accounts = [],
+  categories = [],
   isLoading = false,
   error = null,
   onRefresh,
@@ -33,15 +31,17 @@ export function TransactionsScreen({
   onAddTransaction,
   onFormSubmit,
   onVoidTransaction,
+  autoOpenForm = false,
 }: TransactionsScreenProps) {
   const { colors, typography } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterType, setFilterType] = useState<'ALL' | 'INCOME' | 'EXPENSE'>('ALL');
+  const [filterType, setFilterType] = useState<'ALL' | 'INCOME' | 'EXPENSE' | 'TRANSFER'>('ALL');
 
   // Internal Modal & Sheet States
-  const [isFormVisible, setIsFormVisible] = useState(false);
+  const [isFormVisible, setIsFormVisible] = useState(autoOpenForm);
   const [formMode, setFormMode] = useState<TransactionFormMode>('expense');
   const [editingTransaction, setEditingTransaction] = useState<TransactionViewModel | null>(null);
+
 
   const [isDetailVisible, setIsDetailVisible] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<TransactionViewModel | null>(null);
@@ -57,8 +57,9 @@ export function TransactionsScreen({
 
       const matchesFilter =
         filterType === 'ALL' ||
-        (filterType === 'INCOME' && (tx.type === 'INCOME' || tx.type === 'TRANSFER_IN')) ||
-        (filterType === 'EXPENSE' && (tx.type === 'EXPENSE' || tx.type === 'TRANSFER_OUT'));
+        (filterType === 'INCOME' && tx.type === 'INCOME') ||
+        (filterType === 'EXPENSE' && tx.type === 'EXPENSE') ||
+        (filterType === 'TRANSFER' && (tx.type === 'TRANSFER_OUT' || tx.type === 'TRANSFER_IN'));
 
       return matchesSearch && matchesFilter;
     });
@@ -108,16 +109,19 @@ export function TransactionsScreen({
     setIsFormVisible(true);
   };
 
-  const handleModalSubmit = async (values: TransactionFormValues) => {
+  const handleModalSubmit = async (values: TransactionFormValues, submittedMode?: TransactionFormMode) => {
     if (!onFormSubmit) {
-      setIsFormVisible(false);
+      if (__DEV__) {
+        console.warn('[TransactionsScreen] onFormSubmit handler was not provided.');
+      }
+      setModalError('Transaction submission handler is missing. Unable to save transaction.');
       return;
     }
 
     try {
       setIsSubmitting(true);
       setModalError(null);
-      await onFormSubmit(values, formMode, editingTransaction?.id);
+      await onFormSubmit(values, submittedMode || formMode, editingTransaction?.id);
       setIsFormVisible(false);
       if (onRefresh) onRefresh();
     } catch (err: any) {
@@ -129,7 +133,10 @@ export function TransactionsScreen({
 
   const handleVoidTransaction = async (txId: string) => {
     if (!onVoidTransaction) {
-      setIsDetailVisible(false);
+      if (__DEV__) {
+        console.warn('[TransactionsScreen] onVoidTransaction handler was not provided.');
+      }
+      setModalError('Transaction void handler is missing. Unable to void transaction.');
       return;
     }
 
@@ -162,8 +169,17 @@ export function TransactionsScreen({
         <TransactionSearch value={searchQuery} onChangeText={setSearchQuery} />
 
         <View style={styles.filterPillsRow}>
-          {(['ALL', 'INCOME', 'EXPENSE'] as const).map((type) => {
+          {(['ALL', 'EXPENSE', 'INCOME', 'TRANSFER'] as const).map((type) => {
             const isActive = filterType === type;
+            const label =
+              type === 'ALL'
+                ? 'All'
+                : type === 'EXPENSE'
+                ? 'Expenses'
+                : type === 'INCOME'
+                ? 'Income'
+                : 'Transfers';
+
             return (
               <TouchableOpacity
                 key={type}
@@ -177,7 +193,7 @@ export function TransactionsScreen({
                 onPress={() => setFilterType(type)}
                 accessibilityRole="button"
                 accessibilityState={{ selected: isActive }}
-                accessibilityLabel={`Filter by ${type}`}
+                accessibilityLabel={`Filter by ${label}`}
               >
                 <Text
                   style={[
@@ -188,7 +204,7 @@ export function TransactionsScreen({
                     },
                   ]}
                 >
-                  {type === 'ALL' ? 'All' : type === 'INCOME' ? 'Income' : 'Expenses'}
+                  {label}
                 </Text>
               </TouchableOpacity>
             );
@@ -197,7 +213,7 @@ export function TransactionsScreen({
       </View>
 
       {error && (
-        <View style={[styles.errorContainer, { backgroundColor: 'rgba(239, 68, 68, 0.15)' }]}>
+        <View style={[styles.errorContainer, { backgroundColor: colors.surfaceSecondary, borderColor: colors.error, borderWidth: 1 }]}>
           <Text style={[styles.errorText, { color: colors.error, fontSize: typography.caption.fontSize }]}>{error}</Text>
           {onRefresh && (
             <TouchableOpacity onPress={onRefresh} style={styles.retryBtn}>
@@ -220,7 +236,7 @@ export function TransactionsScreen({
       ) : (
         <FlatList
           data={groupedTransactions}
-          keyExtractor={(item) => item.dateLabel}
+          keyExtractor={(item) => `group-${item.dateLabel}`}
           contentContainerStyle={styles.listContent}
           onRefresh={onRefresh}
           refreshing={isLoading}
@@ -295,10 +311,10 @@ const styles = StyleSheet.create({
   },
   filterPill: {
     paddingHorizontal: 14,
-    paddingVertical: 6,
+    paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
-    minHeight: 36,
+    minHeight: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -319,6 +335,8 @@ const styles = StyleSheet.create({
   },
   retryBtn: {
     marginLeft: 8,
+    minHeight: 44,
+    justifyContent: 'center',
   },
   emptyContainer: {
     flex: 1,

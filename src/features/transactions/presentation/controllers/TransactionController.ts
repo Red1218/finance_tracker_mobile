@@ -49,7 +49,7 @@ export class TransactionController {
   }
 
   public async createExpense(data: {
-    id: string;
+    id?: string;
     accountId: string;
     amount: number;
     currencyCode: string;
@@ -62,7 +62,7 @@ export class TransactionController {
   }
 
   public async createIncome(data: {
-    id: string;
+    id?: string;
     accountId: string;
     amount: number;
     currencyCode: string;

@@ -13,8 +13,8 @@ import { TransactionRow } from '../../../features/transactions/contracts/Transac
 
 export class TransactionMapper {
   public static toDomain(row: TransactionRow): Transaction {
-    const rawDate = row.occurred_at || row.transaction_date || new Date().toISOString();
-    const rawVoided = row.archived_at || row.voided_at || null;
+    const rawDate = row.occurred_at || new Date().toISOString();
+    const rawVoided = row.archived_at || null;
     return new Transaction({
       id: new TransactionId(row.id),
       accountId: new AccountId(row.account_id),
@@ -44,11 +44,9 @@ export class TransactionMapper {
       description: entity.description ? entity.description.value : null,
       transfer_group_id: entity.transferGroupId ? entity.transferGroupId.value : null,
       occurred_at: isoDate,
-      transaction_date: isoDate,
       created_at: entity.createdAt.toISOString(),
       updated_at: new Date().toISOString(),
       archived_at: isoVoided,
-      voided_at: isoVoided,
     };
   }
 

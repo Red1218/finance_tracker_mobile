@@ -12,6 +12,7 @@ import { CreateIncomeCommand } from './CreateIncomeCommand';
 import { TransactionDTO } from '../dto/TransactionDTO';
 import { TransactionDTOMapper } from '../mappers/TransactionDTOMapper';
 import { AccountNotFoundError } from '../../../accounts/application/errors/AccountApplicationError';
+import { generateUUID } from '../../../../core/utils/uuid';
 
 export class CreateIncomeTransactionUseCase {
   constructor(
@@ -35,7 +36,7 @@ export class CreateIncomeTransactionUseCase {
     }
 
     const transaction = Transaction.createIncome({
-      id: new TransactionId(command.id || crypto.randomUUID()),
+      id: new TransactionId(command.id || generateUUID()),
       accountId,
       amount: new Money(command.amount),
       currencyCode: new CurrencyCode(command.currencyCode),

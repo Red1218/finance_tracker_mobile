@@ -14,6 +14,7 @@ import { TransactionDTO } from '../dto/TransactionDTO';
 import { TransactionDTOMapper } from '../mappers/TransactionDTOMapper';
 import { AccountNotFoundError } from '../../../accounts/application/errors/AccountApplicationError';
 import { SameAccountTransferError } from '../errors/TransactionApplicationError';
+import { generateUUID } from '../../../../core/utils/uuid';
 
 export class ExecuteTransferUseCase {
   constructor(
@@ -51,14 +52,15 @@ export class ExecuteTransferUseCase {
       const destAccount = destResult.data;
 
       const { sourceEntry, destEntry } = Transaction.createTransferPair({
-        sourceTransactionId: new TransactionId(command.sourceTransactionId || crypto.randomUUID()),
-        destTransactionId: new TransactionId(command.destTransactionId || crypto.randomUUID()),
+        sourceTransactionId: new TransactionId(command.sourceTransactionId || generateUUID()),
+        destTransactionId: new TransactionId(command.destTransactionId || generateUUID()),
         sourceAccountId: srcAccId,
         destAccountId: destAccId,
         amount: new Money(command.amount),
         currencyCode: new CurrencyCode(command.currencyCode),
         description: new TransactionDescription(command.description),
-        transferGroupId: new TransferReference(command.transferGroupId || crypto.randomUUID()),
+        transferGroupId: new TransferReference(command.transferGroupId || generateUUID()),
+
         transactionDate: command.transactionDate ? (command.transactionDate as any) : undefined,
       });
 

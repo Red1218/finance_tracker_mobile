@@ -93,4 +93,25 @@ describe('TransactionsScreen Presentation & User Actions', () => {
     expect(onVoidTransactionMock).toHaveBeenCalledWith('tx-1');
     expect(onRefreshMock).toHaveBeenCalled();
   });
+
+  it('preserves income mode when user switches tab from default expense to income', async () => {
+    const onFormSubmitMock = vi.fn().mockResolvedValue(undefined);
+    const defaultScreenFormMode = 'expense';
+    const submittedModalActiveMode = 'income';
+
+    const formValues = {
+      accountId: 'acc-1',
+      amount: 10000,
+      currencyCode: 'INR',
+      description: 'Salary',
+      categoryId: 'cat-2',
+    };
+
+    // Simulate TransactionsScreen.handleModalSubmit receiving submittedMode from modal
+    const submittedModeToForward = submittedModalActiveMode || defaultScreenFormMode;
+    await onFormSubmitMock(formValues, submittedModeToForward, undefined);
+
+    expect(onFormSubmitMock).toHaveBeenCalledWith(formValues, 'income', undefined);
+    expect(onFormSubmitMock).not.toHaveBeenCalledWith(formValues, 'expense', undefined);
+  });
 });

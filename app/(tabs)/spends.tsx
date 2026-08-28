@@ -1,6 +1,6 @@
 import React from 'react';
-import { TransactionsScreen } from '@/src/features/transactions/presentation/screens/TransactionsScreen';
+import { TransactionsRouteContainer } from '@/src/features/transactions/integration/TransactionsRouteContainer';
 
 export default function SpendsScreenRoute() {
-  return <TransactionsScreen />;
+  return <TransactionsRouteContainer />;
 }

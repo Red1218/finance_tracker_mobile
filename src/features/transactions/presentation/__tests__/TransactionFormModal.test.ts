@@ -48,17 +48,17 @@ describe('TransactionFormModal Presentation Behavior & Rules', () => {
     expect(title).toBe('Edit Transaction');
   });
 
-  it('handles submit callback invocation', async () => {
+  it('handles submit callback invocation with activeMode parameter', async () => {
     const onSubmitMock = vi.fn().mockResolvedValue(undefined);
     const testValues: TransactionFormValues = {
       accountId: 'acc-1',
-      amount: 300,
+      amount: 10000,
       currencyCode: 'INR',
-      description: 'Coffee',
-      categoryId: 'cat-1',
+      description: 'Salary',
+      categoryId: 'cat-2',
     };
 
-    await onSubmitMock(testValues);
-    expect(onSubmitMock).toHaveBeenCalledWith(testValues);
+    await onSubmitMock(testValues, 'income');
+    expect(onSubmitMock).toHaveBeenCalledWith(testValues, 'income');
   });
 });

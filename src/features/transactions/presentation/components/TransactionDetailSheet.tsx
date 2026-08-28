@@ -53,7 +53,7 @@ export function TransactionDetailSheet({
         <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose} />
 
         <View style={[styles.sheetContent, { backgroundColor: colors.surfacePrimary, borderColor: colors.border }]}>
-          <View style={styles.handleBar} />
+          <View style={[styles.handleBar, { backgroundColor: colors.borderSubtle }]} />
 
           <View style={styles.headerRow}>
             <StatusIndicator
@@ -72,7 +72,7 @@ export function TransactionDetailSheet({
           </View>
 
           {error && (
-            <View style={[styles.errorBanner, { backgroundColor: 'rgba(239, 68, 68, 0.15)', borderColor: colors.error }]}>
+            <View style={[styles.errorBanner, { backgroundColor: colors.surfaceSecondary, borderColor: colors.error }]}>
               <Icon name="AlertTriangle" size={18} color={colors.error} />
               <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
             </View>
@@ -102,7 +102,7 @@ export function TransactionDetailSheet({
                 </Text>
               </View>
 
-              <View style={styles.divider} />
+              <View style={[styles.divider, { backgroundColor: colors.borderSubtle }]} />
 
               <View style={styles.metaRow}>
                 <Text style={[styles.metaLabel, { color: colors.textMuted }]}>Date</Text>
@@ -113,7 +113,7 @@ export function TransactionDetailSheet({
 
               {transaction.transferGroupId && (
                 <>
-                  <View style={styles.divider} />
+                  <View style={[styles.divider, { backgroundColor: colors.borderSubtle }]} />
                   <View style={styles.metaRow}>
                     <Text style={[styles.metaLabel, { color: colors.textMuted }]}>Transfer Reference</Text>
                     <Text style={[styles.metaValue, { color: colors.warning }]}>
@@ -125,7 +125,7 @@ export function TransactionDetailSheet({
             </Card>
 
             {showVoidConfirm && (
-              <View style={[styles.confirmCard, { backgroundColor: 'rgba(239, 68, 68, 0.1)', borderColor: colors.error }]}>
+              <View style={[styles.confirmCard, { backgroundColor: colors.surfaceSecondary, borderColor: colors.error }]}>
                 <View style={styles.confirmHeader}>
                   <Icon name="AlertTriangle" size={24} color={colors.error} />
                   <Text style={[styles.confirmTitle, { color: colors.error }]}>Void Transaction?</Text>

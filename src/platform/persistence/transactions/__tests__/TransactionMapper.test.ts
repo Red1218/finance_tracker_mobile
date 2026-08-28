@@ -34,7 +34,12 @@ describe('TransactionMapper', () => {
     expect(row.description).toBe('Groceries');
     expect(row.category_id).toBe('33333333-3333-4333-a333-333333333333');
     expect(row.transfer_group_id).toBeNull();
-    expect(row.voided_at).toBeNull();
+    expect(row.occurred_at).toBe(expense.transactionDate.value.toISOString());
+    expect(row.archived_at).toBeNull();
+
+    // Verify non-existent legacy columns are strictly absent from persistence row
+    expect(row).not.toHaveProperty('transaction_date');
+    expect(row).not.toHaveProperty('voided_at');
 
     const domainObject = TransactionMapper.toDomain(row);
 
@@ -49,7 +54,7 @@ describe('TransactionMapper', () => {
     expect(domainObject.isVoided).toBe(false);
   });
 
-  it('maps a paired transfer entry with transferGroupId and voidedAt symmetrically', () => {
+  it('maps a paired transfer entry with transferGroupId and archivedAt symmetrically', () => {
     const { sourceEntry } = Transaction.createTransferPair({
       sourceTransactionId: new TransactionId('44444444-4444-4444-a444-444444444444'),
       destTransactionId: new TransactionId('55555555-5555-4555-a555-555555555555'),
@@ -67,7 +72,10 @@ describe('TransactionMapper', () => {
 
     expect(row.type).toBe('TRANSFER_OUT');
     expect(row.transfer_group_id).toBe('88888888-8888-4888-a888-888888888888');
-    expect(row.voided_at).toBe('2026-07-25T12:00:00.000Z');
+    expect(row.archived_at).toBe('2026-07-25T12:00:00.000Z');
+
+    expect(row).not.toHaveProperty('transaction_date');
+    expect(row).not.toHaveProperty('voided_at');
 
     const domainObject = TransactionMapper.toDomain(row);
 

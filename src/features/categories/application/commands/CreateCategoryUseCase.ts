@@ -5,6 +5,8 @@ import { CategoryDTO } from '../dto/CategoryDTO';
 import { CategoryDTOMapper } from '../mappers/CategoryDTOMapper';
 import { DuplicateCategoryNameError } from '../errors/CategoryApplicationError';
 
+import { generateUUID } from '../../../../core/utils/uuid';
+
 export class CreateCategoryUseCase {
   constructor(private readonly categoryRepository: ICategoryRepository) {
     Object.freeze(this);
@@ -19,7 +21,8 @@ export class CreateCategoryUseCase {
     }
 
     const category = new Category({
-      id: new CategoryId(command.id || crypto.randomUUID()),
+      id: new CategoryId(command.id || generateUUID()),
+
       name: new CategoryName(command.name),
       kind,
       isSystem: false,

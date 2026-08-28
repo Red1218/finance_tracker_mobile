@@ -20,12 +20,12 @@ export function TransactionDateGroup({ dateLabel }: TransactionDateGroupProps) {
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: 8,
+    paddingVertical: 10,
     paddingHorizontal: 4,
   },
   label: {
-    fontWeight: '600',
+    fontWeight: '700',
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 0.6,
   },
 });
