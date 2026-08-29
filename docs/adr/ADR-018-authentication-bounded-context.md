@@ -1,7 +1,8 @@
 # ADR-018: Authentication Bounded Context Architecture
 
 ## Status
-**✅ Approved**
+**✅ Approved** (Extended by [ADR-024](./ADR-024-auth-architecture-consolidation.md))
+
 
 ## Context
 The Finance Tracker platform requires user identity management, multi-tenant row isolation, and session management. While database Row-Level Security (RLS) policies (`auth.uid() = user_id`) were implemented in database migrations, a standalone bounded context for user authentication was needed to orchestrate login, session restoration, session refresh, and logout workflows.

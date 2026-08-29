@@ -1,7 +1,8 @@
 # ADR-017: Transaction Migration & Facade Strategy
 
 ## Status
-**✅ Approved**
+**↩️ Superseded by [ADR-023](./ADR-023-retire-expenses-bounded-context.md)** (Retirement of Expenses Bounded Context)
+
 
 ## Context
 During initial MVP development, expenses were modeled as an independent `Expense` entity within `src/features/expenses`. As the application evolved into an enterprise financial platform, a formal double-entry ledger was introduced in `src/features/transactions` with `Transaction` as the canonical aggregate root supporting all movement types (`INCOME`, `EXPENSE`, `TRANSFER_IN`, `TRANSFER_OUT`).

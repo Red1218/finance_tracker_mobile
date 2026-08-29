@@ -43,5 +43,6 @@ yarn-error.*
 supabase/.temp/
 .env
 
-# IDE metadata
+# IDE metadata & transient artifacts
 .idea/
+.artifacts/

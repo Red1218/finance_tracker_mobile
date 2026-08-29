@@ -1,68 +1,52 @@
 # AI Index
 
-## Navigation Map
+## Navigation Map for AI Agents
 
-### Architecture
-- **Purpose**: Defines system design, components, and persistence architecture.
-- **Location**: [ARCHITECTURE.md](file:///d:/Projects/finance_tracker_mobile/docs/ARCHITECTURE.md) & [PERSISTENCE_ARCHITECTURE.md](file:///d:/Projects/finance_tracker_mobile/docs/PERSISTENCE_ARCHITECTURE.md)
-- **When to update it**: When introducing new major components, changing system interactions, or modifying persistence design.
+### Agent Rules & Primary Instructions
+- **Purpose**: Authoritative instruction source for AI coding agents.
+- **Location**: [AGENTS.md](../AGENTS.md)
+- **When to update it**: Only when project-wide agent rules or governance standards are updated.
 
-### Engineering Handbook
-- **Purpose**: Coding standards, Git workflows, and engineering practices.
-- **Location**: `docs/handbook/`
-- **When to update it**: When team conventions or tooling change.
+### Current Project Status & Baseline Metrics
+- **Purpose**: Single living snapshot of current development phase, test suite baselines, and open work items.
+- **Location**: [docs/status/PROJECT_STATUS.md](./status/PROJECT_STATUS.md)
+- **When to update it**: At phase transitions or verification milestone updates (via reviewable PR).
 
-### ADRs (Architecture Decision Records)
-- **Purpose**: Records of significant architectural decisions.
-- **Location**: `docs/architecture/adrs/`
-- **When to update it**: When a new architectural decision is made and approved.
+### Architecture & Persistence Specifications
+- **Purpose**: Defines system layers, Expo Router boundaries, data flows, and database/RLS schema.
+- **Location**: [ARCHITECTURE.md](./ARCHITECTURE.md) & [PERSISTENCE_ARCHITECTURE.md](./PERSISTENCE_ARCHITECTURE.md)
+- **When to update it**: When introducing new major components or updating persistence design (Approved & Frozen 🔒).
 
-### Decision Log
-- **Purpose**: Tracks active, ongoing, or minor engineering decisions.
-- **Location**: [ACTIVE_DECISIONS.md](file:///d:/Projects/finance_tracker_mobile/docs/context/ACTIVE_DECISIONS.md)
-- **When to update it**: When a technical decision is being considered or finalized.
+### Architectural Decision Records (ADRs)
+- **Purpose**: Records of significant architectural decisions (ADR-010 through ADR-024).
+- **Location**: [docs/adr/INDEX.md](./adr/INDEX.md)
+- **When to update it**: When a new architectural decision is formally proposed and approved.
 
-### Tech Debt
-- **Purpose**: Tracks known technical debt and refactoring needs.
-- **Location**: [CURRENT_STATE.md](file:///d:/Projects/finance_tracker_mobile/docs/context/CURRENT_STATE.md) (Known Technical Debt section)
-- **When to update it**: When new shortcuts are taken or debt is resolved.
+### Product Roadmap
+- **Purpose**: High-level development phases and feature milestones (Phase 1 through Phase 6).
+- **Location**: [ROADMAP.md](./ROADMAP.md)
+- **When to update it**: When product phase milestones shift.
 
-### Roadmap
-- **Purpose**: High-level timeline and future goals.
-- **Location**: `docs/roadmap/`
-- **When to update it**: During quarterly planning or major shifts in project direction.
+### Feature Specifications
+- **Purpose**: Bounded context specifications and domain/application architecture.
+- **Location**: `docs/features/<feature>/`
+- **When to update it**: When designing or updating feature bounded context specifications.
 
-### Phase Documents
-- **Purpose**: Tracks the current development phase objectives and status.
-- **Location**: [CURRENT_PHASE.md](file:///d:/Projects/finance_tracker_mobile/docs/context/CURRENT_PHASE.md)
-- **When to update it**: When starting, progressing, or completing a development phase.
+### UI & Design System
+- **Purpose**: UI governance, component system, navigation, motion, and accessibility specifications.
+- **Location**: `docs/ui/`
+- **When to update it**: When adding new shared UI primitives or modifying component registry.
 
-### Testing
-- **Purpose**: Testing strategies, rules, and coverage expectations.
-- **Location**: `docs/testing/`
-- **When to update it**: When testing frameworks or requirements change.
+### Operations & Release Runbooks
+- **Purpose**: EAS Build profiles, environment variable provisioning, and store submission checklists.
+- **Location**: `docs/operations/`
+- **When to update it**: When updating CI/CD, EAS, or app release runbooks.
 
-### Security
-- **Purpose**: Security policies, threat models, and vulnerability handling.
-- **Location**: `docs/security/`
-- **When to update it**: When new security policies are introduced.
-
-### Contributing
-- **Purpose**: Guidelines for new contributors.
-- **Location**: `CONTRIBUTING.md`
-- **When to update it**: When onboarding processes or PR templates change.
-
-### Changelog
-- **Purpose**: Chronological list of user-facing changes.
-- **Location**: `CHANGELOG.md`
-- **When to update it**: When releasing new versions or completing phases.
-
-### Current Context
-- **Purpose**: The immediate, live state of the project for AI sessions.
-- **Location**: `docs/context/`
-- **When to update it**: Continuously, at the end of every significant development session.
+### Historical Execution Logs
+- **Purpose**: Archived execution plans and walkthroughs for past refactor phases.
+- **Location**: `docs/history/refactors/`
+- **When to update it**: Archived after refactor completion.
 
 ---
-**Last Updated**: 2026-07-21
-**Owner**: Development Team
-**Related Documents**: [AI_BOOTSTRAP.md](file:///d:/Projects/finance_tracker_mobile/docs/AI_BOOTSTRAP.md)
+**Last Updated**: 2026-08-29  
+**Owner**: Finance Tracker Team  

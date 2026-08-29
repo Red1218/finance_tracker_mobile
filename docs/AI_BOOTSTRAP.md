@@ -1,27 +1,22 @@
 # AI Context System Bootstrap
 
 ## Purpose
-This is the first document every AI assistant must read.
+This is the onboarding guidance document for AI coding assistants joining a Finance Tracker development session.
 
-## Rules
-- Repository documentation is the single source of truth.
-- Never rely on previous chat memory.
-- Never assume missing information.
-- Always follow Architecture Freeze and Documentation Freeze.
-- Respect ADRs and Engineering Handbook.
-- Update context documents before finishing a development session if the project state changes.
+## Core Rules
+- [AGENTS.md](../AGENTS.md) is the master instruction source for AI agent rules and behavioral constraints.
+- Repository documentation under `docs/` is the single source of truth.
+- Never rely on transient chat memory or unverified assumptions.
+- Respect Approved & Frozen specifications (`ARCHITECTURE.md`, `PERSISTENCE_ARCHITECTURE.md`, and all `docs/adr/` records).
+- Update `docs/status/PROJECT_STATUS.md` via reviewable PRs when phase milestones or baselines change.
 
-## Read Order
-1. [AI_INDEX.md](file:///d:/Projects/finance_tracker_mobile/docs/AI_INDEX.md)
-2. [PROJECT_OVERVIEW.md](file:///d:/Projects/finance_tracker_mobile/docs/context/PROJECT_OVERVIEW.md)
-3. [CURRENT_STATE.md](file:///d:/Projects/finance_tracker_mobile/docs/context/CURRENT_STATE.md)
-4. [CURRENT_PHASE.md](file:///d:/Projects/finance_tracker_mobile/docs/context/CURRENT_PHASE.md)
-5. [AI_RULES.md](file:///d:/Projects/finance_tracker_mobile/docs/context/AI_RULES.md)
-6. [NEXT_STEPS.md](file:///d:/Projects/finance_tracker_mobile/docs/context/NEXT_STEPS.md)
-
-Only after reading these should implementation begin.
+## Recommended Read Order
+1. [AGENTS.md](../AGENTS.md) — Primary agent instructions and rules
+2. [AI_INDEX.md](./AI_INDEX.md) — Master navigation index
+3. [status/PROJECT_STATUS.md](./status/PROJECT_STATUS.md) — Authoritative living current-state snapshot
+4. [ROADMAP.md](./ROADMAP.md) — High-level product phase roadmap
+5. [ARCHITECTURE.md](./ARCHITECTURE.md) — Master architecture specification
 
 ---
-**Last Updated**: 2026-07-21
-**Owner**: Development Team
-**Related Documents**: None
+**Last Updated**: 2026-08-29  
+**Owner**: Finance Tracker Team  
