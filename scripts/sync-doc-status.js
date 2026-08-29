@@ -158,7 +158,7 @@ function verifyMarkdownLinks() {
   }
 
   log(`✅ Markdown link check passed (0 broken links across ${mdFiles.length} files).`);
-  return 0;
+  return { brokenLinks: 0, totalFiles: mdFiles.length };
 }
 
 // -----------------------------------------------------------------------------
@@ -294,7 +294,7 @@ function main() {
     const doctorChecks = verifyExpoDoctor();
 
     // 4. Verify Markdown Links
-    const brokenLinks = verifyMarkdownLinks();
+    const linkMetrics = verifyMarkdownLinks();
 
     // 5. Get Commit SHA
     const commitSha = getCommitSha();
@@ -305,9 +305,24 @@ function main() {
       totalTests: testMetrics.totalTests,
       totalFiles: testMetrics.totalFiles,
       doctorChecks,
-      brokenLinks,
+      brokenLinks: linkMetrics.brokenLinks,
       commitSha,
     });
+
+    if (process.env.GITHUB_OUTPUT) {
+      const outputs = [
+        `changed=${result.changed}`,
+        `ts_errors=0`,
+        `tests_passed=${testMetrics.passedTests}`,
+        `tests_total=${testMetrics.totalTests}`,
+        `test_files=${testMetrics.totalFiles}`,
+        `doctor_checks=${doctorChecks}`,
+        `doctor_total=${doctorChecks}`,
+        `broken_links=${linkMetrics.brokenLinks}`,
+        `audited_files=${linkMetrics.totalFiles}`,
+      ].join('\n') + '\n';
+      fs.appendFileSync(process.env.GITHUB_OUTPUT, outputs, 'utf8');
+    }
 
     log(`Synchronization complete. Status document updated: ${result.changed}`);
     process.exit(0);
