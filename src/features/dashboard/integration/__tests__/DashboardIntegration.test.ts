@@ -16,6 +16,7 @@ describe('Dashboard Feature End-to-End Integration', () => {
 
     const queryBuilder = {
       eq: vi.fn().mockReturnThis(),
+      or: vi.fn().mockReturnThis(),
       gte: vi.fn().mockReturnThis(),
       lte: vi.fn().mockReturnThis(),
       is: vi.fn().mockReturnThis(),

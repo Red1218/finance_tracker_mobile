@@ -9,6 +9,7 @@ export interface BudgetHealthRow {
   readonly categoryId?: string;
   readonly categoryName?: string;
   readonly isOverall?: boolean;
+  readonly isDerived?: boolean;
 }
 
 export interface BudgetHealthViewModel extends SectionViewModel<BudgetHealthRow[]> {

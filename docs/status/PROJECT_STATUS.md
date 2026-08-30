@@ -96,6 +96,7 @@ All 12 bounded contexts are fully implemented under `src/features/`:
 1. **EAS Build & App Release Pipelines**: Finalize `eas.json` profiles for staging and production builds on iOS and Android.
 2. **Native Push Notifications**: Finalize native push notification channel registrations for low-budget alerts and bill payment reminders.
 3. **App Store & Play Store Submissions**: Prepare app metadata, screenshots, and privacy nutrition labels.
+4. **Dashboard Derived Overall Budget Health ([ADR-025](../adr/ADR-025-dashboard-derived-overall-budget-health.md))**: Design approved by product review; ADR status remains Proposed pending merge, and implementation/tests have not yet started. See `docs/features/dashboard/addendum_derived_overall_budget_health.md` for the implementation-facing contract.
 
 ---
 
@@ -111,3 +112,5 @@ All 12 bounded contexts are fully implemented under `src/features/`:
 | `docs/status/PROJECT_STATUS.md` | Complete current-state project status record | Living Status Spec | Active & Authoritative |
 | `docs/history/refactors/2026-08-24_dto-refactor/implementation_plan.md` | DTO refactor implementation plan record | Historical Record | Completed & Frozen |
 | `docs/history/refactors/2026-08-24_dto-refactor/walkthrough.md` | DTO refactor walkthrough record | Historical Record | Completed & Frozen |
+| `docs/adr/ADR-025-dashboard-derived-overall-budget-health.md` | Dashboard Derived Overall Budget Health ADR (extends ADR-016) | Governance / ADR | 🟡 Proposed |
+| `docs/features/dashboard/addendum_derived_overall_budget_health.md` | Dashboard Derived Overall Budget Health design addendum (implementation-facing contract) | Feature Design Addendum | Design Approved — Pending Implementation |

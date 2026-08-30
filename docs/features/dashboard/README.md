@@ -140,3 +140,16 @@
   - Sprint 3 — Infrastructure Layer: ✅ Completed
   - Sprint 4 — Presentation Layer: ✅ Completed
   - Sprint 5 — Integration Layer: ▶ Current
+
+---
+
+## Post-Freeze Design Addenda
+
+The Dashboard architecture package (Stages 0.1–0.7, Phases 1.1–1.8) is Approved & Frozen and is not
+reopened by the items below. New behavior added after the freeze is tracked as standalone addenda
+rather than additional numbered phases.
+
+- **Derived Overall Budget Health** — [ADR-025](../../adr/ADR-025-dashboard-derived-overall-budget-health.md) (🟡 Proposed, extends [ADR-016](../../adr/ADR-016-budgets-bounded-context.md)) / [addendum_derived_overall_budget_health.md](./addendum_derived_overall_budget_health.md)
+  Status: Design Approved by product review — Pending Implementation & Verification. Adds a
+  read-only, non-persisted, Dashboard-only combined-category budget aggregate for users with
+  category budgets but no explicit Overall Budget. Does not modify the Budgets bounded context.

@@ -11,11 +11,8 @@ export class BudgetHealthMapper {
     }
 
     const rows: BudgetHealthRow[] = healthStatuses.map(status => {
-      const isOverall =
-        status.categoryId === undefined ||
-        status.categoryId === null ||
-        status.budgetId === 'overall' ||
-        status.budgetId === 'global';
+      const isDerived = status.source === 'Derived';
+      const isOverall = isDerived || status.categoryId === undefined || status.categoryId === null;
 
       const catName = isOverall
         ? 'Overall'
@@ -34,6 +31,7 @@ export class BudgetHealthMapper {
         categoryId: status.categoryId,
         categoryName: catName,
         isOverall,
+        isDerived,
       };
     });
 
