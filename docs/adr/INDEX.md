@@ -26,6 +26,7 @@ For the reusable template, see [ADR_TEMPLATE.md](./ADR_TEMPLATE.md).
 | [ADR-022](./ADR-022-bills-bounded-context.md) | Bills Bounded Context Architecture | ✅ Approved | 2026-08 | Separate BillPayment entity, calendar anchor recurrence, derived status, IBillTransactionPort, dual idempotency |
 | [ADR-023](./ADR-023-retire-expenses-bounded-context.md) | Retirement of Expenses Bounded Context | ✅ Approved | 2026-08 | Complete retirement and removal of legacy expenses bounded context (Supersedes ADR-017) |
 | [ADR-024](./ADR-024-auth-architecture-consolidation.md) | Authentication Architecture Consolidation | ✅ Approved | 2026-08 | Deletion of legacy platform auth and adoption of useAppAuth adapter (Extends ADR-018) |
+| [ADR-025](./ADR-025-dashboard-derived-overall-budget-health.md) | Dashboard Derived Overall Budget Health | 🟡 Proposed | 2026-08 | Read-only, non-persisted, Dashboard-only combined-category budget aggregate; design approved, not yet implemented (Extends ADR-016) |
 
 ---
 
