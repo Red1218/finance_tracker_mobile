@@ -28,6 +28,7 @@ describe('SupabaseDashboardRepository Data Contract Tests', () => {
         return {
           select: vi.fn().mockReturnThis(),
           eq: vi.fn().mockReturnThis(),
+          or: vi.fn().mockResolvedValue({ data: [], error: null }),
           is: vi.fn().mockResolvedValue({ data: [], error: null }),
         };
       }),
@@ -39,5 +40,41 @@ describe('SupabaseDashboardRepository Data Contract Tests', () => {
     expect(snapshot.transactions).toHaveLength(2);
     expect(snapshot.transactions[0].direction).toBe('Income');
     expect(snapshot.transactions[1].direction).toBe('Expense');
+  });
+
+  it('queries categories including both user categories and system categories', async () => {
+    const mockOr = vi.fn().mockResolvedValue({
+      data: [
+        { id: 'cat-user', name: 'Custom User Category' },
+        { id: 'cat-sys', name: 'Transportation' },
+      ],
+      error: null,
+    });
+
+    const mockSupabaseClient = {
+      from: vi.fn((table: string) => {
+        if (table === 'categories') {
+          return {
+            select: vi.fn().mockReturnThis(),
+            or: mockOr,
+          };
+        }
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          gte: vi.fn().mockReturnThis(),
+          lte: vi.fn().mockResolvedValue({ data: [], error: null }),
+          is: vi.fn().mockResolvedValue({ data: [], error: null }),
+        };
+      }),
+    } as unknown as SupabaseClient;
+
+    const repository = new SupabaseDashboardRepository(mockSupabaseClient);
+    const snapshot = await repository.getDashboardData('user-123', 'CurrentMonth');
+
+    expect(mockOr).toHaveBeenCalledWith('user_id.eq.user-123,is_system.eq.true');
+    expect(snapshot.categories).toHaveLength(2);
+    expect(snapshot.categories[0].name).toBe('Custom User Category');
+    expect(snapshot.categories[1].name).toBe('Transportation');
   });
 });

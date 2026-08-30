@@ -27,7 +27,7 @@ export class SupabaseDashboardRepository implements DashboardReadRepository {
 
       // Fetch Categories, Budgets, and Transactions concurrently from Supabase
       const [categoriesRes, budgetsRes, expensesRes] = await Promise.all([
-        this.client.from('categories').select('id, name').eq('user_id', userId),
+        this.client.from('categories').select('id, name').or(`user_id.eq.${userId},is_system.eq.true`),
         this.client.from('budgets').select('id, amount, category_id').eq('user_id', userId).is('archived_at', null),
         this.client.from('transactions')
           .select('id, amount, currency_code, occurred_at, category_id, description, type')
