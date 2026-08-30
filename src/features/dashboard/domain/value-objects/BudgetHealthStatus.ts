@@ -2,17 +2,28 @@ import { MonetaryAmount } from './MonetaryAmount';
 
 export type BudgetStatus = 'OnTrack' | 'AtRisk' | 'OverBudget';
 
+/**
+ * 'Explicit' — backed by a real, persisted Budget (category or explicit-overall). `budgetId` is that Budget's id.
+ * 'Derived' — a Dashboard-only calculated aggregate (ADR-025). Never backed by a Budget; `budgetId` must be absent.
+ */
+export type BudgetHealthSource = 'Explicit' | 'Derived';
+
 export class BudgetHealthStatus {
   public readonly status: BudgetStatus;
   public readonly consumptionRatio: number;
   public readonly remainingAmount: MonetaryAmount;
 
   constructor(
-    public readonly budgetId: string,
+    public readonly source: BudgetHealthSource,
     public readonly amountConsumed: MonetaryAmount,
     public readonly limit: MonetaryAmount,
-    public readonly categoryId?: string
+    public readonly categoryId?: string,
+    public readonly budgetId?: string
   ) {
+    if (source === 'Derived' && budgetId !== undefined) {
+      throw new Error('A derived BudgetHealthStatus must not carry a persisted budgetId');
+    }
+
     if (amountConsumed.currency !== limit.currency) {
       throw new Error('Currencies must match to calculate budget health');
     }

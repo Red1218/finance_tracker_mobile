@@ -12,6 +12,7 @@ export interface MonthlyBudgetCardProps {
 
 export function MonthlyBudgetCard({ budget }: MonthlyBudgetCardProps) {
   const { colors, typography } = useTheme();
+  const isDerived = budget.isDerived === true;
 
   // Map BudgetHealthRow statusLabel to StatusIndicator status type
   const statusType =
@@ -38,16 +39,33 @@ export function MonthlyBudgetCard({ budget }: MonthlyBudgetCardProps) {
     progressColor = colors.warning;
   }
 
+  const ringAccessibilityLabel = isDerived
+    ? `Estimated monthly budget utilization: ${percentage}%. Calculated from your category budgets.`
+    : `Monthly budget utilization: ${percentage}%`;
+
   return (
     <Card variant="elevated" style={styles.cardContainer}>
       {/* Header Row: Section Title & Status Badge */}
       <View style={styles.headerRow}>
-        <Text
-          style={[styles.title, { color: colors.textPrimary, fontSize: typography.heading.fontSize }]}
-          accessibilityRole="header"
-        >
-          Monthly Budget
-        </Text>
+        <View style={styles.titleGroup}>
+          <Text
+            style={[styles.title, { color: colors.textPrimary, fontSize: typography.heading.fontSize }]}
+            accessibilityRole="header"
+          >
+            Monthly Budget
+          </Text>
+          {isDerived ? (
+            <View
+              style={[styles.estimatedBadge, { backgroundColor: colors.surfaceElevated || colors.borderSubtle }]}
+              accessible={true}
+              accessibilityLabel="Estimated value, calculated from your category budgets"
+            >
+              <Text style={[styles.estimatedBadgeText, { color: colors.textSecondary }]}>
+                Estimated
+              </Text>
+            </View>
+          ) : null}
+        </View>
         <StatusIndicator status={statusType} label={badgeText} />
       </View>
 
@@ -59,7 +77,7 @@ export function MonthlyBudgetCard({ budget }: MonthlyBudgetCardProps) {
           strokeWidth={12}
           progressColor={progressColor}
           trackColor={colors.surfaceElevated || colors.borderSubtle}
-          accessibilityLabel={`Monthly budget utilization: ${percentage}%`}
+          accessibilityLabel={ringAccessibilityLabel}
         >
           <Text style={[styles.percentageText, { color: colors.textPrimary }]}>
             {percentage}%
@@ -81,6 +99,14 @@ export function MonthlyBudgetCard({ budget }: MonthlyBudgetCardProps) {
           Spent <Text style={styles.boldText}>{budget.amountConsumed}</Text> of{' '}
           <Text style={styles.boldText}>{budget.budgetLimit}</Text>
         </Text>
+        {isDerived ? (
+          <Text
+            style={[styles.derivedCaption, { color: colors.textSecondary, fontSize: typography.caption.fontSize }]}
+            accessibilityLabel="Calculated from your category budgets"
+          >
+            Calculated from your category budgets.
+          </Text>
+        ) : null}
       </View>
     </Card>
   );
@@ -98,6 +124,25 @@ const styles = StyleSheet.create({
   },
   title: {
     fontWeight: '700',
+  },
+  titleGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  estimatedBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  estimatedBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  derivedCaption: {
+    textAlign: 'center',
+    marginTop: 4,
   },
   ringContainer: {
     alignItems: 'center',

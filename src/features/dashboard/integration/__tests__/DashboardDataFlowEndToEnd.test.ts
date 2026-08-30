@@ -7,6 +7,7 @@ import { CategoryBreakdownService } from '../../domain/services/CategoryBreakdow
 import { RecentActivityService } from '../../domain/services/RecentActivityService';
 import { LoggerAdapter } from '../../infrastructure/services/LoggerAdapter';
 import { BudgetHealthSection } from '../../presentation/components/sections/BudgetHealthSection';
+import { MonthlyBudgetCard } from '../../presentation/components/sections/MonthlyBudgetCard';
 import React from 'react';
 
 vi.mock('react-native-svg', () => {
@@ -30,6 +31,7 @@ vi.mock('../../../../shared/theme', () => ({
     typography: {
       heading: { fontSize: 18 },
       body: { fontSize: 14 },
+      caption: { fontSize: 12 },
     },
   }),
 }));
@@ -45,7 +47,7 @@ describe('Dashboard Budget Data Flow End-To-End Pipeline', () => {
     const mockSupabaseClient: any = {
       from: (table: string) => {
         if (table === 'categories') {
-          return { select: () => ({ eq: () => Promise.resolve({ data: [], error: null }) }) };
+          return { select: () => ({ eq: () => Promise.resolve({ data: [], error: null }), or: () => Promise.resolve({ data: [], error: null }) }) };
         }
         if (table === 'budgets') {
           return {
@@ -77,7 +79,7 @@ describe('Dashboard Budget Data Flow End-To-End Pipeline', () => {
             })
           };
         }
-        return { select: () => ({ eq: () => Promise.resolve({ data: [], error: null }) }) };
+        return { select: () => ({ eq: () => Promise.resolve({ data: [], error: null }), or: () => Promise.resolve({ data: [], error: null }) }) };
       }
     };
 
@@ -97,6 +99,7 @@ describe('Dashboard Budget Data Flow End-To-End Pipeline', () => {
     expect(budgetContent).toBeDefined();
     expect(budgetContent).toHaveLength(1);
     expect(budgetContent![0].isOverall).toBe(true);
+    expect(budgetContent![0].isDerived).toBe(false);
     expect(budgetContent![0].categoryId).toBeUndefined();
     expect(budgetContent![0].remainingAmount).toBe('₹600.00');
 
@@ -104,13 +107,28 @@ describe('Dashboard Budget Data Flow End-To-End Pipeline', () => {
     const sectionElement = BudgetHealthSection({ viewModel: viewModel.budgetHealthSection, onRetry: vi.fn() });
     const childCard = sectionElement.props.children;
     expect(childCard.type.name).toBe('MonthlyBudgetCard');
+
+    // An explicit Overall Budget must never render the "Estimated" indicator (ADR-025).
+    const renderedCard = MonthlyBudgetCard(childCard.props);
+    const titleGroup = renderedCard.props.children[0].props.children[0];
+    expect(titleGroup.props.children[1]).toBeNull();
   });
 
-  it('proves that category-only budgets generate category linear list (no false aggregate card)', async () => {
+  it('proves that category-only budgets generate a Derived Overall aggregate + category names, rendered with the Estimated indicator', async () => {
     const mockSupabaseClient: any = {
       from: (table: string) => {
         if (table === 'categories') {
-          return { select: () => ({ eq: () => Promise.resolve({ data: [{ id: 'cat-1', name: 'Groceries' }, { id: 'cat-2', name: 'Utilities' }], error: null }) }) };
+          return {
+            select: () => ({
+              or: () => Promise.resolve({
+                data: [
+                  { id: 'cat-1', name: 'Groceries' },
+                  { id: 'cat-2', name: 'Utilities' },
+                ],
+                error: null,
+              })
+            })
+          };
         }
         if (table === 'budgets') {
           return {
@@ -143,7 +161,7 @@ describe('Dashboard Budget Data Flow End-To-End Pipeline', () => {
             })
           };
         }
-        return { select: () => ({ eq: () => Promise.resolve({ data: [], error: null }) }) };
+        return { select: () => ({ eq: () => Promise.resolve({ data: [], error: null }), or: () => Promise.resolve({ data: [], error: null }) }) };
       }
     };
 
@@ -161,14 +179,26 @@ describe('Dashboard Budget Data Flow End-To-End Pipeline', () => {
     const budgetContent = viewModel.budgetHealthSection.content;
 
     expect(budgetContent).toBeDefined();
-    expect(budgetContent).toHaveLength(2);
-    expect(budgetContent![0].isOverall).toBe(false);
-    expect(budgetContent![1].isOverall).toBe(false);
+    // 1 derived aggregate overall row + 2 category rows = 3 rows total
+    expect(budgetContent).toHaveLength(3);
+    expect(budgetContent![0].isOverall).toBe(true);
+    expect(budgetContent![0].isDerived).toBe(true);
+    expect(budgetContent![0].budgetLimit).toBe('₹1,350.00');
 
-    // Test presentation component output
+    expect(budgetContent![1].categoryName).toBe('Groceries');
+    expect(budgetContent![2].categoryName).toBe('Utilities');
+
+    // Test presentation component receives globalBudgetRow (derived aggregate) and renders MonthlyBudgetCard
     const sectionElement = BudgetHealthSection({ viewModel: viewModel.budgetHealthSection, onRetry: vi.fn() });
     const childCard = sectionElement.props.children;
-    expect(childCard.type.name).not.toBe('MonthlyBudgetCard');
-    expect(childCard.props.variant).toBe('elevated');
+    expect(childCard.type.name).toBe('MonthlyBudgetCard');
+
+    // A Derived Overall must render the "Estimated" indicator so it is never confused with an
+    // explicit Overall Budget the user configured (ADR-025).
+    const renderedCard = MonthlyBudgetCard(childCard.props);
+    const titleGroup = renderedCard.props.children[0].props.children[0];
+    const estimatedBadge = titleGroup.props.children[1];
+    expect(estimatedBadge).not.toBeNull();
+    expect(estimatedBadge.props.children.props.children).toBe('Estimated');
   });
 });
