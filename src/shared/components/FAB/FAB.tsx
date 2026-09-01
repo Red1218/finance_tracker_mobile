@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { TouchableOpacity, Text, StyleSheet, ViewStyle } from 'react-native';
 import { useTheme } from '../../theme';
 import { Icon } from '../Icon';
@@ -15,6 +15,7 @@ export function FAB({
   accessibilityLabel,
 }: FABProps) {
   const { colors, radius, shadows, spacing, typography } = useTheme();
+  const [isFocused, setIsFocused] = useState(false);
 
   if (!visible) return null;
 
@@ -35,6 +36,14 @@ export function FAB({
     flexDirection: 'row',
     gap: spacing.space8,
     ...shadows.large,
+    ...(isFocused
+      ? {
+          outlineWidth: 2,
+          outlineColor: colors.focus,
+          outlineStyle: 'solid',
+          outlineOffset: 2,
+        }
+      : null),
   };
 
   return (
@@ -46,6 +55,8 @@ export function FAB({
       accessibilityRole="button"
       accessibilityState={{ disabled: !!disabled }}
       accessibilityLabel={accessibilityLabel || label || 'Action'}
+      onFocus={() => setIsFocused(true)}
+      onBlur={() => setIsFocused(false)}
     >
       <Icon name={iconName} size={iconSize} color="#FFFFFF" />
       {isExtended && label ? (
