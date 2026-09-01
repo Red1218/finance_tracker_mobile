@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '../../../../shared/theme';
-import { Card } from '../../../../shared/components/Card';
 import { Icon } from '../../../../shared/components/Icon';
 import { StatusIndicator } from '../../../../shared/components/StatusIndicator';
 import { SyncViewModel } from '../models/SyncViewModel';
@@ -31,7 +30,7 @@ export function SyncStatusSection({
   error: errorProp,
   onManualSyncPress,
 }: SyncStatusSectionProps) {
-  const { colors, typography } = useTheme();
+  const { colors, spacing, typography } = useTheme();
 
   let isOnline = viewModel.isOnline;
   let isSyncing = isSyncingProp ?? false;
@@ -80,13 +79,13 @@ export function SyncStatusSection({
   }
 
   return (
-    <Card variant="elevated" style={styles.cardContainer}>
-      <View style={styles.headerRow}>
-        <Icon name="Cloud" size="md" color={colors.brandPrimary} />
-        <Text style={[styles.sectionTitle, { color: colors.textPrimary, fontSize: typography.heading.fontSize }]} accessibilityRole="header">
-          Network & Synchronization
-        </Text>
-      </View>
+    <View style={[styles.cardContainer, { paddingVertical: spacing.space16, borderBottomWidth: 1, borderBottomColor: colors.divider }]}>
+      <Text
+        style={[styles.groupLabel, { color: colors.textSecondary, marginBottom: spacing.space16 }]}
+        accessibilityRole="header"
+      >
+        Network & Synchronization
+      </Text>
 
       <View style={styles.statusRow}>
         <Text style={[styles.label, { color: colors.textSecondary, fontSize: typography.body.fontSize }]}>
@@ -135,23 +134,17 @@ export function SyncStatusSection({
           {isSyncing ? 'Syncing...' : 'Sync Now'}
         </Text>
       </TouchableOpacity>
-    </Card>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  cardContainer: {
-    padding: 16,
-    marginBottom: 12,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-    gap: 8,
-  },
-  sectionTitle: {
+  cardContainer: {},
+  groupLabel: {
+    fontSize: 12,
     fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
   },
   statusRow: {
     flexDirection: 'row',

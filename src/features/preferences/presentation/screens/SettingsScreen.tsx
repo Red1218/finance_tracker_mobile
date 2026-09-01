@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useTheme } from '../../../../shared/theme';
+import { AppBar } from '../../../../shared/components';
 import { PreferencesModule } from '../../composition/PreferencesModule';
 import { usePreferences } from '../hooks/usePreferences';
 import { useUpdatePreference } from '../hooks/useUpdatePreference';
@@ -29,6 +31,7 @@ export function SettingsScreen({
   syncModule = defaultSyncModule,
 }: SettingsScreenProps) {
   const { colors, spacing, typography } = useTheme();
+  const router = useRouter();
 
   const { user, logout, loading: isAuthLoading } = useAppAuth();
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -113,118 +116,129 @@ export function SettingsScreen({
   }
 
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: colors.backgroundPrimary }]}
-      contentContainerStyle={{ padding: spacing.space16 }}
-    >
-      <Text style={[{ color: colors.textPrimary, marginBottom: spacing.space20 }, typography.heading]}>
-        Settings
-      </Text>
-
-      {updateError && (
-        <View style={[styles.errorCard, { backgroundColor: colors.surfaceSecondary, marginBottom: spacing.space16 }]}>
-          <Text style={[{ color: colors.error }, typography.caption]}>{updateError}</Text>
-        </View>
-      )}
-
-      {/* 0. Account & Security Section */}
-      <AccountSecuritySection
-        userEmail={user?.email ?? null}
-        onSignOut={handleSignOutPress}
-        disabled={isSigningOut || isAuthLoading}
-      />
-
-      {/* 1. Appearance Section */}
-      <AppearanceSection
-        viewModel={viewModel.appearance}
-        onThemeChange={updateTheme}
-        disabled={isUpdating}
-      />
-
-      {/* 2. Finance Section */}
-      <FinanceSection
-        viewModel={viewModel.finance}
-        onWeekStartChange={updateWeekStart}
-        onDecimalPrecisionChange={updateDecimalPrecision}
-        disabled={isUpdating}
-      />
-
-      {/* 3. Defaults Section */}
-      <DefaultsSection
-        viewModel={viewModel.defaults}
-        categories={categories}
-        onSelectDefaultExpenseCategory={updateDefaultExpenseCategory}
-        onSelectDefaultIncomeCategory={updateDefaultIncomeCategory}
-        disabled={isUpdating}
-      />
-
-      {/* 4. Notification Preferences Section (Real Application & Infrastructure Flow) */}
-      <NotificationPreferencesSection
-        viewModel={{
-          billRemindersEnabled: viewModel.notifications.dailyReminderEnabled,
-          billReminderLeadTimeDays: 3,
-          budgetAlertsEnabled: viewModel.notifications.budgetAlertsEnabled,
-          dailyDigestEnabled: viewModel.notifications.dailyReminderEnabled,
-          dailyDigestTime: viewModel.notifications.reminderTime ?? '20:00',
-          permissionState,
+    <View style={[styles.container, { backgroundColor: colors.backgroundPrimary }]}>
+      <AppBar
+        title="Settings"
+        leadingAction={{
+          id: 'back',
+          iconName: 'ChevronLeft',
+          label: 'Back',
+          onPress: () => router.back(),
         }}
-        onToggleBillReminders={(enabled) =>
-          updateNotificationSettings({
-            budgetAlertsEnabled: viewModel.notifications.budgetAlertsEnabled,
-            dailyReminderEnabled: enabled,
-            reminderTime: viewModel.notifications.reminderTime ?? '20:00',
-          })
-        }
-        onChangeLeadTimeDays={() => {}}
-        onToggleBudgetAlerts={(enabled) =>
-          updateNotificationSettings({
-            budgetAlertsEnabled: enabled,
-            dailyReminderEnabled: viewModel.notifications.dailyReminderEnabled,
-            reminderTime: viewModel.notifications.reminderTime,
-          })
-        }
-        onToggleDailyDigest={(enabled) =>
-          updateNotificationSettings({
-            budgetAlertsEnabled: viewModel.notifications.budgetAlertsEnabled,
-            dailyReminderEnabled: enabled,
-            reminderTime: viewModel.notifications.reminderTime ?? '20:00',
-          })
-        }
-        onChangeDigestTime={(time) =>
-          updateNotificationSettings({
-            budgetAlertsEnabled: viewModel.notifications.budgetAlertsEnabled,
-            dailyReminderEnabled: true,
-            reminderTime: time,
-          })
-        }
-        onRequestPermission={requestPermission}
-        onOpenSystemSettings={openSystemSettings}
       />
 
-      {/* 5. Data & Backup Section (Explicit Deferred Boundary) */}
-      <BackupRestoreSection
-        onExportPress={() => handleBackupNotice('export')}
-        onRestorePress={() => handleBackupNotice('restore')}
-        isExporting={false}
-        isRestoring={false}
-      />
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={{ paddingHorizontal: spacing.space20, paddingTop: spacing.space16, paddingBottom: spacing.space32 }}
+      >
+        {updateError && (
+          <View style={[styles.errorCard, { backgroundColor: colors.surfaceSecondary, marginBottom: spacing.space16 }]}>
+            <Text style={[{ color: colors.error }, typography.caption]}>{updateError}</Text>
+          </View>
+        )}
 
-      {/* 6. Network & Synchronization Section (Real Application & Controller Flow) */}
-      <SyncStatusSection
-        viewModel={syncViewModel}
-        isSyncing={isSyncing}
-        error={syncError}
-        onManualSyncPress={triggerSync}
-      />
+        {/* 1. Appearance Section */}
+        <AppearanceSection
+          viewModel={viewModel.appearance}
+          onThemeChange={updateTheme}
+          disabled={isUpdating}
+        />
 
-      {/* About Section */}
-      <AboutSection viewModel={viewModel.about} />
-    </ScrollView>
+        {/* 2. Finance Section */}
+        <FinanceSection
+          viewModel={viewModel.finance}
+          onWeekStartChange={updateWeekStart}
+          onDecimalPrecisionChange={updateDecimalPrecision}
+          disabled={isUpdating}
+        />
+
+        {/* 3. Defaults Section */}
+        <DefaultsSection
+          viewModel={viewModel.defaults}
+          categories={categories}
+          onSelectDefaultExpenseCategory={updateDefaultExpenseCategory}
+          onSelectDefaultIncomeCategory={updateDefaultIncomeCategory}
+          disabled={isUpdating}
+        />
+
+        {/* 4. Notification Preferences Section (Real Application & Infrastructure Flow) */}
+        <NotificationPreferencesSection
+          viewModel={{
+            billRemindersEnabled: viewModel.notifications.dailyReminderEnabled,
+            billReminderLeadTimeDays: 3,
+            budgetAlertsEnabled: viewModel.notifications.budgetAlertsEnabled,
+            dailyDigestEnabled: viewModel.notifications.dailyReminderEnabled,
+            dailyDigestTime: viewModel.notifications.reminderTime ?? '20:00',
+            permissionState,
+          }}
+          onToggleBillReminders={(enabled) =>
+            updateNotificationSettings({
+              budgetAlertsEnabled: viewModel.notifications.budgetAlertsEnabled,
+              dailyReminderEnabled: enabled,
+              reminderTime: viewModel.notifications.reminderTime ?? '20:00',
+            })
+          }
+          onChangeLeadTimeDays={() => {}}
+          onToggleBudgetAlerts={(enabled) =>
+            updateNotificationSettings({
+              budgetAlertsEnabled: enabled,
+              dailyReminderEnabled: viewModel.notifications.dailyReminderEnabled,
+              reminderTime: viewModel.notifications.reminderTime,
+            })
+          }
+          onToggleDailyDigest={(enabled) =>
+            updateNotificationSettings({
+              budgetAlertsEnabled: viewModel.notifications.budgetAlertsEnabled,
+              dailyReminderEnabled: enabled,
+              reminderTime: viewModel.notifications.reminderTime ?? '20:00',
+            })
+          }
+          onChangeDigestTime={(time) =>
+            updateNotificationSettings({
+              budgetAlertsEnabled: viewModel.notifications.budgetAlertsEnabled,
+              dailyReminderEnabled: true,
+              reminderTime: time,
+            })
+          }
+          onRequestPermission={requestPermission}
+          onOpenSystemSettings={openSystemSettings}
+        />
+
+        {/* 5. Data & Backup Section (Explicit Deferred Boundary) */}
+        <BackupRestoreSection
+          onExportPress={() => handleBackupNotice('export')}
+          onRestorePress={() => handleBackupNotice('restore')}
+          isExporting={false}
+          isRestoring={false}
+        />
+
+        {/* 6. Network & Synchronization Section (Real Application & Controller Flow) */}
+        <SyncStatusSection
+          viewModel={syncViewModel}
+          isSyncing={isSyncing}
+          error={syncError}
+          onManualSyncPress={triggerSync}
+        />
+
+        {/* 0. Account & Security Section */}
+        <AccountSecuritySection
+          userEmail={user?.email ?? null}
+          onSignOut={handleSignOutPress}
+          disabled={isSigningOut || isAuthLoading}
+        />
+
+        {/* About Section */}
+        <AboutSection viewModel={viewModel.about} />
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  scroll: {
     flex: 1,
   },
   centeredContainer: {

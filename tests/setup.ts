@@ -94,28 +94,15 @@ vi.mock('expo-sharing', () => ({
   shareAsync: vi.fn().mockResolvedValue(undefined),
 }));
 
-// Mock useTheme from src/shared/theme
+// Mock useTheme from src/shared/theme. Returns the real theme object (same
+// one src/shared/theme/theme.ts exports) rather than a hand-duplicated
+// subset of fields, so it can never drift out of sync with the actual
+// token values or omit fields (spacing, radius, colors.divider, etc.) that
+// real components use but a hand-picked list didn't anticipate.
+import { theme as realTheme } from '../src/shared/theme/theme';
+
 vi.mock('../src/shared/theme', () => ({
-  useTheme: () => ({
-    colors: {
-      textPrimary: '#0A0F1D',
-      textSecondary: '#4A5568',
-      backgroundPrimary: '#F8FAFC',
-      brandPrimary: '#2563EB',
-      surfacePrimary: '#FFFFFF',
-      surfaceElevated: '#FFFFFF',
-      borderSubtle: '#E2E8F0',
-      error: '#DC2626',
-      warning: '#D97706',
-      success: '#16A34A',
-    },
-    typography: {
-      heading: { fontSize: 20 },
-      title: { fontSize: 18 },
-      body: { fontSize: 14 },
-      caption: { fontSize: 12 },
-    },
-  }),
+  useTheme: () => realTheme,
 }));
 
 // Mock environment variables for config validation

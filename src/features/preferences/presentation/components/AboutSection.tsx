@@ -8,11 +8,11 @@ interface AboutSectionProps {
 }
 
 export function AboutSection({ viewModel }: AboutSectionProps) {
-  const { colors, spacing, typography, radius } = useTheme();
+  const { colors, spacing, typography } = useTheme();
 
   return (
-    <View style={[styles.sectionCard, { backgroundColor: colors.surfacePrimary, borderRadius: radius.medium, padding: spacing.space16, marginBottom: spacing.space16 }]}>
-      <Text style={[{ color: colors.textPrimary, marginBottom: spacing.space16 }, typography.title]}>
+    <View style={[styles.sectionCard, { paddingVertical: spacing.space16 }]}>
+      <Text style={[styles.groupLabel, { color: colors.textSecondary, marginBottom: spacing.space16 }]}>
         About
       </Text>
 
@@ -46,6 +46,12 @@ export function AboutSection({ viewModel }: AboutSectionProps) {
 
 const styles = StyleSheet.create({
   sectionCard: {},
+  groupLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
