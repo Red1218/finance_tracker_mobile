@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme';
 import { Icon } from '../Icon';
 import type { BottomNavigationProps } from './BottomNavigation.types';
@@ -11,12 +12,14 @@ export function BottomNavigation({
   style,
 }: BottomNavigationProps) {
   const { colors, spacing, typography } = useTheme();
+  const insets = useSafeAreaInsets();
 
   const containerStyle: ViewStyle = {
     backgroundColor: colors.backgroundSecondary,
     borderTopWidth: 1,
     borderTopColor: colors.divider,
-    paddingVertical: spacing.space8,
+    paddingTop: spacing.space8,
+    paddingBottom: Math.max(insets.bottom, spacing.space8),
     paddingHorizontal: spacing.space8,
   };
 
