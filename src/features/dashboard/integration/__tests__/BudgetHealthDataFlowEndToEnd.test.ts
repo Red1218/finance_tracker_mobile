@@ -25,20 +25,43 @@ vi.mock('../../../../shared/theme', () => ({
     colors: {
       textPrimary: '#FFFFFF',
       textSecondary: '#AAAAAA',
+      textMuted: '#777777',
       brandPrimary: '#0066FF',
       surfacePrimary: '#1E1E1E',
       surfaceElevated: '#2A2A2A',
+      surfaceElevatedHairline: '#2A2A2A',
       borderSubtle: '#333333',
       error: '#FF0000',
+      warning: '#FFAA00',
       success: '#00FF00',
     },
+    spacing: { space20: 20 },
     typography: {
       heading: { fontSize: 18 },
       body: { fontSize: 14 },
       caption: { fontSize: 12 },
+      numericLarge: { fontSize: 28, fontWeight: '700' },
     },
   }),
+  withAlpha: (hex: string, alpha: number) => `rgba(from ${hex} / ${alpha})`,
 }));
+
+function collectNodes(node: any, predicate: (n: any) => boolean, out: any[] = []): any[] {
+  if (node === null || node === undefined) return out;
+  if (predicate(node)) out.push(node);
+  if (typeof node !== 'object') return out;
+  const children = node.props?.children;
+  if (Array.isArray(children)) {
+    children.forEach((c) => collectNodes(c, predicate, out));
+  } else if (children !== undefined && children !== null) {
+    collectNodes(children, predicate, out);
+  }
+  return out;
+}
+
+function collectTexts(node: any): string[] {
+  return collectNodes(node, (n) => typeof n === 'string');
+}
 
 class MockDashboardReadRepository implements DashboardReadRepository {
   constructor(private readonly snapshot: DashboardDataSnapshot) {}
@@ -114,8 +137,7 @@ describe('BudgetHealth Data Flow Contract (Mocked Repository)', () => {
 
     // Explicit overall must never render the "Estimated" indicator (ADR-025).
     const renderedCard = MonthlyBudgetCard(childCard.props);
-    const titleGroup = renderedCard.props.children[0].props.children[0];
-    expect(titleGroup.props.children[1]).toBeNull();
+    expect(collectTexts(renderedCard)).not.toContain('Estimated from your category budgets');
   });
 
   it('derives aggregate monthly budget when repository contains only category budgets and maps system category names', async () => {
@@ -184,10 +206,7 @@ describe('BudgetHealth Data Flow Contract (Mocked Repository)', () => {
 
     // A Derived Overall must render the "Estimated" indicator (ADR-025).
     const renderedCard = MonthlyBudgetCard(childCard.props);
-    const titleGroup = renderedCard.props.children[0].props.children[0];
-    const estimatedBadge = titleGroup.props.children[1];
-    expect(estimatedBadge).not.toBeNull();
-    expect(estimatedBadge.props.children.props.children).toBe('Estimated');
+    expect(collectTexts(renderedCard)).toContain('Estimated from your category budgets');
   });
 
   it('renders empty state when repository contains empty budgets', async () => {
