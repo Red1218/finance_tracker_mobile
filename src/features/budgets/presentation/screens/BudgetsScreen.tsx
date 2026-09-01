@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, ActivityIndicator, Modal, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
-import { useTheme } from '../../../../shared/theme';
+import { useTheme, withAlpha } from '../../../../shared/theme';
 import { AppBar, FAB } from '../../../../shared/components';
 import { useBudgets } from '../hooks/useBudgets';
 import { useCreateBudget } from '../hooks/useCreateBudget';
@@ -154,7 +154,7 @@ export const BudgetsScreen: React.FC<BudgetsScreenProps> = ({ module }) => {
       <AppBar title="Budgets" />
 
       {error && (
-        <View style={[styles.errorContainer, { backgroundColor: 'rgba(239, 68, 68, 0.15)' }]}>
+        <View style={[styles.errorContainer, { backgroundColor: withAlpha(colors.error, 0.15) }]}>
           <Text style={[styles.errorText, { color: colors.error, fontSize: typography.caption.fontSize }]}>
             {error}
           </Text>

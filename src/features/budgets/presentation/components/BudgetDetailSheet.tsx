@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Modal, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
-import { useTheme } from '../../../../shared/theme';
+import { useTheme, withAlpha } from '../../../../shared/theme';
 import { Icon } from '../../../../shared/components';
 import { BudgetViewModel } from '../models/BudgetViewModel';
 import { BudgetProgressBar } from './BudgetProgressBar';
@@ -141,7 +141,7 @@ export function BudgetDetailSheet({
 
               <TouchableOpacity
                 onPress={() => onArchive(budget)}
-                style={[styles.secondaryActionBtn, { backgroundColor: 'rgba(239, 68, 68, 0.15)' }]}
+                style={[styles.secondaryActionBtn, { backgroundColor: withAlpha(colors.error, 0.15) }]}
                 accessibilityRole="button"
                 accessibilityLabel="Archive budget"
               >

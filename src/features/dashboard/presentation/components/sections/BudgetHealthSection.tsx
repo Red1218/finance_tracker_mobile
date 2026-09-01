@@ -82,7 +82,16 @@ export function BudgetHealthSection({ viewModel, onRetry, onNavigateToBudgets }:
             const statusType = budget.statusLabel === 'OverBudget' ? 'error' : isWarning ? 'warning' : 'success';
 
             return (
-              <View key={index} style={[styles.item, index < contentRows.length - 1 && styles.itemBorder]}>
+              <View
+                key={index}
+                style={[
+                  styles.item,
+                  index < contentRows.length - 1 && [
+                    styles.itemBorder,
+                    { borderBottomColor: colors.surfaceElevatedHairline },
+                  ],
+                ]}
+              >
                 <View style={styles.headerRow}>
                   <Text style={[styles.categoryTitle, { color: colors.textPrimary, fontSize: typography.body.fontSize }]}>
                     {(budget as any).categoryName || `Budget #${index + 1}`}
@@ -168,7 +177,6 @@ const styles = StyleSheet.create({
   },
   itemBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
     paddingBottom: 12,
   },
   pressed: {
