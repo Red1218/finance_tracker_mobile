@@ -1,4 +1,13 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+
+// TransactionFormModal (imported transitively via TransactionsScreen) now
+// pulls in @react-native-community/datetimepicker for the DATE field (§6.6);
+// its source uses Flow syntax Vitest's transform can't parse, so it needs
+// the same mock every other consumer of that package already uses.
+vi.mock('@react-native-community/datetimepicker', () => ({
+  default: () => null,
+}));
+
 import { TransactionViewModel } from '../models/TransactionViewModel';
 import { filterTransactions, formatGroupTotal, groupTransactionsByDate } from '../screens/TransactionsScreen';
 

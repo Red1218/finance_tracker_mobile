@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity }
 import { useTheme } from '../../../../shared/theme';
 import { AppBar, FAB, Icon } from '../../../../shared/components';
 
-import { TransactionRow, TransactionSearch, TransactionDateGroup, TransactionFormModal, TransactionDetailSheet, TransactionFormValues, TransactionFormMode } from '../components';
+import { TransactionRow, TransactionSearch, TransactionDateGroup, TransactionFormModal, TransactionDetailSheet, QuickAddTransactionModal, TransactionFormValues, TransactionFormMode } from '../components';
 import { TransactionViewModel } from '../models/TransactionViewModel';
 
 export type TransactionFilterType = 'ALL' | 'INCOME' | 'EXPENSE' | 'TRANSFER';
@@ -119,9 +119,14 @@ export function TransactionsScreen({
   const [filterType, setFilterType] = useState<'ALL' | 'INCOME' | 'EXPENSE' | 'TRANSFER'>('ALL');
 
   // Internal Modal & Sheet States
-  const [isFormVisible, setIsFormVisible] = useState(autoOpenForm);
+  // The FAB (locally, or forwarded via ?openModal=1 from Home) opens the
+  // amount-first quick-add (3b) first; the full form (3c) opens directly
+  // only for Edit, or via quick-add's "More details" handoff (§6.6).
+  const [isQuickAddVisible, setIsQuickAddVisible] = useState(autoOpenForm);
+  const [isFormVisible, setIsFormVisible] = useState(false);
   const [formMode, setFormMode] = useState<TransactionFormMode>('expense');
   const [editingTransaction, setEditingTransaction] = useState<TransactionViewModel | null>(null);
+  const [moreDetailsSeed, setMoreDetailsSeed] = useState<Partial<TransactionFormValues> | null>(null);
 
 
   const [isDetailVisible, setIsDetailVisible] = useState(false);
@@ -153,10 +158,8 @@ export function TransactionsScreen({
     if (onAddTransaction) {
       onAddTransaction();
     } else {
-      setFormMode('expense');
-      setEditingTransaction(null);
       setModalError(null);
-      setIsFormVisible(true);
+      setIsQuickAddVisible(true);
     }
   };
 
@@ -164,6 +167,19 @@ export function TransactionsScreen({
     setIsDetailVisible(false);
     setFormMode('edit');
     setEditingTransaction(tx);
+    setMoreDetailsSeed(null);
+    setModalError(null);
+    setIsFormVisible(true);
+  };
+
+  const handleMoreDetails = (seed: { mode: TransactionFormMode; amount?: number; categoryId?: string | null }) => {
+    setIsQuickAddVisible(false);
+    setFormMode(seed.mode);
+    setEditingTransaction(null);
+    setMoreDetailsSeed({
+      amount: seed.amount,
+      categoryId: seed.categoryId,
+    });
     setModalError(null);
     setIsFormVisible(true);
   };
@@ -182,6 +198,28 @@ export function TransactionsScreen({
       setModalError(null);
       await onFormSubmit(values, submittedMode || formMode, editingTransaction?.id);
       setIsFormVisible(false);
+      if (onRefresh) onRefresh();
+    } catch (err: any) {
+      setModalError(err?.message || 'Failed to save transaction.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleQuickAddSubmit = async (values: TransactionFormValues, submittedMode: TransactionFormMode) => {
+    if (!onFormSubmit) {
+      if (__DEV__) {
+        console.warn('[TransactionsScreen] onFormSubmit handler was not provided.');
+      }
+      setModalError('Transaction submission handler is missing. Unable to save transaction.');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      setModalError(null);
+      await onFormSubmit(values, submittedMode);
+      setIsQuickAddVisible(false);
       if (onRefresh) onRefresh();
     } catch (err: any) {
       setModalError(err?.message || 'Failed to save transaction.');
@@ -343,6 +381,18 @@ export function TransactionsScreen({
 
       <FAB iconName="Plus" onPress={handleFabPress} accessibilityLabel="Add transaction" />
 
+      <QuickAddTransactionModal
+        visible={isQuickAddVisible}
+        accounts={accounts}
+        categories={categories}
+        budgetRemainingByCategoryId={budgetRemainingByCategoryId}
+        isLoading={isSubmitting}
+        error={modalError}
+        onSubmit={handleQuickAddSubmit}
+        onMoreDetails={handleMoreDetails}
+        onClose={() => setIsQuickAddVisible(false)}
+      />
+
       <TransactionFormModal
         visible={isFormVisible}
         mode={formMode}
@@ -355,10 +405,11 @@ export function TransactionsScreen({
                 description: editingTransaction.description,
                 categoryId: editingTransaction.categoryId,
               }
-            : undefined
+            : moreDetailsSeed || undefined
         }
         accounts={accounts}
         categories={categories}
+        budgetRemainingByCategoryId={budgetRemainingByCategoryId}
         isLoading={isSubmitting}
         error={modalError}
         onSubmit={handleModalSubmit}
