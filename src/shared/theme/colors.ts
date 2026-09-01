@@ -27,9 +27,14 @@ export const darkColors: ColorTokens = Object.freeze({
   surfacePrimary: '#1E293B',
   surfaceElevated: '#334155',
   surfaceSecondary: '#18181B',
-  brandPrimary: '#2563EB',
+  // oklch(0.66 0.095 290) — spec's own approximation (docs §4).
+  brandPrimary: '#9184D9',
+  // No pressed/hover value given in the spec for the new accent — left
+  // unchanged pending an explicit decision, per session review.
   brandPrimaryPressed: '#1D4ED8',
-  brandSecondary: '#6366F1',
+  // Collapses into brandPrimary (docs §4: "the indigo had no distinct job").
+  // Key kept in place per review so existing consumers don't break.
+  brandSecondary: '#9184D9',
   success: '#10B981',
   warning: '#F59E0B',
   error: '#EF4444',
@@ -50,9 +55,14 @@ export const lightColors: ColorTokens = Object.freeze({
   surfacePrimary: '#FFFFFF',
   surfaceElevated: '#FFFFFF',
   surfaceSecondary: '#F1F5F9',
-  brandPrimary: '#2563EB',
+  // oklch(0.52 0.13 290) — spec's own approximation (docs §4). Darkened from
+  // the dark-theme accent: the dark-ground value only manages 3.1:1 on white.
+  brandPrimary: '#6B5CC4',
+  // No pressed/hover value given in the spec for the new accent — left
+  // unchanged pending an explicit decision, per session review.
   brandPrimaryPressed: '#1D4ED8',
-  brandSecondary: '#6366F1',
+  // Collapses into brandPrimary (docs §4: "the indigo had no distinct job").
+  brandSecondary: '#6B5CC4',
   success: '#10B981',
   warning: '#F59E0B',
   error: '#EF4444',

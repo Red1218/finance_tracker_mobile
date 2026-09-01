@@ -32,7 +32,8 @@ describe('ThemeProvider & useTheme', () => {
 
     expect(navTheme.dark).toBe(true);
     expect(navTheme.colors.background).toBe('#0F172A');
-    expect(navTheme.colors.primary).toBe('#2563EB');
+    // brandPrimary updated per visual-refresh spec §4 (accent desaturated to oklch(0.66 0.095 290)).
+    expect(navTheme.colors.primary).toBe('#9184D9');
     expect(navTheme.fonts).toBeDefined();
   });
 });
