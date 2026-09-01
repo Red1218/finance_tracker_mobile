@@ -9,3 +9,4 @@ export * from './AppBar';
 export * from './BottomNavigation';
 export * from './FAB';
 export * from './CircularProgress';
+export * from './SegmentedControl';

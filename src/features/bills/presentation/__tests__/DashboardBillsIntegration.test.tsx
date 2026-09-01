@@ -7,15 +7,24 @@ vi.mock('expo-router', () => ({
   }),
 }));
 
+vi.mock('react-native-svg', () => {
+  const React = require('react');
+  return {
+    default: (props: any) => React.createElement('Svg', props, props.children),
+    Circle: (props: any) => React.createElement('Circle', props),
+  };
+});
+
 import { DashboardView } from '../../../dashboard/presentation/screens/DashboardView';
 import { BudgetHealthSection } from '../../../dashboard/presentation/components/sections/BudgetHealthSection';
-import { RecentActivitySection } from '../../../dashboard/presentation/components/sections/RecentActivitySection';
+import { IncomeExpenseSection } from '../../../dashboard/presentation/components/sections/IncomeExpenseSection';
+import { CategoryBreakdownSection } from '../../../dashboard/presentation/components/sections/CategoryBreakdownSection';
 import { UpcomingBillsSection } from '../components/UpcomingBillsSection';
 import { UpcomingBillsSectionState } from '../view-models/UpcomingBillsViewModel';
 import { DashboardScreenState } from '../../../dashboard/presentation/models/DashboardScreenState';
 
 describe('DashboardBillsIntegration Structural Verification', () => {
-  it('renders upcomingBillsSection node in DashboardView at correct layout position without requiring Bills Application or Infrastructure dependencies', () => {
+  it('renders upcomingBillsSection node in DashboardView between the income/expense pair and the category breakdown, without requiring Bills Application or Infrastructure dependencies', () => {
     const mockDashboardState: DashboardScreenState = {
       isRefreshing: false,
       isPeriodSelectorOpen: false,
@@ -23,7 +32,7 @@ describe('DashboardBillsIntegration Structural Verification', () => {
       selectedSection: null,
       activeModal: null,
       viewModel: {
-        activeReportingPeriodId: 'this_month',
+        activeReportingPeriodId: 'CurrentMonth',
         activeReportingPeriodLabel: 'This Month',
         overallStatus: 'Loaded',
         error: null,
@@ -71,31 +80,26 @@ describe('DashboardBillsIntegration Structural Verification', () => {
 
     expect(React.isValidElement(vnode)).toBe(true);
 
-    const dashboardLayout = React.Children.toArray((vnode.props as { children: React.ReactNode }).children)[0] as React.ReactElement;
-    const layoutChildren = React.Children.toArray((dashboardLayout.props as { children: React.ReactNode }).children);
+    const dashboardLayout = (vnode.props as { children: React.ReactNode[] }).children[0] as React.ReactElement;
+    const layoutChildren = (dashboardLayout.props as { children: React.ReactNode[] }).children;
 
-    const upcomingSectionWrapper = layoutChildren.find((child: React.ReactNode) => {
-      if (!React.isValidElement(child)) return false;
-      const props = child.props as { children?: React.ReactNode };
-      const childrenArr = React.Children.toArray(props.children);
-      return childrenArr.some((c: React.ReactNode) => React.isValidElement(c) && c.type === UpcomingBillsSection);
-    });
+    // Budget ring hero is the first, full-bleed layout child.
+    expect((layoutChildren[0] as React.ReactElement).type).toBe(BudgetHealthSection);
 
-    expect(upcomingSectionWrapper).toBeDefined();
+    // The bills slot lives inside the gutter, between IncomeExpenseSection and CategoryBreakdownSection.
+    const gutter = layoutChildren[1] as React.ReactElement;
+    const gutterChildren = (gutter.props as { children: React.ReactNode[] }).children;
 
-    const innerComponentTypes = layoutChildren.map((child: React.ReactNode) => {
-      if (!React.isValidElement(child)) return null;
-      const props = child.props as { children?: React.ReactNode };
-      const inner = React.Children.toArray(props.children)[0];
-      return React.isValidElement(inner) ? inner.type : null;
-    });
+    const incomeExpenseIndex = gutterChildren.findIndex(
+      (c) => React.isValidElement(c) && c.type === IncomeExpenseSection
+    );
+    const billsIndex = gutterChildren.findIndex((c) => c === sectionNode);
+    const categoryIndex = gutterChildren.findIndex(
+      (c) => React.isValidElement(c) && c.type === CategoryBreakdownSection
+    );
 
-    const budgetHealthIndex = innerComponentTypes.indexOf(BudgetHealthSection);
-    const upcomingIndex = upcomingSectionWrapper ? layoutChildren.indexOf(upcomingSectionWrapper) : -1;
-    const recentActivityIndex = innerComponentTypes.indexOf(RecentActivitySection);
-
-    expect(budgetHealthIndex).toBeGreaterThan(-1);
-    expect(upcomingIndex).toBeGreaterThan(budgetHealthIndex);
-    expect(recentActivityIndex).toBeGreaterThan(upcomingIndex);
+    expect(incomeExpenseIndex).toBeGreaterThan(-1);
+    expect(billsIndex).toBeGreaterThan(incomeExpenseIndex);
+    expect(categoryIndex).toBeGreaterThan(billsIndex);
   });
 });

@@ -1,9 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Card } from '../../../../../shared/components/Card';
-import { StatusIndicator } from '../../../../../shared/components/StatusIndicator';
 import { CircularProgress } from '../../../../../shared/components/CircularProgress';
-import { useTheme } from '../../../../../shared/theme';
+import { useTheme, withAlpha } from '../../../../../shared/theme';
 import { BudgetHealthRow } from '../../../application/view-models/BudgetHealthViewModel';
 
 export interface MonthlyBudgetCardProps {
@@ -11,25 +9,9 @@ export interface MonthlyBudgetCardProps {
 }
 
 export function MonthlyBudgetCard({ budget }: MonthlyBudgetCardProps) {
-  const { colors, typography } = useTheme();
+  const { colors, spacing, typography } = useTheme();
   const isDerived = budget.isDerived === true;
 
-  // Map BudgetHealthRow statusLabel to StatusIndicator status type
-  const statusType =
-    budget.statusLabel === 'OverBudget'
-      ? 'error'
-      : budget.statusLabel === 'AtRisk'
-        ? 'warning'
-        : 'success';
-
-  const badgeText =
-    budget.statusLabel === 'OverBudget'
-      ? 'Over Budget'
-      : budget.statusLabel === 'AtRisk'
-        ? 'At Risk'
-        : 'Healthy';
-
-  // consumptionRatio is a percentage (e.g. 70)
   const percentage = Math.min(Math.max(Math.round(budget.consumptionRatio), 0), 100);
 
   let progressColor = colors.brandPrimary;
@@ -39,139 +21,83 @@ export function MonthlyBudgetCard({ budget }: MonthlyBudgetCardProps) {
     progressColor = colors.warning;
   }
 
+  const remainingLabel = budget.remainingAmount || '₹0.00';
+
   const ringAccessibilityLabel = isDerived
-    ? `Estimated monthly budget utilization: ${percentage}%. Calculated from your category budgets.`
-    : `Monthly budget utilization: ${percentage}%`;
+    ? `${remainingLabel} left to spend of ${budget.budgetLimit}. Estimated from your category budgets.`
+    : `${remainingLabel} left to spend of ${budget.budgetLimit}`;
 
   return (
-    <Card variant="elevated" style={styles.cardContainer}>
-      {/* Header Row: Section Title & Status Badge */}
-      <View style={styles.headerRow}>
-        <View style={styles.titleGroup}>
-          <Text
-            style={[styles.title, { color: colors.textPrimary, fontSize: typography.heading.fontSize }]}
-            accessibilityRole="header"
-          >
-            Monthly Budget
-          </Text>
-          {isDerived ? (
-            <View
-              style={[styles.estimatedBadge, { backgroundColor: colors.surfaceElevated || colors.borderSubtle }]}
-              accessible={true}
-              accessibilityLabel="Estimated value, calculated from your category budgets"
-            >
-              <Text style={[styles.estimatedBadgeText, { color: colors.textSecondary }]}>
-                Estimated
-              </Text>
-            </View>
-          ) : null}
-        </View>
-        <StatusIndicator status={statusType} label={badgeText} />
-      </View>
-
-      {/* Ring Visual Container */}
-      <View style={styles.ringContainer}>
-        <CircularProgress
-          percentage={percentage}
-          size={160}
-          strokeWidth={12}
-          progressColor={progressColor}
-          trackColor={colors.surfaceElevated || colors.borderSubtle}
-          accessibilityLabel={ringAccessibilityLabel}
+    <View
+      style={[
+        styles.accentField,
+        {
+          backgroundColor: withAlpha(colors.brandPrimary, 0.08),
+          marginHorizontal: -spacing.space20,
+          paddingHorizontal: spacing.space20,
+        },
+      ]}
+    >
+      <CircularProgress
+        percentage={percentage}
+        size={212}
+        strokeWidth={14}
+        progressColor={progressColor}
+        trackColor={colors.surfaceElevatedHairline || colors.surfaceElevated}
+        accessibilityLabel={ringAccessibilityLabel}
+      >
+        <Text style={[styles.label, { color: colors.textSecondary }]}>LEFT TO SPEND</Text>
+        <Text
+          style={[
+            styles.value,
+            {
+              color: colors.textPrimary,
+              fontSize: typography.numericLarge.fontSize,
+              fontWeight: typography.numericLarge.fontWeight,
+            },
+          ]}
         >
-          <Text style={[styles.percentageText, { color: colors.textPrimary }]}>
-            {percentage}%
-          </Text>
-          <Text style={[styles.utilizedText, { color: colors.textSecondary }]}>
-            UTILIZED
-          </Text>
-        </CircularProgress>
-      </View>
-
-      {/* Prompt / Amounts Footer */}
-      <View style={styles.footerContainer}>
-        {budget.remainingAmount ? (
-          <Text style={[styles.remainingText, { color: colors.textPrimary, fontSize: typography.body.fontSize }]}>
-            You have <Text style={styles.boldText}>{budget.remainingAmount}</Text> left
-          </Text>
-        ) : null}
-        <Text style={[styles.footerText, { color: colors.textSecondary, fontSize: typography.caption.fontSize }]}>
-          Spent <Text style={styles.boldText}>{budget.amountConsumed}</Text> of{' '}
-          <Text style={styles.boldText}>{budget.budgetLimit}</Text>
+          {remainingLabel}
         </Text>
-        {isDerived ? (
-          <Text
-            style={[styles.derivedCaption, { color: colors.textSecondary, fontSize: typography.caption.fontSize }]}
-            accessibilityLabel="Calculated from your category budgets"
-          >
-            Calculated from your category budgets.
-          </Text>
-        ) : null}
-      </View>
-    </Card>
+        <Text style={[styles.caption, { color: colors.textSecondary }]}>of {budget.budgetLimit}</Text>
+      </CircularProgress>
+
+      {isDerived ? (
+        <Text
+          style={[styles.estimatedCaption, { color: colors.textMuted }]}
+          accessibilityLabel="Estimated, calculated from your category budgets"
+        >
+          Estimated from your category budgets
+        </Text>
+      ) : null}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  cardContainer: {
-    padding: 20,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  accentField: {
     alignItems: 'center',
-    marginBottom: 16,
+    paddingTop: 12,
+    paddingBottom: 28,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
   },
-  title: {
-    fontWeight: '700',
-  },
-  titleGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  estimatedBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
-  },
-  estimatedBadgeText: {
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-  derivedCaption: {
-    textAlign: 'center',
-    marginTop: 4,
-  },
-  ringContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginVertical: 12,
-  },
-  percentageText: {
-    fontSize: 36,
-    fontWeight: '700',
-  },
-  utilizedText: {
+  label: {
     fontSize: 11,
     fontWeight: '600',
     letterSpacing: 1.5,
-    marginTop: 2,
+    marginBottom: 6,
   },
-  footerContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 12,
-    gap: 4,
+  value: {
+    marginBottom: 2,
   },
-  remainingText: {
+  caption: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  estimatedCaption: {
+    fontSize: 12,
+    marginTop: 14,
     textAlign: 'center',
-  },
-  footerText: {
-    textAlign: 'center',
-  },
-  boldText: {
-    fontWeight: '700',
   },
 });

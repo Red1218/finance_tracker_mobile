@@ -1,16 +1,23 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useTheme } from '../../../../shared/theme';
+import { SegmentedControl } from '../../../../shared/components/SegmentedControl';
 import { DashboardScreenState } from '../models/DashboardScreenState';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { DashboardHeader } from '../components/layout/DashboardHeader';
-import { ReportingPeriodSelector } from '../components/layout/ReportingPeriodSelector';
 import { BudgetHealthSection } from '../components/sections/BudgetHealthSection';
-import { RecentActivitySection } from '../components/sections/RecentActivitySection';
+import { IncomeExpenseSection } from '../components/sections/IncomeExpenseSection';
+import { CategoryBreakdownSection } from '../components/sections/CategoryBreakdownSection';
 import { LoadingSkeleton } from '../components/common/LoadingSkeleton';
 import { FAB } from '../../../../shared/components/FAB';
 
 import { useRouter } from 'expo-router';
+
+const PERIOD_OPTIONS = [
+  { id: 'CurrentMonth', label: 'This Month' },
+  { id: 'PreviousMonth', label: 'Last Month' },
+  { id: 'YearToDate', label: 'YTD' },
+];
 
 interface DashboardViewProps {
   state: DashboardScreenState;
@@ -35,18 +42,16 @@ export function DashboardView({
   onRefreshSection,
   onChangePeriod,
   onExecuteQuickAction,
-  onTogglePeriodSelector,
   upcomingBillsSection,
   userAvatarUrl,
   userEmail,
   onAvatarPress,
   onNotificationsPress,
-  onNavigateToSpends,
   onNavigateToBudgets,
   onNavigateToCreateTransaction,
 }: DashboardViewProps) {
   const { colors } = useTheme();
-  const { viewModel, isRefreshing, isPeriodSelectorOpen } = state;
+  const { viewModel, isRefreshing } = state;
 
   let router: ReturnType<typeof useRouter> | null = null;
   try {
@@ -88,39 +93,35 @@ export function DashboardView({
             userEmail={userEmail}
             onAvatarPress={onAvatarPress}
             onNotificationsPress={onNotificationsPress}
-            selector={
-              <ReportingPeriodSelector
-                currentPeriodId={viewModel.activeReportingPeriodId}
-                isOpen={isPeriodSelectorOpen}
-                onToggle={onTogglePeriodSelector}
-                onSelect={onChangePeriod}
-              />
-            }
           />
         }
       >
-        {/* 1. Monthly Budget Card / Budget Health */}
-        <View style={styles.sectionContainer}>
-          <BudgetHealthSection
-            viewModel={viewModel.budgetHealthSection}
-            onRetry={() => onRefreshSection('BudgetHealth')}
-            onNavigateToBudgets={onNavigateToBudgets}
+        {/* 1. Budget ring hero, full-bleed on its own accent field */}
+        <BudgetHealthSection
+          viewModel={viewModel.budgetHealthSection}
+          onRetry={() => onRefreshSection('BudgetHealth')}
+          onNavigateToBudgets={onNavigateToBudgets}
+        />
+
+        {/* 2. Period rail -> income/expense pair -> category breakdown */}
+        <View style={styles.gutter}>
+          <SegmentedControl
+            options={PERIOD_OPTIONS}
+            selectedId={viewModel.activeReportingPeriodId}
+            onChange={onChangePeriod}
+            accessibilityLabel="Reporting period"
           />
-        </View>
 
-        {/* 2. Upcoming Bills (Preserved Cross-Context Contract Slot) */}
-        {upcomingBillsSection ? (
-          <View style={styles.zonalSpacing}>
-            {upcomingBillsSection}
-          </View>
-        ) : null}
+          <IncomeExpenseSection
+            viewModel={viewModel.kpiSection}
+            onRetry={() => onRefreshSection('KPI')}
+          />
 
-        {/* 3. Recent Activity (3 Items + View All) */}
-        <View style={styles.zonalSpacing}>
-          <RecentActivitySection
-            viewModel={viewModel.recentActivitySection}
-            onRetry={() => onRefreshSection('RecentActivity')}
-            onSeeAll={onNavigateToSpends}
+          {upcomingBillsSection ? upcomingBillsSection : null}
+
+          <CategoryBreakdownSection
+            viewModel={viewModel.categoryBreakdownSection}
+            onRetry={() => onRefreshSection('CategoryBreakdown')}
           />
         </View>
 
@@ -148,11 +149,8 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 16,
   },
-  sectionContainer: {
-    marginTop: 4,
-  },
-  zonalSpacing: {
-    marginTop: 14,
+  gutter: {
+    gap: 16,
   },
   bottomSpacer: {
     height: 72,

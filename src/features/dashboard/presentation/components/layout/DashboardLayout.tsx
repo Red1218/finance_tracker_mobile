@@ -11,7 +11,7 @@ interface DashboardLayoutProps {
 }
 
 export function DashboardLayout({ isRefreshing, onRefresh, header, children }: DashboardLayoutProps) {
-  const { colors } = useTheme();
+  const { colors, spacing } = useTheme();
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.backgroundPrimary }]}>
@@ -19,7 +19,10 @@ export function DashboardLayout({ isRefreshing, onRefresh, header, children }: D
         {header}
         <ScrollView
           style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingHorizontal: spacing.space20, paddingTop: spacing.space20, gap: spacing.space16 },
+          ]}
           refreshControl={
             <RefreshControl
               refreshing={isRefreshing}
@@ -47,8 +50,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: 16,
     paddingBottom: 40,
-    gap: 16,
   },
 });
