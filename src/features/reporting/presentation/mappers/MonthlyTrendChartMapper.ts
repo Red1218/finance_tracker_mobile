@@ -14,6 +14,18 @@ export interface MonthlyTrendChartViewModel {
   accessibilitySummary: string;
 }
 
+export interface TrendBarPoint {
+  value: number;
+  label?: string;
+  spacing?: number;
+  labelTextStyle?: { color: string; fontSize: number };
+}
+
+export interface MonthlyTrendBarChartViewModel {
+  barData: TrendBarPoint[];
+  accessibilitySummary: string;
+}
+
 export class MonthlyTrendChartMapper {
   public static mapToChartViewModel(data: MonthlyTrendResponse): MonthlyTrendChartViewModel {
     const items = data.items;
@@ -86,6 +98,49 @@ export class MonthlyTrendChartMapper {
     return {
       expenseData,
       incomeData,
+      accessibilitySummary: summaryParts.join(' '),
+    };
+  }
+
+  /**
+   * Paired income/expense bars per period - two consecutive BarChart entries
+   * per point (tight spacing within the pair, wider spacing before the next),
+   * the same grouping technique BudgetChartMapper already uses for budget-vs-spent.
+   */
+  public static mapToBarChartViewModel(data: MonthlyTrendResponse): MonthlyTrendBarChartViewModel {
+    const items = data.items;
+
+    if (items.length === 0) {
+      return {
+        barData: [],
+        accessibilitySummary: 'Income and expenses trend chart. No trend data available for this period.',
+      };
+    }
+
+    const barData: TrendBarPoint[] = [];
+    const summaryParts: string[] = [`Income and expenses trend chart across ${items.length} periods.`];
+
+    items.forEach((item) => {
+      barData.push(
+        {
+          value: item.income,
+          label: item.period,
+          spacing: 2,
+          labelTextStyle: { color: chartTheme.colors.textSecondary, fontSize: 10 },
+        },
+        {
+          value: item.expenses,
+          spacing: 16,
+        }
+      );
+
+      summaryParts.push(
+        `${item.period}: income ₹${item.income.toLocaleString()}, expenses ₹${item.expenses.toLocaleString()}.`
+      );
+    });
+
+    return {
+      barData,
       accessibilitySummary: summaryParts.join(' '),
     };
   }

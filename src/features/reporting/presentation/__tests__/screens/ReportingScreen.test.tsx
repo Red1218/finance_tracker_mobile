@@ -4,6 +4,7 @@ import { theme } from '../../../../../shared/theme/theme';
 
 vi.mock('../../../../../shared/theme', () => ({
   useTheme: () => theme,
+  withAlpha: (hex: string, alpha: number) => `rgba(from ${hex} / ${alpha})`,
 }));
 
 vi.mock('@react-native-community/datetimepicker', () => ({
@@ -14,6 +15,10 @@ vi.mock('../../components/charts/TrendLineChart', () => ({
   TrendLineChart: () => null,
 }));
 
+vi.mock('../../components/charts/MonthlyTrendBarChart', () => ({
+  MonthlyTrendBarChart: () => null,
+}));
+
 vi.mock('../../components/charts/CategoryDonutChart', () => ({
   CategoryDonutChart: () => null,
 }));
@@ -21,6 +26,9 @@ vi.mock('../../components/charts/CategoryDonutChart', () => ({
 vi.mock('../../components/charts/BudgetBarChart', () => ({
   BudgetBarChart: () => null,
 }));
+
+const refreshMock = vi.fn();
+const changePeriodMock = vi.fn();
 
 vi.mock('../../hooks/useReporting', () => ({
   useReporting: () => ({
@@ -39,8 +47,8 @@ vi.mock('../../hooks/useReporting', () => ({
     },
     isLoading: false,
     error: null,
-    changePeriod: vi.fn(),
-    refresh: vi.fn(),
+    changePeriod: changePeriodMock,
+    refresh: refreshMock,
   }),
 }));
 
@@ -54,30 +62,50 @@ vi.mock('react', async (importOriginal) => {
 
 import { ReportingScreen } from '../../screens/ReportingScreen';
 
+function collectNodes(node: any, predicate: (n: any) => boolean, out: any[] = []): any[] {
+  if (node === null || node === undefined) return out;
+  if (predicate(node)) out.push(node);
+  if (typeof node !== 'object') return out;
+  const children = node.props?.children;
+  if (Array.isArray(children)) {
+    children.forEach((c) => collectNodes(c, predicate, out));
+  } else if (children !== undefined && children !== null) {
+    collectNodes(children, predicate, out);
+  }
+  return out;
+}
+
+function collectTexts(node: any): string[] {
+  return collectNodes(node, (n) => typeof n === 'string');
+}
+
 describe('ReportingScreen Component Presentation', () => {
-  it('renders screen container with header title, refresh action, and content cards', () => {
+  it('renders screen container with a flat "Analytics" title, Export action, and pull-to-refresh content', () => {
     const element = ReportingScreen({}) as React.ReactElement<{
       style?: Array<{ backgroundColor?: string }>;
-      children?: Array<React.ReactElement<{
-        style?: Array<{ paddingHorizontal?: number; paddingTop?: number }>;
-        children?: Array<React.ReactElement<{
-          children?: Array<React.ReactElement<{
-            children?: string;
-            accessibilityLabel?: string;
-          }>>;
-        }>>;
-        contentContainerStyle?: { padding?: number };
-      }>>;
+      children?: Array<React.ReactElement<any>>;
     }>;
 
     expect(element.props.style?.[1]?.backgroundColor).toBe(theme.colors.backgroundPrimary);
 
-    const header = element.props.children?.[0];
+    const header = element.props.children?.[0] as React.ReactElement<{ children: any }>;
     const headerTop = header?.props?.children?.[0];
     const titleText = headerTop?.props?.children?.[0];
-    expect(titleText?.props?.children).toBe('Analytics & Reporting');
+    expect(titleText?.props?.children).toBe('Analytics');
 
-    const scrollContent = element.props.children?.[1];
-    expect(scrollContent?.props?.contentContainerStyle?.padding).toBe(16);
+    // Refresh is no longer a header button - only Export stays in the header (§6.4).
+    const texts = collectTexts(header);
+    expect(texts).not.toContain('Refresh');
+    expect(texts).toContain('Export');
+
+    const scrollView = element.props.children?.[1] as React.ReactElement<{
+      contentContainerStyle?: { padding?: number };
+      refreshControl?: React.ReactElement<{ refreshing?: boolean; onRefresh?: () => void }>;
+    }>;
+    expect(scrollView?.props?.contentContainerStyle?.padding).toBe(16);
+
+    // Pull-to-refresh replaces the old header Refresh button.
+    expect(scrollView?.props?.refreshControl?.props?.refreshing).toBe(false);
+    expect(scrollView?.props?.refreshControl?.props?.onRefresh).toBe(refreshMock);
   });
 });
