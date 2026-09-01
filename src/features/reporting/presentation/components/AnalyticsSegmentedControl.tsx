@@ -11,8 +11,8 @@ interface Props {
 }
 
 const OPTIONS = [
-  { id: 'reports', label: 'Reports & Trends', accessibilityLabel: 'Reports and Trends tab' },
-  { id: 'insights', label: 'AI Insights & Forecasts', accessibilityLabel: 'AI Insights and Forecasts tab' },
+  { id: 'reports', label: 'Reports', accessibilityLabel: 'Reports tab' },
+  { id: 'insights', label: 'Insights', accessibilityLabel: 'Insights tab' },
 ];
 
 export const AnalyticsSegmentedControl: React.FC<Props> = ({

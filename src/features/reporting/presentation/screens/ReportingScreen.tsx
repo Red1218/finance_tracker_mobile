@@ -1,20 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, RefreshControl, StyleSheet } from 'react-native';
 import { useTheme } from '../../../../shared/theme';
-import { Card } from '../../../../shared/components/Card';
 import { useReporting } from '../hooks/useReporting';
 import { reportingModule } from '../../composition/ReportingModule';
 import { ReportingPeriodSelector } from '../components/ReportingPeriodSelector';
 import { MonthlyTrendCard } from '../components/MonthlyTrendCard';
-import { CategoryBreakdownCard } from '../components/CategoryBreakdownCard';
 import { AnalyticsSegmentedControl, AnalyticsSegment } from '../components/AnalyticsSegmentedControl';
 import { MonthOverMonthCard } from '../components/MonthOverMonthCard';
 import { CashFlowForecastCard } from '../components/CashFlowForecastCard';
-import { AIInsightCard } from '../components/AIInsightCard';
 import { ExportModal } from '../components/ExportModal';
 import { AnalyticsSkeleton } from '../components/AnalyticsSkeleton';
-import { MonthOverMonthComparison, ExportReportRequest } from '../../domain';
-import { CashFlowForecast } from '../../../insights/domain';
+import { MonthOverMonthComparison, ExportReportRequest, ReportingPeriod } from '../../domain';
+
+const PERIOD_LABELS: Record<ReportingPeriod, string> = {
+  [ReportingPeriod.TODAY]: 'Today',
+  [ReportingPeriod.WEEK]: 'This Week',
+  [ReportingPeriod.MONTH]: 'This Month',
+  [ReportingPeriod.QUARTER]: 'This Quarter',
+  [ReportingPeriod.YEAR]: 'This Year',
+  [ReportingPeriod.CUSTOM]: 'Custom Range',
+};
 
 export const ReportingScreen: React.FC = () => {
   const theme = useTheme();
@@ -36,16 +41,6 @@ export const ReportingScreen: React.FC = () => {
     previousExpense: 5000,
     previousNetSavings: 3000,
   });
-
-  const categoryBreakdownResponse = {
-    items: viewModel.categoryBreakdown.map((c) => ({
-      categoryId: c.categoryId,
-      categoryName: c.categoryName,
-      amount: parseFloat(c.formattedAmount.replace(/[^0-9.]/g, '')) || 0,
-      percentage: c.percentage,
-      transactionCount: 0,
-    })),
-  };
 
   const monthlyTrendResponse = {
     comparison: undefined,
@@ -76,30 +71,22 @@ export const ReportingScreen: React.FC = () => {
     }
   };
 
+  const periodLabel = PERIOD_LABELS[selectedPeriod] ?? String(selectedPeriod);
+
   return (
     <View style={[styles.screen, { backgroundColor: theme.colors.backgroundPrimary }]}>
       {/* Top Bar Header */}
-      <View style={[styles.header, { backgroundColor: theme.colors.surfaceElevated, borderBottomColor: theme.colors.borderSubtle }]}>
+      <View style={styles.header}>
         <View style={styles.headerTop}>
-          <Text style={[styles.title, { color: theme.colors.textPrimary }]}>Analytics & Reporting</Text>
+          <Text style={[styles.title, { color: theme.colors.textPrimary }]}>Analytics</Text>
 
-          <View style={styles.headerActions}>
-            <TouchableOpacity
-              onPress={() => setExportModalVisible(true)}
-              style={[styles.actionButton, { backgroundColor: theme.colors.surfacePrimary, borderColor: theme.colors.borderSubtle }]}
-              accessibilityLabel="Export Report"
-            >
-              <Text style={[styles.actionText, { color: theme.colors.brandPrimary }]}>Export</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={refresh}
-              style={[styles.actionButton, { backgroundColor: theme.colors.surfacePrimary, borderColor: theme.colors.borderSubtle }]}
-              accessibilityLabel="Refresh report data"
-            >
-              <Text style={[styles.actionText, { color: theme.colors.textSecondary }]}>Refresh</Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            onPress={() => setExportModalVisible(true)}
+            style={styles.exportButton}
+            accessibilityLabel="Export Report"
+          >
+            <Text style={[styles.exportText, { color: theme.colors.brandPrimary }]}>Export</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Tab Segmented Switcher */}
@@ -108,19 +95,20 @@ export const ReportingScreen: React.FC = () => {
           onSegmentChange={setActiveSegment}
           disabled={isLoading}
         />
-
-        {/* Period Selector */}
-        {activeSegment === 'reports' && (
-          <ReportingPeriodSelector
-            selected={selectedPeriod}
-            onSelect={changePeriod}
-            disabled={isLoading}
-          />
-        )}
       </View>
 
       {/* Main Content ScrollView */}
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={isLoading}
+            onRefresh={refresh}
+            tintColor={theme.colors.brandPrimary}
+            colors={[theme.colors.brandPrimary]}
+          />
+        }
+      >
         {error ? (
           <View style={[styles.errorBanner, { backgroundColor: theme.colors.surfacePrimary, borderColor: theme.colors.error }]}>
             <Text style={[styles.errorText, { color: theme.colors.error }]}>{error}</Text>
@@ -135,22 +123,21 @@ export const ReportingScreen: React.FC = () => {
           </>
         ) : activeSegment === 'reports' ? (
           <>
-            {/* Financial Summary Performance Card */}
+            {/* Period Selector */}
+            <ReportingPeriodSelector
+              selected={selectedPeriod}
+              onSelect={changePeriod}
+              disabled={isLoading}
+            />
+
+            {/* Net savings hero - type on the ground, not a box inside a box */}
             {viewModel.financialSummary && (
-              <Card variant="elevated" style={styles.summaryCard}>
+              <View style={styles.summarySection}>
                 <Text style={[styles.sectionHeading, { color: theme.colors.textMuted }]}>
-                  Financial Performance Summary
+                  NET SAVINGS · {periodLabel.toUpperCase()}
                 </Text>
 
-                <View style={[styles.savingsBox, { backgroundColor: theme.colors.surfacePrimary, borderColor: theme.colors.borderSubtle }]}>
-                  <View style={styles.savingsHeader}>
-                    <Text style={[styles.savingsLabel, { color: theme.colors.textMuted }]}>Net Savings</Text>
-                    <View style={[styles.savingsBadge, { backgroundColor: theme.colors.surfaceElevated, borderColor: theme.colors.borderSubtle }]}>
-                      <Text style={[styles.badgeText, { color: viewModel.financialSummary.isPositiveSavings ? theme.colors.success : theme.colors.error }]}>
-                        {viewModel.financialSummary.savingsRatePercentage}% Savings Rate
-                      </Text>
-                    </View>
-                  </View>
+                <View style={styles.heroRow}>
                   <Text
                     style={[
                       styles.netSavingsAmount,
@@ -159,31 +146,32 @@ export const ReportingScreen: React.FC = () => {
                   >
                     {viewModel.financialSummary.formattedNetSavings}
                   </Text>
+                  <Text style={[styles.rateCaption, { color: theme.colors.textSecondary }]}>
+                    {viewModel.financialSummary.savingsRatePercentage}% rate
+                  </Text>
                 </View>
 
-                <View style={styles.tilesRow}>
-                  <View style={[styles.metricTile, { backgroundColor: theme.colors.surfacePrimary, borderColor: theme.colors.borderSubtle }]}>
-                    <Text style={[styles.tileLabel, { color: theme.colors.textMuted }]}>Total Income</Text>
-                    <Text style={[styles.tileAmount, { color: theme.colors.success }]}>
+                <View style={styles.metricsRow}>
+                  <View style={styles.metricItem}>
+                    <Text style={[styles.metricLabel, { color: theme.colors.textMuted }]}>Income</Text>
+                    <Text style={[styles.metricValue, { color: theme.colors.textPrimary }]}>
                       {viewModel.financialSummary.formattedIncome}
                     </Text>
                   </View>
 
-                  <View style={[styles.metricTile, { backgroundColor: theme.colors.surfacePrimary, borderColor: theme.colors.borderSubtle }]}>
-                    <Text style={[styles.tileLabel, { color: theme.colors.textMuted }]}>Total Expenses</Text>
-                    <Text style={[styles.tileAmount, { color: theme.colors.error }]}>
+                  <View style={styles.metricItem}>
+                    <Text style={[styles.metricLabel, { color: theme.colors.textMuted }]}>Expenses</Text>
+                    <Text style={[styles.metricValue, { color: theme.colors.textPrimary }]}>
                       {viewModel.financialSummary.formattedExpense}
                     </Text>
                   </View>
+
+                  <MonthOverMonthCard comparison={momComparison} />
                 </View>
-              </Card>
+
+                <View style={[styles.divider, { backgroundColor: theme.colors.borderSubtle }]} />
+              </View>
             )}
-
-            {/* Month-over-Month Comparison Card */}
-            <MonthOverMonthCard comparison={momComparison} />
-
-            {/* Category Breakdown Card */}
-            <CategoryBreakdownCard data={categoryBreakdownResponse} />
 
             {/* Monthly Trend Card */}
             <MonthlyTrendCard data={monthlyTrendResponse} />
@@ -217,7 +205,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 8,
-    borderBottomWidth: 1,
   },
   headerTop: {
     flexDirection: 'row',
@@ -226,24 +213,17 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   title: {
-    fontSize: 20,
-    fontWeight: '800',
+    fontSize: 28,
+    fontWeight: '400',
     letterSpacing: -0.5,
   },
-  headerActions: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  actionButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    borderWidth: 1,
-    minHeight: 36,
+  exportButton: {
+    minHeight: 44,
     justifyContent: 'center',
+    paddingHorizontal: 8,
   },
-  actionText: {
-    fontSize: 12,
+  exportText: {
+    fontSize: 15,
     fontWeight: '600',
   },
   scrollContent: {
@@ -259,8 +239,8 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
   },
-  summaryCard: {
-    marginBottom: 16,
+  summarySection: {
+    marginBottom: 8,
   },
   sectionHeading: {
     fontSize: 11,
@@ -269,53 +249,40 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     marginBottom: 8,
   },
-  savingsBox: {
-    padding: 16,
-    borderRadius: 14,
-    borderWidth: 1,
-    marginBottom: 12,
-  },
-  savingsHeader: {
+  heroRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  savingsLabel: {
-    fontSize: 13,
-  },
-  savingsBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 2,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  badgeText: {
-    fontSize: 11,
-    fontWeight: '700',
+    alignItems: 'baseline',
+    gap: 10,
+    marginBottom: 16,
   },
   netSavingsAmount: {
-    fontSize: 28,
-    fontWeight: '800',
+    fontSize: 40,
+    fontWeight: '400',
     fontVariant: ['tabular-nums'],
   },
-  tilesRow: {
+  rateCaption: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  metricsRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 20,
+    marginBottom: 16,
   },
-  metricTile: {
+  metricItem: {
     flex: 1,
-    padding: 12,
-    borderRadius: 12,
-    borderWidth: 1,
   },
-  tileLabel: {
-    fontSize: 11,
+  metricLabel: {
+    fontSize: 12,
     marginBottom: 4,
   },
-  tileAmount: {
-    fontSize: 16,
+  metricValue: {
+    fontSize: 20,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
+  },
+  divider: {
+    height: 1,
+    width: '100%',
   },
 });

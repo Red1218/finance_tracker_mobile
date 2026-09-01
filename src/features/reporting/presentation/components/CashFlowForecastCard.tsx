@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Card } from '../../../../shared/components/Card';
-import { useTheme } from '../../../../shared/theme';
+import { useTheme, withAlpha } from '../../../../shared/theme';
 import { CashFlowForecast } from '../../../insights/domain';
 
 interface Props {
@@ -13,118 +12,52 @@ export const CashFlowForecastCard: React.FC<Props> = ({ forecast }) => {
 
   if (!forecast) {
     return (
-      <Card variant="elevated" style={styles.card}>
-        <Text style={[styles.title, { color: theme.colors.textPrimary }]}>30-Day Cash Flow Forecast</Text>
-        <Text style={[styles.emptyText, { color: theme.colors.textMuted }]}>
+      <View
+        style={[styles.panel, { backgroundColor: withAlpha(theme.colors.brandPrimary, 0.08), borderRadius: theme.radius.large }]}
+      >
+        <Text style={[styles.eyebrow, { color: theme.colors.brandPrimary }]}>✦ FORECAST</Text>
+        <Text style={[styles.copy, { color: theme.colors.textSecondary }]}>
           Forecast is unavailable. Generate more transaction history to enable AI cash flow projections.
         </Text>
-      </Card>
+      </View>
     );
   }
 
   const confidencePct = Math.round(forecast.confidenceScore.score * 100);
+  const isPositive = forecast.projectedSavings >= 0;
+  const formattedSavings = `₹${Math.abs(forecast.projectedSavings).toLocaleString('en-IN')}`;
 
   return (
-    <Card
-      variant="elevated"
-      style={styles.card}
-      accessibilityLabel={`30 day cash flow forecast. Projected savings: ₹${forecast.projectedSavings}. Confidence: ${confidencePct}%`}
+    <View
+      style={[styles.panel, { backgroundColor: withAlpha(theme.colors.brandPrimary, 0.08), borderRadius: theme.radius.large }]}
+      accessibilityLabel={`Cash flow forecast. Projected savings: ₹${forecast.projectedSavings}. Confidence: ${confidencePct} percent.`}
     >
-      <View style={styles.header}>
-        <Text style={[styles.title, { color: theme.colors.textPrimary }]}>30-Day Cash Flow Forecast</Text>
-        <View style={[styles.badge, { backgroundColor: theme.colors.brandSecondary }]}>
-          <Text style={styles.badgeText}>{confidencePct}% Confidence</Text>
-        </View>
-      </View>
-
-      <View style={styles.heroBox}>
-        <Text style={[styles.heroLabel, { color: theme.colors.textMuted }]}>Projected Net Savings</Text>
-        <Text
-          style={[
-            styles.heroAmount,
-            { color: forecast.projectedSavings >= 0 ? theme.colors.success : theme.colors.error },
-          ]}
-        >
-          ₹{forecast.projectedSavings.toLocaleString('en-IN')}
-        </Text>
-      </View>
-
-      <View style={styles.tilesRow}>
-        <View style={[styles.tile, { backgroundColor: theme.colors.surfacePrimary, borderColor: theme.colors.borderSubtle }]}>
-          <Text style={[styles.tileLabel, { color: theme.colors.textMuted }]}>Projected Income</Text>
-          <Text style={[styles.tileAmount, { color: theme.colors.success }]}>
-            ₹{forecast.predictedIncome.toLocaleString('en-IN')}
-          </Text>
-        </View>
-
-        <View style={[styles.tile, { backgroundColor: theme.colors.surfacePrimary, borderColor: theme.colors.borderSubtle }]}>
-          <Text style={[styles.tileLabel, { color: theme.colors.textMuted }]}>Projected Expenses</Text>
-          <Text style={[styles.tileAmount, { color: theme.colors.error }]}>
-            ₹{forecast.predictedExpense.toLocaleString('en-IN')}
-          </Text>
-        </View>
-      </View>
-    </Card>
+      <Text style={[styles.eyebrow, { color: theme.colors.brandPrimary }]}>✦ FORECAST</Text>
+      <Text style={[styles.copy, { color: theme.colors.textPrimary }]}>
+        At your current pace you will close this period with about{' '}
+        <Text style={{ fontWeight: '700', color: isPositive ? theme.colors.success : theme.colors.error }}>
+          {isPositive ? '' : '-'}
+          {formattedSavings}
+        </Text>{' '}
+        in net savings ({confidencePct}% confidence).
+      </Text>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  card: {
+  panel: {
+    padding: 16,
     marginBottom: 16,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  badge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-  },
-  badgeText: {
-    color: '#F8FAFC',
+  eyebrow: {
     fontSize: 11,
     fontWeight: '700',
+    letterSpacing: 1,
+    marginBottom: 8,
   },
-  emptyText: {
-    fontSize: 13,
-    marginTop: 8,
-  },
-  heroBox: {
-    marginBottom: 12,
-  },
-  heroLabel: {
-    fontSize: 12,
-    marginBottom: 2,
-  },
-  heroAmount: {
-    fontSize: 26,
-    fontWeight: '800',
-    fontVariant: ['tabular-nums'],
-  },
-  tilesRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  tile: {
-    flex: 1,
-    padding: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-  },
-  tileLabel: {
-    fontSize: 11,
-    marginBottom: 4,
-  },
-  tileAmount: {
+  copy: {
     fontSize: 15,
-    fontWeight: '700',
-    fontVariant: ['tabular-nums'],
+    lineHeight: 22,
   },
 });
