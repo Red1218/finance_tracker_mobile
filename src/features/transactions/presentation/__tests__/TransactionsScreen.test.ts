@@ -1,8 +1,23 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { TransactionViewModel } from '../models/TransactionViewModel';
+import { filterTransactions, formatGroupTotal, groupTransactionsByDate } from '../screens/TransactionsScreen';
 
-const mockTransactions: TransactionViewModel[] = [
-  {
+// This screen has no working component-render path in this project's test
+// setup (TransactionsScreen uses real useState; there is no react-test-renderer
+// installed, so it can't even be invoked as a bare function the way the
+// hook-free presentational components in this feature can - see
+// TransactionRow.test.tsx / TransactionDateGroup.test.tsx). Its previous test
+// file never actually exercised the screen either way - every case
+// reimplemented trivial logic inline against local mock data, or called a
+// standalone vi.fn() and asserted it had been called.
+//
+// filterTransactions / groupTransactionsByDate / formatGroupTotal are
+// exported from TransactionsScreen.tsx specifically so this file can test
+// the screen's actual filtering/grouping/total logic for real, even though
+// its JSX output remains unverified by this suite.
+
+function makeTransaction(overrides: Partial<TransactionViewModel>): TransactionViewModel {
+  return {
     id: 'tx-1',
     accountId: 'acc-1',
     categoryId: 'cat-1',
@@ -17,101 +32,101 @@ const mockTransactions: TransactionViewModel[] = [
     formattedDate: 'Aug 20, 2026',
     isVoided: false,
     badgeColor: '#EF4444',
-  },
-  {
-    id: 'tx-2',
-    accountId: 'acc-1',
-    categoryId: 'cat-2',
-    type: 'INCOME',
-    typeLabel: 'Income',
-    amount: 50000,
-    formattedAmount: '+₹50,000.00',
-    currencyCode: 'INR',
-    description: 'Monthly Salary',
-    transferGroupId: null,
-    transactionDateIso: '2026-08-01T09:00:00Z',
-    formattedDate: 'Aug 01, 2026',
-    isVoided: false,
-    badgeColor: '#10B981',
-  },
-];
+    ...overrides,
+  };
+}
 
-describe('TransactionsScreen Presentation & User Actions', () => {
-  it('filters transactions by search query correctly', () => {
-    const query = 'Groceries';
-    const filtered = mockTransactions.filter((tx) =>
-      tx.description.toLowerCase().includes(query.toLowerCase())
-    );
-    expect(filtered).toHaveLength(1);
-    expect(filtered[0].id).toBe('tx-1');
+describe('filterTransactions', () => {
+  const groceries = makeTransaction({ id: 'tx-1', description: 'Groceries', type: 'EXPENSE', typeLabel: 'Expense' });
+  const salary = makeTransaction({ id: 'tx-2', description: 'Monthly Salary', type: 'INCOME', typeLabel: 'Income' });
+  const transferOut = makeTransaction({ id: 'tx-3', description: 'Rent transfer', type: 'TRANSFER_OUT', typeLabel: 'Transfer Out' });
+  const transferIn = makeTransaction({ id: 'tx-4', description: 'Rent transfer', type: 'TRANSFER_IN', typeLabel: 'Transfer In' });
+  const all = [groceries, salary, transferOut, transferIn];
+
+  it('matches by description, case-insensitively', () => {
+    expect(filterTransactions(all, 'groceries', 'ALL')).toEqual([groceries]);
   });
 
-  it('filters transactions by type filter pill correctly', () => {
-    const incomeOnly = mockTransactions.filter((tx) => tx.type === 'INCOME');
-    expect(incomeOnly).toHaveLength(1);
-    expect(incomeOnly[0].description).toBe('Monthly Salary');
+  it('matches by type label when the query does not match the description', () => {
+    expect(filterTransactions(all, 'income', 'ALL')).toEqual([salary]);
   });
 
-  it('triggers onAddTransaction callback when FAB is pressed', () => {
-    const onAddTransactionMock = vi.fn();
-    onAddTransactionMock();
-    expect(onAddTransactionMock).toHaveBeenCalled();
+  it('filters to EXPENSE only', () => {
+    expect(filterTransactions(all, '', 'EXPENSE')).toEqual([groceries]);
   });
 
-  it('triggers onSelectTransaction callback when row is selected', () => {
-    const onSelectTransactionMock = vi.fn();
-    onSelectTransactionMock(mockTransactions[0]);
-    expect(onSelectTransactionMock).toHaveBeenCalledWith(mockTransactions[0]);
+  it('filters to INCOME only', () => {
+    expect(filterTransactions(all, '', 'INCOME')).toEqual([salary]);
   });
 
-  it('triggers onFormSubmit and onRefresh callbacks on transaction creation', async () => {
-    const onFormSubmitMock = vi.fn().mockResolvedValue(undefined);
-    const onRefreshMock = vi.fn();
-
-    const formValues = {
-      accountId: 'acc-1',
-      amount: 150,
-      currencyCode: 'INR',
-      description: 'Snacks',
-      categoryId: 'cat-1',
-    };
-
-    await onFormSubmitMock(formValues, 'expense');
-    onRefreshMock();
-
-    expect(onFormSubmitMock).toHaveBeenCalledWith(formValues, 'expense');
-    expect(onRefreshMock).toHaveBeenCalled();
+  it('filters to TRANSFER, matching both TRANSFER_OUT and TRANSFER_IN', () => {
+    expect(filterTransactions(all, '', 'TRANSFER')).toEqual([transferOut, transferIn]);
   });
 
-  it('triggers onVoidTransaction and onRefresh callbacks on void action', async () => {
-    const onVoidTransactionMock = vi.fn().mockResolvedValue(undefined);
-    const onRefreshMock = vi.fn();
+  it('combines search and type filter', () => {
+    expect(filterTransactions(all, 'rent', 'TRANSFER')).toEqual([transferOut, transferIn]);
+    expect(filterTransactions(all, 'rent', 'EXPENSE')).toEqual([]);
+  });
+});
 
-    await onVoidTransactionMock('tx-1');
-    onRefreshMock();
-
-    expect(onVoidTransactionMock).toHaveBeenCalledWith('tx-1');
-    expect(onRefreshMock).toHaveBeenCalled();
+describe('formatGroupTotal', () => {
+  it('sums non-voided outflows as negative', () => {
+    const total = formatGroupTotal([
+      makeTransaction({ type: 'EXPENSE', amount: 480 }),
+      makeTransaction({ type: 'EXPENSE', amount: 600 }),
+    ]);
+    expect(total).toBe('-₹1,080.00');
   });
 
-  it('preserves income mode when user switches tab from default expense to income', async () => {
-    const onFormSubmitMock = vi.fn().mockResolvedValue(undefined);
-    const defaultScreenFormMode = 'expense';
-    const submittedModalActiveMode = 'income';
+  it('sums income as positive', () => {
+    const total = formatGroupTotal([makeTransaction({ type: 'INCOME', amount: 62000 })]);
+    expect(total).toBe('+₹62,000.00');
+  });
 
-    const formValues = {
-      accountId: 'acc-1',
-      amount: 10000,
-      currencyCode: 'INR',
-      description: 'Salary',
-      categoryId: 'cat-2',
-    };
+  it('nets outflows against inflows in the same group', () => {
+    const total = formatGroupTotal([
+      makeTransaction({ type: 'EXPENSE', amount: 100 }),
+      makeTransaction({ type: 'INCOME', amount: 40 }),
+    ]);
+    expect(total).toBe('-₹60.00');
+  });
 
-    // Simulate TransactionsScreen.handleModalSubmit receiving submittedMode from modal
-    const submittedModeToForward = submittedModalActiveMode || defaultScreenFormMode;
-    await onFormSubmitMock(formValues, submittedModeToForward, undefined);
+  it('excludes voided transactions entirely, matching the spec mockup', () => {
+    // 07-visual-refresh.md §6.2 / 2a-transactions.png: a struck-through,
+    // voided -₹18,000 transfer does not count toward its group's total.
+    const total = formatGroupTotal([
+      makeTransaction({ type: 'EXPENSE', amount: 2340, isVoided: false }),
+      makeTransaction({ type: 'TRANSFER_OUT', amount: 18000, isVoided: true }),
+    ]);
+    expect(total).toBe('-₹2,340.00');
+  });
 
-    expect(onFormSubmitMock).toHaveBeenCalledWith(formValues, 'income', undefined);
-    expect(onFormSubmitMock).not.toHaveBeenCalledWith(formValues, 'expense', undefined);
+  it('returns a zero total for an empty or fully-voided group', () => {
+    expect(formatGroupTotal([])).toBe('+₹0.00');
+    expect(formatGroupTotal([makeTransaction({ type: 'EXPENSE', amount: 500, isVoided: true })])).toBe('+₹0.00');
+  });
+});
+
+describe('groupTransactionsByDate', () => {
+  it('groups by formattedDate, preserving first-seen order, with each group carrying its own total', () => {
+    const todayCoffee = makeTransaction({ id: 't1', formattedDate: 'Aug 24, 2026', type: 'EXPENSE', amount: 480 });
+    const todayMetro = makeTransaction({ id: 't2', formattedDate: 'Aug 24, 2026', type: 'EXPENSE', amount: 600 });
+    const yesterdaySalary = makeTransaction({ id: 't3', formattedDate: 'Aug 23, 2026', type: 'INCOME', amount: 62000 });
+
+    const groups = groupTransactionsByDate([todayCoffee, todayMetro, yesterdaySalary]);
+
+    expect(groups).toEqual([
+      { dateLabel: 'Aug 24, 2026', data: [todayCoffee, todayMetro], totalLabel: '-₹1,080.00' },
+      { dateLabel: 'Aug 23, 2026', data: [yesterdaySalary], totalLabel: '+₹62,000.00' },
+    ]);
+  });
+
+  it('falls back to a "Recent" group when formattedDate is empty', () => {
+    const tx = makeTransaction({ formattedDate: '' });
+    expect(groupTransactionsByDate([tx])).toEqual([{ dateLabel: 'Recent', data: [tx], totalLabel: '-₹500.00' }]);
+  });
+
+  it('returns no groups for an empty transaction list', () => {
+    expect(groupTransactionsByDate([])).toEqual([]);
   });
 });

@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitest/config';
+import path from 'path';
 
 export default defineConfig({
   test: {
@@ -7,6 +8,7 @@ export default defineConfig({
     setupFiles: ['./tests/setup.ts'],
     alias: {
       'react-native': 'react-native-web',
+      '@': path.resolve(__dirname, '.'),
     },
     env: {
       EXPO_PUBLIC_SUPABASE_URL: 'https://mock.supabase.co',
