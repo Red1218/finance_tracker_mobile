@@ -35,9 +35,13 @@ export const darkColors: ColorTokens = Object.freeze({
   // Collapses into brandPrimary (docs §4: "the indigo had no distinct job").
   // Key kept in place per review so existing consumers don't break.
   brandSecondary: '#9184D9',
-  success: '#10B981',
-  warning: '#F59E0B',
-  error: '#EF4444',
+  // oklch(0.72 0.105 162), ~7.4:1 on backgroundPrimary (spec claims 7.4:1).
+  success: '#61B990',
+  // oklch(0.78 0.105 75), ~8.7:1 on backgroundPrimary (spec claims 8.7:1).
+  warning: '#DFAE68',
+  // oklch(0.64 0.13 22) — retains the most chroma of the three, ~4.9:1 on
+  // backgroundPrimary (spec claims 4.9:1).
+  error: '#CF6968',
   textPrimary: '#F8FAFC',
   textSecondary: '#94A3B8',
   textMuted: '#64748B',
@@ -63,9 +67,14 @@ export const lightColors: ColorTokens = Object.freeze({
   brandPrimaryPressed: '#1D4ED8',
   // Collapses into brandPrimary (docs §4: "the indigo had no distinct job").
   brandSecondary: '#6B5CC4',
-  success: '#10B981',
-  warning: '#F59E0B',
-  error: '#EF4444',
+  // Spec gives no light-specific success/error rule (only accent and warning
+  // are called out for light theme in §4) — kept identical to the dark-theme
+  // value, approved for this session.
+  success: '#61B990',
+  // oklch(0.62 0.12 75), ~3.6:1 on lightColors.backgroundPrimary (spec claims
+  // 3.6:1, clearing §18's 3:1 floor for graphical objects). Darkened per §4.
+  warning: '#B07A20',
+  error: '#CF6968',
   textPrimary: '#0F172A',
   textSecondary: '#475569',
   textMuted: '#94A3B8',
