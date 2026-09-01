@@ -3,6 +3,11 @@ export interface ColorTokens {
   backgroundSecondary: string;
   surfacePrimary: string;
   surfaceElevated: string;
+  // Three-step neutral ramp (docs §4) — surfaceElevated is the "surfaces"
+  // step; these two are the "hairlines" and "icon badges" steps. Not yet
+  // consumed anywhere; components adopt them in later, per-screen sessions.
+  surfaceElevatedHairline: string;
+  surfaceElevatedBadge: string;
   surfaceSecondary: string;
   brandPrimary: string;
   brandPrimaryPressed: string;
@@ -25,14 +30,28 @@ export const darkColors: ColorTokens = Object.freeze({
   backgroundPrimary: '#0F172A',
   backgroundSecondary: '#0A0A0A',
   surfacePrimary: '#1E293B',
-  surfaceElevated: '#334155',
+  // "surfaces" step of the three-step neutral ramp (docs §4).
+  surfaceElevated: 'rgba(255, 255, 255, 0.045)',
+  // "hairlines" step — ring/donut track fills.
+  surfaceElevatedHairline: 'rgba(255, 255, 255, 0.07)',
+  // "icon badges" step — small icon/avatar/status badge fills.
+  surfaceElevatedBadge: 'rgba(255, 255, 255, 0.05)',
   surfaceSecondary: '#18181B',
-  brandPrimary: '#2563EB',
+  // oklch(0.66 0.095 290) — spec's own approximation (docs §4).
+  brandPrimary: '#9184D9',
+  // No pressed/hover value given in the spec for the new accent — left
+  // unchanged pending an explicit decision, per session review.
   brandPrimaryPressed: '#1D4ED8',
-  brandSecondary: '#6366F1',
-  success: '#10B981',
-  warning: '#F59E0B',
-  error: '#EF4444',
+  // Collapses into brandPrimary (docs §4: "the indigo had no distinct job").
+  // Key kept in place per review so existing consumers don't break.
+  brandSecondary: '#9184D9',
+  // oklch(0.72 0.105 162), ~7.4:1 on backgroundPrimary (spec claims 7.4:1).
+  success: '#61B990',
+  // oklch(0.78 0.105 75), ~8.7:1 on backgroundPrimary (spec claims 8.7:1).
+  warning: '#DFAE68',
+  // oklch(0.64 0.13 22) — retains the most chroma of the three, ~4.9:1 on
+  // backgroundPrimary (spec claims 4.9:1).
+  error: '#CF6968',
   textPrimary: '#F8FAFC',
   textSecondary: '#94A3B8',
   textMuted: '#64748B',
@@ -48,14 +67,29 @@ export const lightColors: ColorTokens = Object.freeze({
   backgroundPrimary: '#F8FAFC',
   backgroundSecondary: '#F1F5F9',
   surfacePrimary: '#FFFFFF',
+  // Placeholder — §11 lists "final light-mode ramp steps" as an open design
+  // decision. Left equal to today's flat surfaceElevated so light mode is
+  // visually unchanged until that decision lands, rather than guessing.
   surfaceElevated: '#FFFFFF',
+  surfaceElevatedHairline: '#FFFFFF',
+  surfaceElevatedBadge: '#FFFFFF',
   surfaceSecondary: '#F1F5F9',
-  brandPrimary: '#2563EB',
+  // oklch(0.52 0.13 290) — spec's own approximation (docs §4). Darkened from
+  // the dark-theme accent: the dark-ground value only manages 3.1:1 on white.
+  brandPrimary: '#6B5CC4',
+  // No pressed/hover value given in the spec for the new accent — left
+  // unchanged pending an explicit decision, per session review.
   brandPrimaryPressed: '#1D4ED8',
-  brandSecondary: '#6366F1',
-  success: '#10B981',
-  warning: '#F59E0B',
-  error: '#EF4444',
+  // Collapses into brandPrimary (docs §4: "the indigo had no distinct job").
+  brandSecondary: '#6B5CC4',
+  // Spec gives no light-specific success/error rule (only accent and warning
+  // are called out for light theme in §4) — kept identical to the dark-theme
+  // value, approved for this session.
+  success: '#61B990',
+  // oklch(0.62 0.12 75), ~3.6:1 on lightColors.backgroundPrimary (spec claims
+  // 3.6:1, clearing §18's 3:1 floor for graphical objects). Darkened per §4.
+  warning: '#B07A20',
+  error: '#CF6968',
   textPrimary: '#0F172A',
   textSecondary: '#475569',
   textMuted: '#94A3B8',
