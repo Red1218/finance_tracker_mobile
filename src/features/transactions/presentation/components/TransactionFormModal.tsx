@@ -10,10 +10,11 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
-  ActivityIndicator,
 } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTheme } from '../../../../shared/theme';
-import { Button, Icon } from '../../../../shared/components';
+import { Button, Icon, SegmentedControl } from '../../../../shared/components';
+import { validateTransactionFormFields } from '../validation/validateTransactionForm';
 
 export type TransactionFormMode = 'expense' | 'income' | 'transfer' | 'edit';
 
@@ -27,12 +28,23 @@ export interface TransactionFormValues {
   transactionDate?: Date;
 }
 
+const TYPE_OPTIONS = [
+  { id: 'expense', label: 'Expense' },
+  { id: 'income', label: 'Income' },
+  { id: 'transfer', label: 'Transfer' },
+];
+
 export interface TransactionFormModalProps {
   visible: boolean;
   mode: TransactionFormMode;
   initialValues?: Partial<TransactionFormValues>;
   accounts: Array<{ id: string; name: string; isArchived?: boolean }>;
   categories: Array<{ id: string; name: string; kind?: 'EXPENSE' | 'INCOME' }>;
+  // categoryId -> remaining amount on that category's active budget - the
+  // same composition-layer prop TransactionDetailSheet's "Counts against"
+  // row already uses (§9 of the visual-refresh spec). Drives the "counts
+  // against your X budget" consequence line (fixes #12).
+  budgetRemainingByCategoryId?: Record<string, number>;
   isLoading?: boolean;
   error?: string | null;
   onSubmit: (values: TransactionFormValues, mode: TransactionFormMode) => Promise<void>;
@@ -45,6 +57,7 @@ export function TransactionFormModal({
   initialValues,
   accounts = [],
   categories = [],
+  budgetRemainingByCategoryId,
   isLoading = false,
   error = null,
   onSubmit,
@@ -61,6 +74,11 @@ export function TransactionFormModal({
   const [amountStr, setAmountStr] = useState<string>('');
   const [description, setDescription] = useState<string>('');
   const [categoryId, setCategoryId] = useState<string | null>(null);
+  const [transactionDate, setTransactionDate] = useState<Date>(new Date());
+
+  const [accountPickerOpen, setAccountPickerOpen] = useState(false);
+  const [categoryPickerOpen, setCategoryPickerOpen] = useState(false);
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
 
   const [validationErrors, setValidationErrors] = useState<{ [key: string]: string }>({});
   const [isDirty, setIsDirty] = useState<boolean>(false);
@@ -75,53 +93,39 @@ export function TransactionFormModal({
       setAmountStr(initialValues?.amount ? String(initialValues.amount) : '');
       setDescription(initialValues?.description || '');
       setCategoryId(initialValues?.categoryId ?? null);
+      setTransactionDate(initialValues?.transactionDate || new Date());
 
+      setAccountPickerOpen(false);
+      setCategoryPickerOpen(false);
+      setDatePickerOpen(false);
       setValidationErrors({});
       setIsDirty(false);
     }
   }, [visible, mode, initialValues, accounts]);
 
   const activeAccounts = accounts.filter((a) => !a.isArchived);
+  const selectedAccount = activeAccounts.find((a) => a.id === accountId);
 
   const filteredCategories = categories.filter((c) => {
     if (activeMode === 'expense') return !c.kind || c.kind === 'EXPENSE';
     if (activeMode === 'income') return !c.kind || c.kind === 'INCOME';
     return false;
   });
+  const selectedCategory = filteredCategories.find((c) => c.id === categoryId);
 
-  const handleModeChange = (newMode: 'expense' | 'income' | 'transfer') => {
-    if (mode === 'edit') return;
-    setActiveMode(newMode);
+  const budgetRemaining = categoryId != null ? budgetRemainingByCategoryId?.[categoryId] : undefined;
+  const showConsequenceLine = activeMode !== 'transfer' && selectedCategory && budgetRemaining !== undefined;
+
+  const formattedDate = transactionDate.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+
+  const handleModeChange = (newMode: string) => {
+    setActiveMode(newMode as 'expense' | 'income' | 'transfer');
     setValidationErrors({});
     setIsDirty(true);
   };
 
   const validateForm = (): boolean => {
-    const errors: { [key: string]: string } = {};
-
-    if (!accountId) {
-      errors.accountId = 'Please select an account';
-    }
-
-    if (activeMode === 'transfer') {
-      if (!destAccountId) {
-        errors.destAccountId = 'Please select a destination account';
-      } else if (destAccountId === accountId) {
-        errors.destAccountId = 'Destination account must differ from source account';
-      }
-    }
-
-    const parsedAmount = parseFloat(amountStr);
-    if (!amountStr.trim() || isNaN(parsedAmount) || parsedAmount <= 0) {
-      errors.amount = 'Amount must be greater than zero';
-    }
-
-    if (!description.trim()) {
-      errors.description = 'Description is required';
-    } else if (description.length > 255) {
-      errors.description = 'Description cannot exceed 255 characters';
-    }
-
+    const errors = validateTransactionFormFields({ accountId, destAccountId, amountStr, description }, activeMode);
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -136,7 +140,7 @@ export function TransactionFormModal({
       currencyCode: 'INR',
       description: description.trim(),
       categoryId: activeMode === 'transfer' ? null : categoryId,
-      transactionDate: initialValues?.transactionDate || new Date(),
+      transactionDate,
     };
 
     await onSubmit(values, activeMode);
@@ -170,13 +174,7 @@ export function TransactionFormModal({
 
           <View style={styles.headerRow}>
             <Text style={[styles.headerTitle, { color: colors.textPrimary, fontSize: typography.title.fontSize }]}>
-              {mode === 'edit'
-                ? 'Edit Transaction'
-                : activeMode === 'expense'
-                ? 'New Expense'
-                : activeMode === 'income'
-                ? 'New Income'
-                : 'New Transfer'}
+              {mode === 'edit' ? 'Edit Transaction' : 'New transaction'}
             </Text>
             <TouchableOpacity
               onPress={handleClose}
@@ -188,38 +186,14 @@ export function TransactionFormModal({
             </TouchableOpacity>
           </View>
 
-          {mode !== 'edit' && (
-            <View style={styles.segmentedRow}>
-              {(['expense', 'income', 'transfer'] as const).map((m) => {
-                const isActive = activeMode === m;
-                return (
-                  <TouchableOpacity
-                    key={m}
-                    style={[
-                      styles.segmentPill,
-                      {
-                        backgroundColor: isActive ? colors.brandPrimary : colors.surfaceSecondary,
-                        borderColor: isActive ? colors.brandPrimary : colors.borderSubtle,
-                      },
-                    ]}
-                    onPress={() => handleModeChange(m)}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: isActive }}
-                    accessibilityLabel={`Set mode to ${m}`}
-                  >
-                    <Text
-                      style={[
-                        styles.segmentPillText,
-                        { color: isActive ? colors.textPrimary : colors.textSecondary },
-                      ]}
-                    >
-                      {m.charAt(0).toUpperCase() + m.slice(1)}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          )}
+          <SegmentedControl
+            options={TYPE_OPTIONS}
+            selectedId={activeMode}
+            onChange={handleModeChange}
+            disabled={mode === 'edit'}
+            style={styles.segmentedControl}
+            accessibilityLabel="Transaction type"
+          />
 
           {error && (
             <View
@@ -238,24 +212,10 @@ export function TransactionFormModal({
             contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
           >
-            <View style={styles.amountCard}>
+            <View style={styles.formGroup}>
               <Text style={[styles.inputLabel, { color: colors.textMuted }]}>AMOUNT</Text>
-              <View style={styles.amountInputRow}>
-                <Text
-                  style={[
-                    styles.currencyPrefix,
-                    {
-                      color:
-                        activeMode === 'income'
-                          ? colors.success
-                          : activeMode === 'expense'
-                          ? colors.error
-                          : colors.warning,
-                    },
-                  ]}
-                >
-                  ₹
-                </Text>
+              <View style={[styles.amountInputRow, { borderBottomColor: colors.brandPrimary }]}>
+                <Text style={[styles.currencyPrefix, { color: colors.textMuted }]}>₹</Text>
                 <TextInput
                   style={[
                     styles.amountInput,
@@ -275,6 +235,7 @@ export function TransactionFormModal({
                   editable={!isLoading}
                   accessibilityLabel="Amount in Rupees"
                 />
+                <Text style={[styles.currencyCode, { color: colors.textMuted }]}>INR</Text>
               </View>
               {validationErrors.amount && (
                 <Text style={[styles.fieldError, { color: colors.error }]}>
@@ -284,9 +245,139 @@ export function TransactionFormModal({
             </View>
 
             <View style={styles.formGroup}>
+              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>DESCRIPTION</Text>
+              <TextInput
+                style={[
+                  styles.field,
+                  {
+                    backgroundColor: 'transparent',
+                    color: colors.textPrimary,
+                    borderColor: validationErrors.description ? colors.error : colors.borderSubtle,
+                  },
+                ]}
+                value={description}
+                onChangeText={(val) => {
+                  setDescription(val);
+                  setIsDirty(true);
+                }}
+                placeholder="Enter description"
+                placeholderTextColor={colors.textMuted}
+                editable={!isLoading}
+                accessibilityLabel="Description input"
+              />
+              {validationErrors.description && (
+                <Text style={[styles.fieldError, { color: colors.error }]}>
+                  {validationErrors.description}
+                </Text>
+              )}
+            </View>
+
+            {/* Category and date are both single-choice pickers - paired on one row. */}
+            <View style={styles.pairRow}>
+              {activeMode !== 'transfer' && (
+                <View style={styles.pairColumn}>
+                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>CATEGORY</Text>
+                  <TouchableOpacity
+                    style={[styles.field, { borderColor: colors.borderSubtle }]}
+                    onPress={() => setCategoryPickerOpen((v) => !v)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Choose category"
+                    accessibilityState={{ expanded: categoryPickerOpen }}
+                  >
+                    <Text style={[styles.fieldValue, { color: selectedCategory ? colors.textPrimary : colors.textMuted }]} numberOfLines={1}>
+                      {selectedCategory?.name || 'Select'}
+                    </Text>
+                    <Icon name="ChevronDown" size={16} color={colors.textMuted} />
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              <View style={styles.pairColumn}>
+                <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>DATE</Text>
+                <TouchableOpacity
+                  style={[styles.field, { borderColor: colors.borderSubtle }]}
+                  onPress={() => setDatePickerOpen((v) => !v)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Choose date"
+                  accessibilityState={{ expanded: datePickerOpen }}
+                >
+                  <Text style={[styles.fieldValue, { color: colors.textPrimary }]}>{formattedDate}</Text>
+                  <Icon name="ChevronDown" size={16} color={colors.textMuted} />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {categoryPickerOpen && filteredCategories.length > 0 && (
+              <View style={styles.pickerContainer}>
+                {filteredCategories.map((cat) => {
+                  const isSelected = categoryId === cat.id;
+                  return (
+                    <TouchableOpacity
+                      key={cat.id}
+                      style={[
+                        styles.pickerChip,
+                        {
+                          backgroundColor: isSelected ? colors.surfaceElevated : colors.surfaceSecondary,
+                          borderColor: isSelected ? colors.brandPrimary : colors.borderSubtle,
+                        },
+                      ]}
+                      onPress={() => {
+                        setCategoryId(cat.id);
+                        setCategoryPickerOpen(false);
+                        setIsDirty(true);
+                      }}
+                      accessibilityRole="radio"
+                      accessibilityState={{ checked: isSelected }}
+                      accessibilityLabel={cat.name}
+                    >
+                      <Text style={{ color: isSelected ? colors.brandPrimary : colors.textPrimary }}>
+                        {cat.name}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            )}
+
+            {datePickerOpen && (
+              <DateTimePicker
+                value={transactionDate}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                onChange={(_event, date) => {
+                  if (Platform.OS === 'android') setDatePickerOpen(false);
+                  if (date) {
+                    setTransactionDate(date);
+                    setIsDirty(true);
+                  }
+                }}
+              />
+            )}
+
+            <View style={styles.formGroup}>
               <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
                 {activeMode === 'transfer' ? 'FROM ACCOUNT' : 'ACCOUNT'}
               </Text>
+              <TouchableOpacity
+                style={[styles.field, { borderColor: colors.borderSubtle }]}
+                onPress={() => setAccountPickerOpen((v) => !v)}
+                accessibilityRole="button"
+                accessibilityLabel="Choose account"
+                accessibilityState={{ expanded: accountPickerOpen }}
+              >
+                <Text style={[styles.fieldValue, { color: selectedAccount ? colors.textPrimary : colors.textMuted }]} numberOfLines={1}>
+                  {selectedAccount?.name || 'Select'}
+                </Text>
+                <Icon name="ChevronDown" size={16} color={colors.textMuted} />
+              </TouchableOpacity>
+              {validationErrors.accountId && (
+                <Text style={[styles.fieldError, { color: colors.error }]}>
+                  {validationErrors.accountId}
+                </Text>
+              )}
+            </View>
+
+            {accountPickerOpen && (
               <View style={styles.pickerContainer}>
                 {activeAccounts.map((acc) => {
                   const isSelected = accountId === acc.id;
@@ -303,10 +394,11 @@ export function TransactionFormModal({
                       onPress={() => {
                         if (mode === 'edit' && initialValues?.destAccountId) return;
                         setAccountId(acc.id);
+                        setAccountPickerOpen(false);
                         setIsDirty(true);
                       }}
-                      accessibilityRole="button"
-                      accessibilityState={{ selected: isSelected }}
+                      accessibilityRole="radio"
+                      accessibilityState={{ checked: isSelected }}
                       accessibilityLabel={`Account ${acc.name}`}
                     >
                       <Text style={{ color: isSelected ? colors.brandPrimary : colors.textPrimary }}>
@@ -316,12 +408,7 @@ export function TransactionFormModal({
                   );
                 })}
               </View>
-              {validationErrors.accountId && (
-                <Text style={[styles.fieldError, { color: colors.error }]}>
-                  {validationErrors.accountId}
-                </Text>
-              )}
-            </View>
+            )}
 
             {activeMode === 'transfer' && (
               <View style={styles.formGroup}>
@@ -348,8 +435,8 @@ export function TransactionFormModal({
                           setDestAccountId(acc.id);
                           setIsDirty(true);
                         }}
-                        accessibilityRole="button"
-                        accessibilityState={{ selected: isSelected, disabled: isSource }}
+                        accessibilityRole="radio"
+                        accessibilityState={{ checked: isSelected, disabled: isSource }}
                         accessibilityLabel={`Destination Account ${acc.name}`}
                       >
                         <Text style={{ color: isSelected ? colors.brandPrimary : colors.textPrimary }}>
@@ -367,67 +454,14 @@ export function TransactionFormModal({
               </View>
             )}
 
-            {activeMode !== 'transfer' && filteredCategories.length > 0 && (
-              <View style={styles.formGroup}>
-                <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>CATEGORY</Text>
-                <View style={styles.pickerContainer}>
-                  {filteredCategories.map((cat) => {
-                    const isSelected = categoryId === cat.id;
-                    return (
-                      <TouchableOpacity
-                        key={cat.id}
-                        style={[
-                          styles.pickerChip,
-                          {
-                            backgroundColor: isSelected ? colors.surfaceElevated : colors.surfaceSecondary,
-                            borderColor: isSelected ? colors.brandPrimary : colors.borderSubtle,
-                          },
-                        ]}
-                        onPress={() => {
-                          setCategoryId(isSelected ? null : cat.id);
-                          setIsDirty(true);
-                        }}
-                        accessibilityRole="button"
-                        accessibilityState={{ selected: isSelected }}
-                        accessibilityLabel={`Category ${cat.name}`}
-                      >
-                        <Text style={{ color: isSelected ? colors.brandPrimary : colors.textPrimary }}>
-                          {cat.name}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-              </View>
+            {showConsequenceLine && (
+              <Text style={[styles.consequenceText, { color: colors.textMuted }]}>
+                This {activeMode} will be counted against your{' '}
+                <Text style={{ fontWeight: '700', color: colors.textSecondary }}>{selectedCategory!.name}</Text> budget
+                {' — ₹'}
+                {budgetRemaining!.toLocaleString('en-IN', { maximumFractionDigits: 0 })} left this month.
+              </Text>
             )}
-
-            <View style={styles.formGroup}>
-              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>DESCRIPTION</Text>
-              <TextInput
-                style={[
-                  styles.textInput,
-                  {
-                    backgroundColor: colors.surfaceSecondary,
-                    color: colors.textPrimary,
-                    borderColor: validationErrors.description ? colors.error : colors.borderSubtle,
-                  },
-                ]}
-                value={description}
-                onChangeText={(val) => {
-                  setDescription(val);
-                  setIsDirty(true);
-                }}
-                placeholder="Enter description"
-                placeholderTextColor={colors.textMuted}
-                editable={!isLoading}
-                accessibilityLabel="Description input"
-              />
-              {validationErrors.description && (
-                <Text style={[styles.fieldError, { color: colors.error }]}>
-                  {validationErrors.description}
-                </Text>
-              )}
-            </View>
           </ScrollView>
 
           <View style={styles.footerRow}>
@@ -435,17 +469,8 @@ export function TransactionFormModal({
               <Text style={{ color: colors.textSecondary }}>Cancel</Text>
             </TouchableOpacity>
             <Button
-              title={
-                isLoading
-                  ? 'Saving...'
-                  : mode === 'edit'
-                  ? 'Save Changes'
-                  : activeMode === 'expense'
-                  ? 'Save Expense'
-                  : activeMode === 'income'
-                  ? 'Save Income'
-                  : 'Execute Transfer'
-              }
+              variant="outline"
+              title={isLoading ? 'Saving...' : mode === 'edit' ? 'Save changes' : 'Save transaction'}
               onPress={handleSubmit}
               disabled={isLoading}
               style={styles.submitBtn}
@@ -498,24 +523,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  segmentedRow: {
-    flexDirection: 'row',
-    gap: 8,
-    paddingHorizontal: 20,
+  segmentedControl: {
+    marginHorizontal: 20,
     marginBottom: 12,
-  },
-  segmentPill: {
-    flex: 1,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 44,
-  },
-  segmentPillText: {
-    fontWeight: '600',
-    fontSize: 14,
   },
   errorBanner: {
     flexDirection: 'row',
@@ -535,10 +545,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 16,
   },
-  amountCard: {
-    marginBottom: 16,
-    alignItems: 'center',
-  },
   inputLabel: {
     fontSize: 12,
     fontWeight: '700',
@@ -549,23 +555,52 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    borderBottomWidth: 2,
+    paddingBottom: 8,
   },
   currencyPrefix: {
-    fontSize: 28,
-    fontWeight: '700',
+    fontSize: 20,
+    fontWeight: '400',
   },
   amountInput: {
-    fontWeight: '700',
-    minWidth: 120,
-    textAlign: 'center',
+    flex: 1,
+    fontWeight: '400',
+  },
+  currencyCode: {
+    fontSize: 13,
+    fontWeight: '600',
   },
   formGroup: {
     marginBottom: 16,
+  },
+  pairRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 16,
+  },
+  pairColumn: {
+    flex: 1,
+  },
+  field: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderRadius: 8,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontSize: 15,
+    minHeight: 44,
+  },
+  fieldValue: {
+    fontSize: 15,
+    flexShrink: 1,
   },
   pickerContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+    marginBottom: 16,
   },
   pickerChip: {
     paddingHorizontal: 12,
@@ -575,16 +610,13 @@ const styles = StyleSheet.create({
     minHeight: 44,
     justifyContent: 'center',
   },
-  textInput: {
-    borderRadius: 8,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    fontSize: 15,
-    minHeight: 44,
-  },
   fieldError: {
     fontSize: 12,
+    marginTop: 4,
+  },
+  consequenceText: {
+    fontSize: 13,
+    lineHeight: 19,
     marginTop: 4,
   },
   footerRow: {
