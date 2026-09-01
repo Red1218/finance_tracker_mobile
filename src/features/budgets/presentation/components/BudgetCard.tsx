@@ -11,11 +11,9 @@ export interface BudgetCardProps {
   summary: BudgetSummaryViewModel;
   categoryName: string;
   onPress?: () => void;
-  onEdit?: () => void;
-  onDelete?: () => void;
 }
 
-export function BudgetCard({ summary, categoryName, onPress, onEdit, onDelete }: BudgetCardProps) {
+export function BudgetCard({ summary, categoryName, onPress }: BudgetCardProps) {
   const { colors, typography } = useTheme();
 
   const currencySymbol = summary.budget.currency === 'INR' || summary.budget.currency === '₹' ? '₹' : `${summary.budget.currency} `;
@@ -63,31 +61,6 @@ export function BudgetCard({ summary, categoryName, onPress, onEdit, onDelete }:
           </Text>
         </View>
       </TouchableOpacity>
-
-      {(onEdit || onDelete) && (
-        <View style={[styles.actionsRow, { borderTopColor: colors.borderSubtle }]}>
-          {onEdit && (
-            <TouchableOpacity
-              onPress={onEdit}
-              style={[styles.actionBtn, { backgroundColor: colors.surfaceElevated }]}
-              accessibilityRole="button"
-              accessibilityLabel="Edit budget"
-            >
-              <Text style={[styles.actionBtnText, { color: colors.brandPrimary, fontSize: typography.caption.fontSize }]}>Edit</Text>
-            </TouchableOpacity>
-          )}
-          {onDelete && (
-            <TouchableOpacity
-              onPress={onDelete}
-              style={[styles.actionBtn, { backgroundColor: 'rgba(239, 68, 68, 0.15)' }]}
-              accessibilityRole="button"
-              accessibilityLabel="Delete budget"
-            >
-              <Text style={[styles.actionBtnText, { color: colors.error, fontSize: typography.caption.fontSize }]}>Delete</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      )}
     </Card>
   );
 }
@@ -131,24 +104,6 @@ const styles = StyleSheet.create({
   },
   percentageText: {},
   remainingText: {
-    fontWeight: '600',
-  },
-  actionsRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: 8,
-    marginTop: 12,
-    paddingTop: 10,
-    borderTopWidth: 1,
-  },
-  actionBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-    minHeight: 32,
-    justifyContent: 'center',
-  },
-  actionBtnText: {
     fontWeight: '600',
   },
 });

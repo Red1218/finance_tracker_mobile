@@ -213,8 +213,6 @@ export const BudgetsScreen: React.FC<BudgetsScreenProps> = ({ module }) => {
                 summary={summary}
                 categoryName={catName}
                 onPress={() => handleCardPress(b)}
-                onEdit={() => handleEditBudget(b)}
-                onDelete={() => handleArchiveRequest(b)}
               />
             );
           })
