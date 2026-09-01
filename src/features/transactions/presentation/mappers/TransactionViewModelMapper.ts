@@ -23,6 +23,7 @@ export class TransactionViewModelMapper {
       ? new Date((input as TransactionDTO).occurredAt)
       : (input as Transaction).transactionDate.value;
     const isVoidedBool = isDto ? (input as TransactionDTO).isArchived : (input as Transaction).isVoided;
+    const createdAtDate = isDto ? new Date((input as TransactionDTO).createdAt) : (input as Transaction).createdAt;
 
     const isOutflow = typeStr === 'EXPENSE' || typeStr === 'TRANSFER_OUT';
     const prefix = isOutflow ? '-' : '+';
@@ -52,6 +53,11 @@ export class TransactionViewModelMapper {
       year: 'numeric',
     });
 
+    const formattedCreatedTime = createdAtDate.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+
     return {
       id: idStr,
       accountId: accountIdStr,
@@ -67,6 +73,7 @@ export class TransactionViewModelMapper {
       formattedDate,
       isVoided: isVoidedBool,
       badgeColor: isVoidedBool ? '#9CA3AF' : badgeColor,
+      formattedCreatedTime,
     };
   }
 

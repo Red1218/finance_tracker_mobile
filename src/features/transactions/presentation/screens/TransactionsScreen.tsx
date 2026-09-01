@@ -82,6 +82,13 @@ export interface TransactionsScreenProps {
   transactions?: TransactionViewModel[];
   accounts?: Array<{ id: string; name: string; isArchived?: boolean }>;
   categories?: Array<{ id: string; name: string; kind?: 'EXPENSE' | 'INCOME' }>;
+  // categoryId -> remaining amount on that category's active budget, supplied
+  // by the composition layer (e.g. TransactionsRouteContainer, which already
+  // loads budgets). Absent/missing entries simply omit the "Counts against"
+  // row - see §9 of the visual-refresh spec: this is the composition-layer
+  // prop pattern, not a transactions->budgets import.
+  budgetRemainingByCategoryId?: Record<string, number>;
+  isFullySynced?: boolean;
   isLoading?: boolean;
   error?: string | null;
   onRefresh?: () => void;
@@ -96,6 +103,8 @@ export function TransactionsScreen({
   transactions = [],
   accounts = [],
   categories = [],
+  budgetRemainingByCategoryId,
+  isFullySynced = true,
   isLoading = false,
   error = null,
   onRefresh,
@@ -202,6 +211,24 @@ export function TransactionsScreen({
       setIsSubmitting(false);
     }
   };
+
+  const selectedCategoryName = selectedTransaction
+    ? categories.find((c) => c.id === selectedTransaction.categoryId)?.name
+    : undefined;
+  const selectedAccountName = selectedTransaction
+    ? accounts.find((a) => a.id === selectedTransaction.accountId)?.name
+    : undefined;
+  const selectedBudgetRemaining =
+    selectedTransaction?.categoryId != null ? budgetRemainingByCategoryId?.[selectedTransaction.categoryId] : undefined;
+  const selectedBudgetSummaryLabel =
+    selectedCategoryName && selectedBudgetRemaining !== undefined
+      ? `${selectedCategoryName} · ₹${selectedBudgetRemaining.toLocaleString('en-IN', { maximumFractionDigits: 0 })} left`
+      : null;
+  const selectedRecordedLabel = selectedTransaction
+    ? isFullySynced
+      ? `Synced ${selectedTransaction.formattedCreatedTime}`
+      : 'Pending sync'
+    : undefined;
 
   if (isLoading && transactions.length === 0) {
     return (
@@ -341,6 +368,10 @@ export function TransactionsScreen({
       <TransactionDetailSheet
         visible={isDetailVisible}
         transaction={selectedTransaction}
+        categoryName={selectedCategoryName}
+        accountName={selectedAccountName}
+        budgetSummaryLabel={selectedBudgetSummaryLabel}
+        recordedLabel={selectedRecordedLabel}
         isLoading={isSubmitting}
         error={modalError}
         onEdit={handleEditPress}

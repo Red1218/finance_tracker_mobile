@@ -32,6 +32,7 @@ function makeTransaction(overrides: Partial<TransactionViewModel>): TransactionV
     formattedDate: 'Aug 20, 2026',
     isVoided: false,
     badgeColor: '#EF4444',
+    formattedCreatedTime: '9:13 AM',
     ...overrides,
   };
 }

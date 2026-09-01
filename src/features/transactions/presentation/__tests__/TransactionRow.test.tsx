@@ -24,6 +24,7 @@ const baseTransaction: TransactionViewModel = {
   formattedDate: 'Aug 15, 2026',
   isVoided: false,
   badgeColor: '#EF4444',
+  formattedCreatedTime: '9:13 AM',
 };
 
 // Renders the component as a plain function call and inspects the real
