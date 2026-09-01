@@ -56,9 +56,9 @@ export function BudgetDetailSheet({
       transparent
       onRequestClose={onClose}
     >
-      <View style={styles.backdrop}>
+      <View style={[styles.backdrop, { backgroundColor: colors.overlay }]}>
         <View style={[styles.sheetContainer, { backgroundColor: colors.surfacePrimary, borderColor: colors.borderSubtle }]}>
-          <View style={styles.handleBar} />
+          <View style={[styles.handleBar, { backgroundColor: colors.borderSubtle }]} />
 
           <ScrollView contentContainerStyle={styles.scrollContent}>
             {/* Header */}
@@ -168,7 +168,6 @@ export function BudgetDetailSheet({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.65)',
     justifyContent: 'flex-end',
   },
   sheetContainer: {
@@ -182,7 +181,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#64748B',
     alignSelf: 'center',
     marginTop: 10,
     marginBottom: 6,

@@ -251,7 +251,7 @@ export const BudgetsScreen: React.FC<BudgetsScreenProps> = ({ module }) => {
 
       {/* Archive Confirmation Dialog Modal */}
       <Modal visible={!!budgetToArchive} transparent animationType="fade">
-        <View style={styles.dialogBackdrop}>
+        <View style={[styles.dialogBackdrop, { backgroundColor: colors.overlay }]}>
           <View style={[styles.dialogCard, { backgroundColor: colors.surfacePrimary, borderColor: colors.borderSubtle }]}>
             <Text style={[styles.dialogTitle, { color: colors.textPrimary, fontSize: typography.title.fontSize }]}>
               Archive Budget?
@@ -314,7 +314,6 @@ const styles = StyleSheet.create({
   },
   dialogBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,

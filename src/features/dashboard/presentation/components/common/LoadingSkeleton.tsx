@@ -1,11 +1,13 @@
 import React from 'react';
 import { View, StyleSheet, Animated } from 'react-native';
+import { useTheme } from '../../../../../shared/theme';
 
 interface LoadingSkeletonProps {
   height?: number;
 }
 
 export function LoadingSkeleton({ height = 100 }: LoadingSkeletonProps) {
+  const { colors } = useTheme();
   const animatedValue = new Animated.Value(0);
 
   React.useEffect(() => {
@@ -31,8 +33,8 @@ export function LoadingSkeleton({ height = 100 }: LoadingSkeletonProps) {
   });
 
   return (
-    <Animated.View 
-      style={[styles.skeleton, { height, opacity }]} 
+    <Animated.View
+      style={[styles.skeleton, { height, opacity, backgroundColor: colors.surfaceElevated }]}
       accessible={true}
       accessibilityRole="progressbar"
       accessibilityLabel="Loading content"
@@ -42,7 +44,6 @@ export function LoadingSkeleton({ height = 100 }: LoadingSkeletonProps) {
 
 const styles = StyleSheet.create({
   skeleton: {
-    backgroundColor: '#E0E0E0',
     borderRadius: 8,
     width: '100%',
   }

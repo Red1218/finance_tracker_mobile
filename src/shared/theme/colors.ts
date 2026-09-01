@@ -67,12 +67,16 @@ export const lightColors: ColorTokens = Object.freeze({
   backgroundPrimary: '#F8FAFC',
   backgroundSecondary: '#F1F5F9',
   surfacePrimary: '#FFFFFF',
-  // Placeholder — §11 lists "final light-mode ramp steps" as an open design
-  // decision. Left equal to today's flat surfaceElevated so light mode is
-  // visually unchanged until that decision lands, rather than guessing.
-  surfaceElevated: '#FFFFFF',
-  surfaceElevatedHairline: '#FFFFFF',
-  surfaceElevatedBadge: '#FFFFFF',
+  // Resolves §11's "final light-mode ramp steps" open design decision.
+  // The dark theme's three-step ramp (§4) lightens a dark ground with
+  // white-alpha overlays; on a white ground the same elevation technique
+  // inverts to dark-alpha overlays instead (the standard Material Design
+  // light-elevation convention) - white-on-white would be invisible.
+  // Alpha magnitudes chosen to sit in the same conventional range as the
+  // dark ramp's (.045/.07/.05), not derived from a spec-given formula.
+  surfaceElevated: 'rgba(15, 23, 42, 0.04)',
+  surfaceElevatedHairline: 'rgba(15, 23, 42, 0.08)',
+  surfaceElevatedBadge: 'rgba(15, 23, 42, 0.05)',
   surfaceSecondary: '#F1F5F9',
   // oklch(0.52 0.13 290) — spec's own approximation (docs §4). Darkened from
   // the dark-theme accent: the dark-ground value only manages 3.1:1 on white.
