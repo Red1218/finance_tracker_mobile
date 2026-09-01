@@ -6,6 +6,78 @@ import { AppBar, FAB, Icon } from '../../../../shared/components';
 import { TransactionRow, TransactionSearch, TransactionDateGroup, TransactionFormModal, TransactionDetailSheet, TransactionFormValues, TransactionFormMode } from '../components';
 import { TransactionViewModel } from '../models/TransactionViewModel';
 
+export type TransactionFilterType = 'ALL' | 'INCOME' | 'EXPENSE' | 'TRANSFER';
+
+export interface TransactionDateGroupData {
+  dateLabel: string;
+  data: TransactionViewModel[];
+  totalLabel: string;
+}
+
+// Exported pure functions, not inlined useMemo closures, so this screen's
+// actual filtering/grouping/total logic can be unit-tested directly without
+// a component renderer (this project has no working one - see
+// TransactionsScreen.test.ts for why).
+
+export function filterTransactions(
+  transactions: TransactionViewModel[],
+  searchQuery: string,
+  filterType: TransactionFilterType
+): TransactionViewModel[] {
+  return transactions.filter((tx) => {
+    const matchesSearch =
+      tx.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      tx.typeLabel.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesFilter =
+      filterType === 'ALL' ||
+      (filterType === 'INCOME' && tx.type === 'INCOME') ||
+      (filterType === 'EXPENSE' && tx.type === 'EXPENSE') ||
+      (filterType === 'TRANSFER' && (tx.type === 'TRANSFER_OUT' || tx.type === 'TRANSFER_IN'));
+
+    return matchesSearch && matchesFilter;
+  });
+}
+
+// Sums a date group's non-voided transactions using the same signed
+// convention TransactionViewModel.formattedAmount already uses (outflow
+// for EXPENSE/TRANSFER_OUT, inflow otherwise), so the running total agrees
+// with what each row displays. A voided transaction never happened, so it
+// never contributes to the total.
+export function formatGroupTotal(transactions: TransactionViewModel[]): string {
+  const total = transactions.reduce((sum, tx) => {
+    if (tx.isVoided) return sum;
+    const isOutflow = tx.type === 'EXPENSE' || tx.type === 'TRANSFER_OUT';
+    return sum + (isOutflow ? -tx.amount : tx.amount);
+  }, 0);
+
+  const prefix = total < 0 ? '-' : '+';
+  // No transaction to read a currency from (an empty group) falls back to
+  // INR, matching every other currency default in this feature.
+  const currencySymbol = !transactions[0] || transactions[0].currencyCode === 'INR' ? '₹' : '';
+  return `${prefix}${currencySymbol}${Math.abs(total).toLocaleString('en-IN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+}
+
+export function groupTransactionsByDate(transactions: TransactionViewModel[]): TransactionDateGroupData[] {
+  const groups: { [dateKey: string]: TransactionViewModel[] } = {};
+  transactions.forEach((tx) => {
+    const dateKey = tx.formattedDate || 'Recent';
+    if (!groups[dateKey]) {
+      groups[dateKey] = [];
+    }
+    groups[dateKey].push(tx);
+  });
+
+  return Object.keys(groups).map((dateKey) => ({
+    dateLabel: dateKey,
+    data: groups[dateKey],
+    totalLabel: formatGroupTotal(groups[dateKey]),
+  }));
+}
+
 export interface TransactionsScreenProps {
   transactions?: TransactionViewModel[];
   accounts?: Array<{ id: string; name: string; isArchived?: boolean }>;
@@ -33,7 +105,7 @@ export function TransactionsScreen({
   onVoidTransaction,
   autoOpenForm = false,
 }: TransactionsScreenProps) {
-  const { colors, typography } = useTheme();
+  const { colors, typography, radius, spacing } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<'ALL' | 'INCOME' | 'EXPENSE' | 'TRANSFER'>('ALL');
 
@@ -49,37 +121,15 @@ export function TransactionsScreen({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
 
-  const filteredTransactions = useMemo(() => {
-    return transactions.filter((tx) => {
-      const matchesSearch =
-        tx.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        tx.typeLabel.toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredTransactions = useMemo(
+    () => filterTransactions(transactions, searchQuery, filterType),
+    [transactions, searchQuery, filterType]
+  );
 
-      const matchesFilter =
-        filterType === 'ALL' ||
-        (filterType === 'INCOME' && tx.type === 'INCOME') ||
-        (filterType === 'EXPENSE' && tx.type === 'EXPENSE') ||
-        (filterType === 'TRANSFER' && (tx.type === 'TRANSFER_OUT' || tx.type === 'TRANSFER_IN'));
-
-      return matchesSearch && matchesFilter;
-    });
-  }, [transactions, searchQuery, filterType]);
-
-  const groupedTransactions = useMemo(() => {
-    const groups: { [dateKey: string]: TransactionViewModel[] } = {};
-    filteredTransactions.forEach((tx) => {
-      const dateKey = tx.formattedDate || 'Recent';
-      if (!groups[dateKey]) {
-        groups[dateKey] = [];
-      }
-      groups[dateKey].push(tx);
-    });
-
-    return Object.keys(groups).map((dateKey) => ({
-      dateLabel: dateKey,
-      data: groups[dateKey],
-    }));
-  }, [filteredTransactions]);
+  const groupedTransactions = useMemo(
+    () => groupTransactionsByDate(filteredTransactions),
+    [filteredTransactions]
+  );
 
   const handleRowPress = (tx: TransactionViewModel) => {
     if (onSelectTransaction) {
@@ -165,7 +215,7 @@ export function TransactionsScreen({
     <View style={[styles.container, { backgroundColor: colors.backgroundPrimary }]}>
       <AppBar title="Transactions" />
 
-      <View style={styles.searchFilterContainer}>
+      <View style={[styles.searchFilterContainer, { paddingHorizontal: spacing.space20 }]}>
         <TransactionSearch value={searchQuery} onChangeText={setSearchQuery} />
 
         <View style={styles.filterPillsRow}>
@@ -186,7 +236,7 @@ export function TransactionsScreen({
                 style={[
                   styles.filterPill,
                   {
-                    backgroundColor: isActive ? colors.surfaceElevated : colors.surfaceSecondary,
+                    borderRadius: radius.pill,
                     borderColor: isActive ? colors.brandPrimary : colors.borderSubtle,
                   },
                 ]}
@@ -213,7 +263,18 @@ export function TransactionsScreen({
       </View>
 
       {error && (
-        <View style={[styles.errorContainer, { backgroundColor: colors.surfaceSecondary, borderColor: colors.error, borderWidth: 1 }]}>
+        <View
+          style={[
+            styles.errorContainer,
+            {
+              marginHorizontal: spacing.space20,
+              borderRadius: radius.medium,
+              backgroundColor: colors.surfaceSecondary,
+              borderColor: colors.error,
+              borderWidth: 1,
+            },
+          ]}
+        >
           <Text style={[styles.errorText, { color: colors.error, fontSize: typography.caption.fontSize }]}>{error}</Text>
           {onRefresh && (
             <TouchableOpacity onPress={onRefresh} style={styles.retryBtn}>
@@ -237,12 +298,12 @@ export function TransactionsScreen({
         <FlatList
           data={groupedTransactions}
           keyExtractor={(item) => `group-${item.dateLabel}`}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[styles.listContent, { paddingHorizontal: spacing.space20 }]}
           onRefresh={onRefresh}
           refreshing={isLoading}
           renderItem={({ item }) => (
             <View style={styles.groupSection}>
-              <TransactionDateGroup dateLabel={item.dateLabel} />
+              <TransactionDateGroup dateLabel={item.dateLabel} totalLabel={item.totalLabel} />
               {item.data.map((tx) => (
                 <View key={tx.id} style={styles.rowSpacing}>
                   <TransactionRow transaction={tx} onPress={handleRowPress} />
@@ -300,7 +361,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   searchFilterContainer: {
-    paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 8,
   },
@@ -312,7 +372,6 @@ const styles = StyleSheet.create({
   filterPill: {
     paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 20,
     borderWidth: 1,
     minHeight: 44,
     alignItems: 'center',
@@ -322,10 +381,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   errorContainer: {
-    marginHorizontal: 16,
     marginBottom: 8,
     padding: 12,
-    borderRadius: 8,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -353,7 +410,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   listContent: {
-    paddingHorizontal: 16,
     paddingBottom: 80,
   },
   groupSection: {
