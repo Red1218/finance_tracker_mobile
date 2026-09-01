@@ -4,11 +4,11 @@ import { Category, CategoryId, CategoryName, CategoryKind } from '../../../../fe
 import { CategoryRow } from '../../../../features/categories/contracts/CategoryRow';
 
 describe('CategoryMapper', () => {
-  it('should map from Row (expense) to Domain entity correctly', () => {
+  it('should map from Row (EXPENSE) to Domain entity correctly', () => {
     const row: CategoryRow = {
       id: 'cat-123',
       name: 'Groceries',
-      kind: 'expense',
+      kind: 'EXPENSE',
       is_system: false,
       archived_at: null,
       color_hex: '#EF4444',
@@ -28,11 +28,11 @@ describe('CategoryMapper', () => {
     expect(entity.iconName).toBe('cart');
   });
 
-  it('should map from Row (income, system) to Domain entity correctly', () => {
+  it('should map from Row (INCOME, system) to Domain entity correctly', () => {
     const row: CategoryRow = {
       id: 'cat-456',
       name: 'Salary',
-      kind: 'income',
+      kind: 'INCOME',
       is_system: true,
       archived_at: null,
     };
@@ -44,7 +44,7 @@ describe('CategoryMapper', () => {
     expect(entity.isArchived).toBe(false);
   });
 
-  it('should map from Domain entity (expense) to Row correctly', () => {
+  it('should map from Domain entity (Expense) to Row correctly', () => {
     const entity = new Category({
       id: new CategoryId('cat-123'),
       name: new CategoryName('Groceries'),
@@ -60,7 +60,7 @@ describe('CategoryMapper', () => {
     expect(row).toEqual({
       id: 'cat-123',
       name: 'Groceries',
-      kind: 'expense',
+      kind: 'EXPENSE',
       is_system: false,
       archived_at: null,
       color_hex: '#EF4444',
@@ -68,7 +68,7 @@ describe('CategoryMapper', () => {
     });
   });
 
-  it('should map from Domain entity (income, system, archived) to Row correctly', () => {
+  it('should map from Domain entity (Income, system, archived) to Row correctly', () => {
     const freezeTime = new Date('2026-07-25T12:00:00.000Z');
     const entity = new Category({
       id: new CategoryId('cat-system'),
@@ -83,7 +83,7 @@ describe('CategoryMapper', () => {
     expect(row).toEqual({
       id: 'cat-system',
       name: 'System Income',
-      kind: 'income',
+      kind: 'INCOME',
       is_system: true,
       archived_at: '2026-07-25T12:00:00.000Z',
       color_hex: null,
@@ -91,12 +91,26 @@ describe('CategoryMapper', () => {
     });
   });
 
+  it('should throw for an unrecognised category_kind value from the database', () => {
+    const row = {
+      id: 'cat-corrupt',
+      name: 'Corrupt',
+      kind: 'expense', // legacy lowercase value must not be silently coerced
+      is_system: false,
+      archived_at: null,
+    } as unknown as CategoryRow;
+
+    expect(() => CategoryMapper.toDomain(row)).toThrowError(
+      'Unknown category_kind value from database: "expense"'
+    );
+  });
+
   describe('Round-trip Symmetry', () => {
-    it('should maintain round-trip symmetry: Row -> Domain -> Row (Expense)', () => {
+    it('should maintain round-trip symmetry: Row -> Domain -> Row (EXPENSE)', () => {
       const originalRow: CategoryRow = {
         id: 'cat-rt-1',
         name: 'Dining Out',
-        kind: 'expense',
+        kind: 'EXPENSE',
         is_system: false,
         archived_at: null,
         color_hex: null,
@@ -104,15 +118,50 @@ describe('CategoryMapper', () => {
       };
 
       const entity = CategoryMapper.toDomain(originalRow);
+      expect(entity.kind).toBe(CategoryKind.Expense);
       const mappedRow = CategoryMapper.toPersistence(entity);
 
       expect(mappedRow).toEqual(originalRow);
     });
 
-    it('should maintain round-trip symmetry: Domain -> Row -> Domain', () => {
-      const freezeTime = new Date('2026-07-25T10:00:00.000Z');
+    it('should maintain round-trip symmetry: Row -> Domain -> Row (INCOME)', () => {
+      const originalRow: CategoryRow = {
+        id: 'cat-rt-2',
+        name: 'Salary',
+        kind: 'INCOME',
+        is_system: false,
+        archived_at: null,
+        color_hex: null,
+        icon_name: null,
+      };
+
+      const entity = CategoryMapper.toDomain(originalRow);
+      expect(entity.kind).toBe(CategoryKind.Income);
+      const mappedRow = CategoryMapper.toPersistence(entity);
+
+      expect(mappedRow).toEqual(originalRow);
+    });
+
+    it('should maintain round-trip symmetry: Domain (Expense) -> Row -> Domain', () => {
       const originalEntity = new Category({
         id: new CategoryId('cat-rt-3'),
+        name: new CategoryName('Groceries'),
+        kind: CategoryKind.Expense,
+        isSystem: false,
+        archivedAt: null,
+      });
+
+      const row = CategoryMapper.toPersistence(originalEntity);
+      expect(row.kind).toBe('EXPENSE');
+      const restoredEntity = CategoryMapper.toDomain(row);
+
+      expect(restoredEntity.kind).toBe(CategoryKind.Expense);
+    });
+
+    it('should maintain round-trip symmetry: Domain (Income) -> Row -> Domain', () => {
+      const freezeTime = new Date('2026-07-25T10:00:00.000Z');
+      const originalEntity = new Category({
+        id: new CategoryId('cat-rt-4'),
         name: new CategoryName('Investment Income'),
         kind: CategoryKind.Income,
         isSystem: false,
@@ -120,6 +169,7 @@ describe('CategoryMapper', () => {
       });
 
       const row = CategoryMapper.toPersistence(originalEntity);
+      expect(row.kind).toBe('INCOME');
       const restoredEntity = CategoryMapper.toDomain(row);
 
       expect(restoredEntity.id.value).toBe(originalEntity.id.value);
@@ -128,6 +178,21 @@ describe('CategoryMapper', () => {
       expect(restoredEntity.isSystem).toBe(originalEntity.isSystem);
       expect(restoredEntity.isArchived).toBe(true);
       expect(restoredEntity.archivedAt?.toISOString()).toBe(freezeTime.toISOString());
+    });
+
+    it('an INCOME database row must never be mapped to CategoryKind.Expense', () => {
+      const incomeRow: CategoryRow = {
+        id: 'cat-income-guard',
+        name: 'Salary',
+        kind: 'INCOME',
+        is_system: false,
+        archived_at: null,
+      };
+
+      const entity = CategoryMapper.toDomain(incomeRow);
+
+      expect(entity.kind).toBe(CategoryKind.Income);
+      expect(entity.kind).not.toBe(CategoryKind.Expense);
     });
   });
 });

@@ -6,7 +6,7 @@ export class CategoryMapper {
     return new Category({
       id: new CategoryId(row.id),
       name: new CategoryName(row.name),
-      kind: row.kind === 'income' ? CategoryKind.Income : CategoryKind.Expense,
+      kind: CategoryMapper.mapRowKindToDomain(row.kind),
       isSystem: row.is_system,
       archivedAt: row.archived_at ? new Date(row.archived_at) : null,
       colorHex: row.color_hex ?? null,
@@ -18,11 +18,18 @@ export class CategoryMapper {
     return {
       id: entity.id.value,
       name: entity.name.value,
-      kind: entity.kind === CategoryKind.Income ? 'income' : 'expense',
+      kind: entity.kind,
       is_system: entity.isSystem,
       archived_at: entity.archivedAt ? entity.archivedAt.toISOString() : null,
       color_hex: entity.colorHex,
       icon_name: entity.iconName,
     };
+  }
+
+  private static mapRowKindToDomain(kind: CategoryRow['kind']): CategoryKind {
+    if (kind === CategoryKind.Income) return CategoryKind.Income;
+    if (kind === CategoryKind.Expense) return CategoryKind.Expense;
+
+    throw new Error(`Unknown category_kind value from database: "${kind}"`);
   }
 }
