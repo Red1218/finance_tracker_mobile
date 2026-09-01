@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native';
-import { useTheme } from '../../theme';
+import { useTheme, withAlpha } from '../../theme';
 import type { StatusIndicatorProps, StatusType } from './StatusIndicator.types';
 
 export function StatusIndicator({
@@ -16,19 +16,19 @@ export function StatusIndicator({
   const statusColors: Record<StatusType, { color: string; background: string }> = {
     success: {
       color: colors.success,
-      background: 'rgba(16, 185, 129, 0.15)',
+      background: withAlpha(colors.success, 0.15),
     },
     warning: {
       color: colors.warning,
-      background: 'rgba(245, 158, 11, 0.15)',
+      background: withAlpha(colors.warning, 0.15),
     },
     error: {
       color: colors.error,
-      background: 'rgba(239, 68, 68, 0.15)',
+      background: withAlpha(colors.error, 0.15),
     },
     info: {
       color: colors.brandPrimary,
-      background: 'rgba(37, 99, 235, 0.15)',
+      background: withAlpha(colors.brandPrimary, 0.15),
     },
   };
 
@@ -42,6 +42,18 @@ export function StatusIndicator({
         accessibilityRole="image"
         accessibilityLabel={accessibilityLabel || `Status: ${status}`}
       />
+    );
+  }
+
+  if (variant === 'text') {
+    return (
+      <Text
+        style={[styles.textOnly, { color: currentStatus.color, fontSize: typography.caption.fontSize }, textStyle]}
+        accessible={true}
+        accessibilityLabel={accessibilityLabel || label || `Status: ${status}`}
+      >
+        {label}
+      </Text>
     );
   }
 
@@ -104,6 +116,9 @@ const styles = StyleSheet.create({
   },
   subtleText: {
     fontWeight: '500',
+  },
+  textOnly: {
+    fontWeight: '700',
   },
   badgeContainer: {
     flexDirection: 'row',

@@ -48,28 +48,23 @@ export const BudgetsScreen: React.FC<BudgetsScreenProps> = ({ module }) => {
   }, [categories]);
 
   // Aggregated summary calculation across active budgets
-  const { totalBudgeted, totalSpent, totalRemaining, overallHealthStatus, dominantPeriodKind } = useMemo(() => {
+  const { totalBudgeted, totalSpent, totalRemaining, overallHealthStatus, overBudgetCount } = useMemo(() => {
     let budgeted = 0;
     let spent = 0;
-    let hasOverBudget = false;
+    let overCount = 0;
     let hasNearLimit = false;
-    let periodKind = 'MONTHLY';
-
-    if (budgets.length > 0) {
-      periodKind = budgets[0].periodKind || 'MONTHLY';
-    }
 
     budgets.forEach((b) => {
       budgeted += b.amount;
       const s = b.spentAmount ?? 0;
       spent += s;
-      if (b.healthStatus === 'OVER_BUDGET') hasOverBudget = true;
+      if (b.healthStatus === 'OVER_BUDGET') overCount += 1;
       if (b.healthStatus === 'NEAR_LIMIT') hasNearLimit = true;
     });
 
     const remaining = budgeted - spent;
     let health = 'ON_TRACK';
-    if (hasOverBudget) health = 'OVER_BUDGET';
+    if (overCount > 0) health = 'OVER_BUDGET';
     else if (hasNearLimit) health = 'NEAR_LIMIT';
 
     return {
@@ -77,7 +72,7 @@ export const BudgetsScreen: React.FC<BudgetsScreenProps> = ({ module }) => {
       totalSpent: spent,
       totalRemaining: remaining,
       overallHealthStatus: health,
-      dominantPeriodKind: periodKind,
+      overBudgetCount: overCount,
     };
   }, [budgets]);
 
@@ -167,14 +162,15 @@ export const BudgetsScreen: React.FC<BudgetsScreenProps> = ({ module }) => {
             totalBudgeted={totalBudgeted}
             totalSpent={totalSpent}
             totalRemaining={totalRemaining}
+            budgetCount={budgets.length}
+            overBudgetCount={overBudgetCount}
             overallHealthStatus={overallHealthStatus}
-            periodKind={dominantPeriodKind}
           />
         )}
 
         {budgets.length > 0 && (
-          <Text style={[styles.sectionHeader, { color: colors.textPrimary, fontSize: typography.heading.fontSize }]}>
-            Category Budgets
+          <Text style={[styles.sectionHeader, { color: colors.textMuted, fontSize: typography.caption.fontSize }]}>
+            CATEGORY BUDGETS
           </Text>
         )}
 
@@ -182,7 +178,7 @@ export const BudgetsScreen: React.FC<BudgetsScreenProps> = ({ module }) => {
           <EmptyBudgetState />
         ) : (
 
-          budgets.map((b) => {
+          budgets.map((b, index) => {
             const catName = b.isOverall
               ? 'Overall Budget'
               : (b.categoryId ? categoryMap.get(b.categoryId) || 'Category' : 'Category');
@@ -213,6 +209,7 @@ export const BudgetsScreen: React.FC<BudgetsScreenProps> = ({ module }) => {
                 summary={summary}
                 categoryName={catName}
                 onPress={() => handleCardPress(b)}
+                isLast={index === budgets.length - 1}
               />
             );
           })
@@ -274,11 +271,11 @@ export const BudgetsScreen: React.FC<BudgetsScreenProps> = ({ module }) => {
               <TouchableOpacity
                 onPress={handleConfirmArchive}
                 disabled={isArchiving}
-                style={[styles.dialogBtn, { backgroundColor: colors.error }]}
+                style={[styles.dialogBtn, { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.borderSubtle }]}
                 accessibilityRole="button"
                 accessibilityLabel="Confirm archive"
               >
-                <Text style={{ color: '#FFFFFF', fontWeight: '600' }}>
+                <Text style={{ color: colors.textPrimary, fontWeight: '600' }}>
                   {isArchiving ? 'Archiving...' : 'Archive'}
                 </Text>
               </TouchableOpacity>
@@ -310,9 +307,10 @@ const styles = StyleSheet.create({
     paddingBottom: 80,
   },
   sectionHeader: {
-    fontWeight: '700',
+    fontWeight: '600',
+    letterSpacing: 0.5,
     marginTop: 8,
-    marginBottom: 12,
+    marginBottom: 4,
   },
   dialogBackdrop: {
     flex: 1,
