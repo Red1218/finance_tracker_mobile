@@ -33,9 +33,9 @@ export function MonthlyBudgetCard({ budget }: MonthlyBudgetCardProps) {
   const percentage = Math.min(Math.max(Math.round(budget.consumptionRatio), 0), 100);
 
   let progressColor = colors.brandPrimary;
-  if (budget.statusLabel === 'OverBudget' || percentage >= 100) {
+  if (budget.statusLabel === 'OverBudget') {
     progressColor = colors.error;
-  } else if (budget.statusLabel === 'AtRisk' || percentage >= 80) {
+  } else if (budget.statusLabel === 'AtRisk') {
     progressColor = colors.warning;
   }
 

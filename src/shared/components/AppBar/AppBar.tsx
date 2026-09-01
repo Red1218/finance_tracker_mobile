@@ -1,11 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
 import { useTheme } from '../../theme';
 import { Icon } from '../Icon';
 import type { AppBarProps } from './AppBar.types';
 
+const LEADING_ACTION_ID = '__leading__';
+
 export function AppBar({ title, subtitle, leadingAction, trailingActions = [], style }: AppBarProps) {
   const { colors, spacing, typography } = useTheme();
+  const [focusedActionId, setFocusedActionId] = useState<string | null>(null);
+
+  const focusRingStyle = (id: string): ViewStyle | null =>
+    focusedActionId === id
+      ? { outlineWidth: 2, outlineColor: colors.focus, outlineStyle: 'solid', outlineOffset: 2 }
+      : null;
 
   const containerStyle: ViewStyle = {
     backgroundColor: colors.surfacePrimary,
@@ -22,9 +30,11 @@ export function AppBar({ title, subtitle, leadingAction, trailingActions = [], s
           <TouchableOpacity
             onPress={leadingAction.onPress}
             disabled={leadingAction.disabled}
-            style={styles.actionButton}
+            style={[styles.actionButton, focusRingStyle(LEADING_ACTION_ID)]}
             accessibilityRole="button"
             accessibilityLabel={leadingAction.label}
+            onFocus={() => setFocusedActionId(LEADING_ACTION_ID)}
+            onBlur={() => setFocusedActionId((current) => (current === LEADING_ACTION_ID ? null : current))}
           >
             <Icon name={leadingAction.iconName} size={24} color={colors.textPrimary} />
           </TouchableOpacity>
@@ -49,9 +59,11 @@ export function AppBar({ title, subtitle, leadingAction, trailingActions = [], s
               key={action.id}
               onPress={action.onPress}
               disabled={action.disabled}
-              style={styles.actionButton}
+              style={[styles.actionButton, focusRingStyle(action.id)]}
               accessibilityRole="button"
               accessibilityLabel={action.label}
+              onFocus={() => setFocusedActionId(action.id)}
+              onBlur={() => setFocusedActionId((current) => (current === action.id ? null : current))}
             >
               <Icon name={action.iconName} size={24} color={colors.textPrimary} />
               {action.badgeCount && action.badgeCount > 0 ? (

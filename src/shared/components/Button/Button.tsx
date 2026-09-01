@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { TouchableOpacity, Text, ActivityIndicator, ViewStyle, TextStyle } from 'react-native';
 import { useTheme } from '../../theme';
 import type { ButtonProps, ButtonVariant } from './Button.types';
 
-export function Button({ variant = 'primary', loading, disabled, title, style, ...props }: ButtonProps) {
+export function Button({ variant = 'primary', loading, disabled, title, style, onFocus, onBlur, ...props }: ButtonProps) {
   const { colors, spacing, radius, typography } = useTheme();
+  const [isFocused, setIsFocused] = useState(false);
 
   const variantStyles: Record<ButtonVariant, { backgroundColor: string; textColor: string }> = {
     primary: {
@@ -35,6 +36,14 @@ export function Button({ variant = 'primary', loading, disabled, title, style, .
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
+    ...(isFocused
+      ? {
+          outlineWidth: 2,
+          outlineColor: colors.focus,
+          outlineStyle: 'solid',
+          outlineOffset: 2,
+        }
+      : null),
   };
 
   const textStyle: TextStyle = {
@@ -56,6 +65,14 @@ export function Button({ variant = 'primary', loading, disabled, title, style, .
         busy: !!loading,
       }}
       {...props}
+      onFocus={(e) => {
+        setIsFocused(true);
+        onFocus?.(e);
+      }}
+      onBlur={(e) => {
+        setIsFocused(false);
+        onBlur?.(e);
+      }}
     >
       {loading ? (
         <ActivityIndicator color={textColor} />

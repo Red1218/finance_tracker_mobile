@@ -1,9 +1,13 @@
 import { describe, it, expect, vi } from 'vitest';
 import { theme } from '../../../../../shared/theme/theme';
 
-vi.mock('../../../../../shared/theme', () => ({
-  useTheme: () => theme,
-}));
+vi.mock('../../../../../shared/theme', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../../../shared/theme')>();
+  return {
+    ...actual,
+    useTheme: () => theme,
+  };
+});
 import { KPICardViewModel } from '../../../application/view-models/KPICardViewModel';
 import { KPICardsSection } from '../../components/sections/KPICardsSection';
 

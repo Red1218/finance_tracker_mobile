@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { SectionStateContainer } from '../common/SectionStateContainer';
 import { KPICardViewModel } from '../../../application/view-models/KPICardViewModel';
-import { useTheme } from '../../../../../shared/theme';
+import { useTheme, withAlpha } from '../../../../../shared/theme';
 import { Card } from '../../../../../shared/components/Card';
 import { Icon } from '../../../../../shared/components/Icon';
 
@@ -50,7 +50,7 @@ export function KPICardsSection({ viewModel, onRetry }: KPICardsSectionProps) {
           {/* Income Column */}
           <View style={styles.metricItem} accessible={true} accessibilityLabel={`Income is ${periodIncome}`}>
             <View style={styles.metricHeader}>
-              <View style={[styles.iconBadge, { backgroundColor: 'rgba(22, 163, 74, 0.12)' }]}>
+              <View style={[styles.iconBadge, { backgroundColor: withAlpha(colors.success, 0.12) }]}>
                 <Icon name="ArrowUpRight" size="sm" color={colors.success} />
               </View>
               <Text style={[styles.metricLabel, { color: colors.textSecondary, fontSize: typography.caption.fontSize }]}>
@@ -65,7 +65,7 @@ export function KPICardsSection({ viewModel, onRetry }: KPICardsSectionProps) {
           {/* Expenses Column */}
           <View style={styles.metricItem} accessible={true} accessibilityLabel={`Expenses is ${periodExpenses}`}>
             <View style={styles.metricHeader}>
-              <View style={[styles.iconBadge, { backgroundColor: 'rgba(220, 38, 38, 0.12)' }]}>
+              <View style={[styles.iconBadge, { backgroundColor: withAlpha(colors.error, 0.12) }]}>
                 <Icon name="ArrowDownRight" size="sm" color={colors.error} />
               </View>
               <Text style={[styles.metricLabel, { color: colors.textSecondary, fontSize: typography.caption.fontSize }]}>

@@ -6,9 +6,13 @@ vi.mock('expo-router', () => ({
     push: vi.fn(),
   }),
 }));
-vi.mock('../../../../../shared/theme', () => ({
-  useTheme: () => theme,
-}));
+vi.mock('../../../../../shared/theme', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../../../shared/theme')>();
+  return {
+    ...actual,
+    useTheme: () => theme,
+  };
+});
 
 
 

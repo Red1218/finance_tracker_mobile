@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { useTheme } from '../../../../../shared/theme';
+import { useTheme, withAlpha } from '../../../../../shared/theme';
 import { Card } from '../../../../../shared/components/Card';
 import { Icon } from '../../../../../shared/components/Icon';
 
@@ -67,7 +67,7 @@ export function QuickActionsSection({
             accessibilityRole="button"
             accessibilityLabel={action.label}
           >
-            <View style={[styles.iconContainer, { backgroundColor: 'rgba(59, 130, 246, 0.15)' }]}>
+            <View style={[styles.iconContainer, { backgroundColor: withAlpha(colors.brandPrimary, 0.15) }]}>
               <Icon name={action.iconName} size="md" color={colors.brandPrimary} />
             </View>
             <Text style={[styles.label, { color: colors.textPrimary, fontSize: typography.caption.fontSize }]}>
