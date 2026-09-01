@@ -13,4 +13,5 @@ export interface TransactionViewModel {
   formattedDate: string; // e.g. "Jul 25, 2026"
   isVoided: boolean;
   badgeColor: string; // e.g. "#EF4444" (red for expense/transfer-out), "#10B981" (green for income/transfer-in)
+  formattedCreatedTime: string; // e.g. "9:13 AM" - when the record was created, for the detail sheet's "Recorded" row
 }

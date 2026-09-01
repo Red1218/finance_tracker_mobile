@@ -54,6 +54,7 @@ describe('TransactionController', () => {
       transferGroupId: null,
       transactionDate: { value: new Date('2026-08-20') },
       isVoided: false,
+      createdAt: new Date('2026-08-20T09:13:00'),
     });
 
     await controller.createExpense(expenseData);
@@ -80,6 +81,7 @@ describe('TransactionController', () => {
       transferGroupId: null,
       transactionDate: { value: new Date('2026-08-20') },
       isVoided: false,
+      createdAt: new Date('2026-08-20T09:13:00'),
     });
 
     await controller.createIncome(incomeData);
@@ -109,6 +111,7 @@ describe('TransactionController', () => {
         transferGroupId: { value: 'tg-1' },
         transactionDate: { value: new Date('2026-08-20') },
         isVoided: false,
+        createdAt: new Date('2026-08-20T09:13:00'),
       },
       destEntry: {
         id: { value: 'tx-dest' },
@@ -121,6 +124,7 @@ describe('TransactionController', () => {
         transferGroupId: { value: 'tg-1' },
         transactionDate: { value: new Date('2026-08-20') },
         isVoided: false,
+        createdAt: new Date('2026-08-20T09:13:00'),
       },
     });
 

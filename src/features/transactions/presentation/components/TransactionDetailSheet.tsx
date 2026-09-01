@@ -1,12 +1,16 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Modal, View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { useTheme } from '../../../../shared/theme';
-import { Button, Card, Icon, StatusIndicator } from '../../../../shared/components';
+import { Icon, StatusIndicator } from '../../../../shared/components';
 import { TransactionViewModel } from '../models/TransactionViewModel';
 
 export interface TransactionDetailSheetProps {
   visible: boolean;
   transaction: TransactionViewModel | null;
+  categoryName?: string;
+  accountName?: string;
+  budgetSummaryLabel?: string | null;
+  recordedLabel?: string;
   isLoading?: boolean;
   error?: string | null;
   onEdit?: (transaction: TransactionViewModel) => void;
@@ -14,9 +18,38 @@ export interface TransactionDetailSheetProps {
   onClose: () => void;
 }
 
+export interface DefinitionRowProps {
+  label: string;
+  value: string;
+  valueColor?: string;
+  isLast?: boolean;
+}
+
+// Exported so tests can identify these nodes by type in the returned
+// element tree (they're unexpanded {type: DefinitionRow, props} descriptors
+// at that point, not yet rendered into their own View/Text output).
+export function DefinitionRow({ label, value, valueColor, isLast }: DefinitionRowProps) {
+  const { colors, typography } = useTheme();
+  return (
+    <View style={[styles.metaRow, !isLast && { borderBottomWidth: 1, borderBottomColor: colors.divider }]}>
+      <Text style={[styles.metaLabel, { color: colors.textSecondary, fontSize: typography.body.fontSize }]}>{label}</Text>
+      <Text
+        style={[styles.metaValue, { color: valueColor ?? colors.textPrimary, fontSize: typography.body.fontSize }]}
+        numberOfLines={1}
+      >
+        {value}
+      </Text>
+    </View>
+  );
+}
+
 export function TransactionDetailSheet({
   visible,
   transaction,
+  categoryName,
+  accountName,
+  budgetSummaryLabel,
+  recordedLabel,
   isLoading = false,
   error = null,
   onEdit,
@@ -24,7 +57,6 @@ export function TransactionDetailSheet({
   onClose,
 }: TransactionDetailSheetProps) {
   const { colors, typography } = useTheme();
-  const [showVoidConfirm, setShowVoidConfirm] = useState(false);
 
   if (!visible || !transaction) return null;
 
@@ -40,12 +72,22 @@ export function TransactionDetailSheet({
     }
   };
 
-  const handleConfirmVoid = async () => {
-    if (onVoid) {
-      await onVoid(transaction.id);
-      setShowVoidConfirm(false);
-    }
-  };
+  const isPositive = transaction.type === 'INCOME' || transaction.type === 'TRANSFER_IN';
+  const isTransfer = transaction.type === 'TRANSFER_OUT' || transaction.type === 'TRANSFER_IN';
+  let iconName: 'ArrowDownLeft' | 'ArrowUpRight' | 'ArrowRightLeft' = isPositive ? 'ArrowDownLeft' : 'ArrowUpRight';
+  if (isTransfer) iconName = 'ArrowRightLeft';
+  let iconColor = isPositive ? colors.success : colors.error;
+  if (isTransfer) iconColor = colors.brandPrimary;
+  if (transaction.isVoided) iconColor = colors.textMuted;
+
+  const rows: DefinitionRowProps[] = [];
+  if (categoryName) rows.push({ label: 'Category', value: categoryName });
+  if (accountName) rows.push({ label: 'Account', value: accountName });
+  if (budgetSummaryLabel) rows.push({ label: 'Counts against', value: budgetSummaryLabel });
+  rows.push({ label: 'Recorded', value: recordedLabel ?? `Synced ${transaction.formattedCreatedTime}` });
+  if (transaction.transferGroupId) {
+    rows.push({ label: 'Transfer Reference', value: `Group ID: ${transaction.transferGroupId}`, valueColor: colors.warning });
+  }
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
@@ -79,7 +121,18 @@ export function TransactionDetailSheet({
           )}
 
           <ScrollView contentContainerStyle={styles.scrollContent}>
-            <View style={styles.amountHeader}>
+            <View style={styles.identityHeader}>
+              <View style={[styles.iconContainer, { backgroundColor: colors.surfaceElevatedBadge }]}>
+                <Icon name={iconName} size={22} color={iconColor} />
+              </View>
+              <View style={styles.identityText}>
+                <Text style={[styles.descriptionText, { color: colors.textPrimary, fontSize: typography.title.fontSize }]} numberOfLines={1}>
+                  {transaction.description || 'Transaction'}
+                </Text>
+                <Text style={[styles.subLabel, { color: colors.textSecondary, fontSize: typography.caption.fontSize }]}>
+                  {transaction.typeLabel} · {transaction.formattedDate}
+                </Text>
+              </View>
               <Text
                 style={[
                   styles.amountText,
@@ -94,98 +147,67 @@ export function TransactionDetailSheet({
               </Text>
             </View>
 
-            <Card style={styles.metadataCard}>
-              <View style={styles.metaRow}>
-                <Text style={[styles.metaLabel, { color: colors.textMuted }]}>Description</Text>
-                <Text style={[styles.metaValue, { color: colors.textPrimary, fontSize: typography.title.fontSize }]}>
-                  {transaction.description}
-                </Text>
-              </View>
-
-              <View style={[styles.divider, { backgroundColor: colors.borderSubtle }]} />
-
-              <View style={styles.metaRow}>
-                <Text style={[styles.metaLabel, { color: colors.textMuted }]}>Date</Text>
-                <Text style={[styles.metaValue, { color: colors.textSecondary }]}>
-                  {transaction.formattedDate}
-                </Text>
-              </View>
-
-              {transaction.transferGroupId && (
-                <>
-                  <View style={[styles.divider, { backgroundColor: colors.borderSubtle }]} />
-                  <View style={styles.metaRow}>
-                    <Text style={[styles.metaLabel, { color: colors.textMuted }]}>Transfer Reference</Text>
-                    <Text style={[styles.metaValue, { color: colors.warning }]}>
-                      Group ID: {transaction.transferGroupId}
-                    </Text>
-                  </View>
-                </>
-              )}
-            </Card>
-
-            {showVoidConfirm && (
-              <View style={[styles.confirmCard, { backgroundColor: colors.surfaceSecondary, borderColor: colors.error }]}>
-                <View style={styles.confirmHeader}>
-                  <Icon name="AlertTriangle" size={24} color={colors.error} />
-                  <Text style={[styles.confirmTitle, { color: colors.error }]}>Void Transaction?</Text>
-                </View>
-                <Text style={[styles.confirmMessage, { color: colors.textSecondary }]}>
-                  This action marks the transaction as voided and removes its balance impact. It cannot be undone.
-                </Text>
-                <View style={styles.confirmBtnRow}>
-                  <TouchableOpacity
-                    style={[styles.confirmCancelBtn, { borderColor: colors.borderSubtle }]}
-                    onPress={() => setShowVoidConfirm(false)}
-                    disabled={isLoading}
-                  >
-                    <Text style={{ color: colors.textSecondary }}>Cancel</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.confirmVoidBtn, { backgroundColor: colors.error }]}
-                    onPress={handleConfirmVoid}
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <ActivityIndicator size="small" color="#FFFFFF" />
-                    ) : (
-                      <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>Confirm Void</Text>
-                    )}
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
+            <View style={styles.definitionList}>
+              {rows.map((row, index) => (
+                <DefinitionRow key={row.label} {...row} isLast={index === rows.length - 1} />
+              ))}
+            </View>
           </ScrollView>
 
-          {!showVoidConfirm && (
-            <View style={styles.actionFooter}>
-              <Button
-                title="Edit Transaction"
-                variant="secondary"
-                disabled={transaction.isVoided || isLoading}
-                onPress={() => {
-                  if (onEdit) onEdit(transaction);
+          <View style={styles.actionFooter}>
+            <TouchableOpacity
+              style={[
+                styles.outlineBtn,
+                { borderColor: transaction.isVoided ? colors.borderSubtle : colors.brandPrimary },
+              ]}
+              disabled={transaction.isVoided || isLoading}
+              onPress={() => {
+                if (onEdit) onEdit(transaction);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Edit Transaction"
+            >
+              <Text
+                style={{
+                  color: transaction.isVoided ? colors.textMuted : colors.brandPrimary,
+                  fontWeight: '600',
+                  fontSize: typography.body.fontSize,
                 }}
-                style={styles.actionBtn}
-              />
-              <TouchableOpacity
-                style={[
-                  styles.voidBtn,
-                  {
-                    borderColor: transaction.isVoided ? colors.borderSubtle : colors.error,
-                    opacity: transaction.isVoided ? 0.5 : 1,
-                  },
-                ]}
-                disabled={transaction.isVoided || isLoading}
-                onPress={() => setShowVoidConfirm(true)}
-                accessibilityRole="button"
-                accessibilityLabel="Void Transaction"
               >
-                <Text style={{ color: transaction.isVoided ? colors.textMuted : colors.error, fontWeight: '600' }}>
+                Edit
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.outlineBtn,
+                { borderColor: transaction.isVoided ? colors.borderSubtle : colors.error },
+              ]}
+              disabled={transaction.isVoided || isLoading}
+              onPress={() => {
+                if (onVoid) onVoid(transaction.id);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Void Transaction"
+            >
+              {isLoading ? (
+                <ActivityIndicator size="small" color={colors.error} />
+              ) : (
+                <Text
+                  style={{
+                    color: transaction.isVoided ? colors.textMuted : colors.error,
+                    fontWeight: '600',
+                    fontSize: typography.body.fontSize,
+                  }}
+                >
                   Void
                 </Text>
-              </TouchableOpacity>
-            </View>
+              )}
+            </TouchableOpacity>
+          </View>
+          {!transaction.isVoided && (
+            <Text style={[styles.consequenceCaption, { color: colors.textMuted, fontSize: typography.caption.fontSize }]}>
+              Voiding keeps the record and removes it from totals.
+            </Text>
           )}
         </View>
       </View>
@@ -213,7 +235,6 @@ const styles = StyleSheet.create({
     width: 36,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#334155',
     alignSelf: 'center',
     marginTop: 12,
     marginBottom: 8,
@@ -249,72 +270,48 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 16,
   },
-  amountHeader: {
+  identityHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
     marginVertical: 16,
   },
+  iconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  identityText: {
+    flex: 1,
+    marginRight: 8,
+  },
+  descriptionText: {
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  subLabel: {},
   amountText: {
     fontWeight: '700',
   },
-  metadataCard: {
-    padding: 16,
-    marginBottom: 16,
+  definitionList: {
+    marginBottom: 8,
   },
   metaRow: {
-    paddingVertical: 4,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
   },
   metaLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    marginBottom: 2,
+    fontWeight: '500',
   },
   metaValue: {
     fontWeight: '600',
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#27272A',
-    marginVertical: 10,
-  },
-  confirmCard: {
-    borderRadius: 12,
-    borderWidth: 1,
-    padding: 16,
-    marginBottom: 16,
-  },
-  confirmHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
-  },
-  confirmTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  confirmMessage: {
-    fontSize: 14,
-    lineHeight: 20,
-    marginBottom: 16,
-  },
-  confirmBtnRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  confirmCancelBtn: {
-    flex: 1,
-    minHeight: 44,
-    borderRadius: 8,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  confirmVoidBtn: {
-    flex: 1,
-    minHeight: 44,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexShrink: 1,
+    textAlign: 'right',
+    marginLeft: 12,
   },
   actionFooter: {
     flexDirection: 'row',
@@ -322,15 +319,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 8,
   },
-  actionBtn: {
+  outlineBtn: {
     flex: 1,
-  },
-  voidBtn: {
     minHeight: 44,
-    paddingHorizontal: 16,
     borderRadius: 8,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  consequenceCaption: {
+    textAlign: 'center',
+    marginTop: 12,
+    paddingHorizontal: 20,
   },
 });

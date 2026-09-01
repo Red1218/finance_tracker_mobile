@@ -3,10 +3,14 @@ import { useLocalSearchParams } from 'expo-router';
 import { TransactionsModule } from '../composition/TransactionsModule';
 import { AccountsModule } from '../../accounts/composition/AccountsModule';
 import { CategoriesModule } from '../../categories/composition/CategoriesModule';
+import { BudgetsModule } from '../../budgets/composition/BudgetsModule';
+import { SyncModule, syncModule as defaultSyncModule } from '../../sync/composition/SyncModule';
 import { TransactionsScreen } from '../presentation/screens/TransactionsScreen';
 import { useTransactions } from '../presentation/hooks/useTransactions';
 import { useAccounts } from '../../accounts/presentation/hooks/useAccounts';
 import { useCategories } from '../../categories/presentation/hooks/useCategories';
+import { useBudgets } from '../../budgets/presentation/hooks/useBudgets';
+import { useSync } from '../../sync/presentation/hooks/useSync';
 import { TransactionFormValues, TransactionFormMode } from '../presentation/components';
 import { generateUUID } from '../../../core/utils/uuid';
 
@@ -14,6 +18,8 @@ export interface TransactionsRouteContainerProps {
   transactionsModule?: TransactionsModule;
   accountsModule?: AccountsModule;
   categoriesModule?: CategoriesModule;
+  budgetsModule?: BudgetsModule;
+  syncModule?: SyncModule;
   autoOpenForm?: boolean;
 }
 
@@ -21,6 +27,8 @@ export function TransactionsRouteContainer({
   transactionsModule: customTransactionsModule,
   accountsModule: customAccountsModule,
   categoriesModule: customCategoriesModule,
+  budgetsModule: customBudgetsModule,
+  syncModule: customSyncModule,
   autoOpenForm: customAutoOpenForm,
 }: TransactionsRouteContainerProps = {}) {
   let searchParams: Record<string, string> = {};
@@ -43,6 +51,11 @@ export function TransactionsRouteContainer({
     () => customCategoriesModule ?? new CategoriesModule(),
     [customCategoriesModule]
   );
+  const budgetsModule = useMemo(
+    () => customBudgetsModule ?? new BudgetsModule(),
+    [customBudgetsModule]
+  );
+  const syncModule = customSyncModule ?? defaultSyncModule;
 
   const { viewModels: accountViewModels, isLoading: accountsLoading, refresh: refreshAccounts } = useAccounts(
     accountsModule.controller
@@ -51,6 +64,22 @@ export function TransactionsRouteContainer({
   const { categories: categoryDtos, isLoading: categoriesLoading, refresh: refreshCategories } = useCategories(
     categoriesModule.listCategoriesUseCase
   );
+
+  // Feeds TransactionDetailSheet's "Counts against" row (§9 of the
+  // visual-refresh spec: composition-layer prop, not a transactions->budgets
+  // import) and "Recorded" sync-state row.
+  const { budgets } = useBudgets(budgetsModule.listBudgetsUseCase);
+  const { viewModel: syncViewModel } = useSync(syncModule.syncController);
+
+  const budgetRemainingByCategoryId = useMemo(() => {
+    const map: Record<string, number> = {};
+    budgets.forEach((b) => {
+      if (b.categoryId && !b.isOverall && !b.isArchived && b.remainingAmount !== undefined) {
+        map[b.categoryId] = b.remainingAmount;
+      }
+    });
+    return map;
+  }, [budgets]);
 
   // Default to first active account if available
   const activeAccountId = accountViewModels.find((a) => !a.isArchived)?.id || accountViewModels[0]?.id || '';
@@ -152,6 +181,8 @@ export function TransactionsRouteContainer({
       transactions={transactions}
       accounts={accounts}
       categories={categories}
+      budgetRemainingByCategoryId={budgetRemainingByCategoryId}
+      isFullySynced={(syncViewModel?.pendingCount ?? 0) === 0}
       isLoading={isInitialLoading}
       error={transactionsError?.message || null}
       onRefresh={handleRefresh}
