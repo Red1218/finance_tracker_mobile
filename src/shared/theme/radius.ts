@@ -3,6 +3,5 @@ export const radius = {
   small: 4,
   medium: 8,
   large: 12,
-  extraLarge: 24,
   pill: 9999,
 } as const;
