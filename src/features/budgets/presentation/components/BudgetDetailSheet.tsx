@@ -1,10 +1,8 @@
 import React from 'react';
 import { View, Text, Modal, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
-import { useTheme, withAlpha } from '../../../../shared/theme';
-import { Icon } from '../../../../shared/components';
+import { useTheme } from '../../../../shared/theme';
 import { BudgetViewModel } from '../models/BudgetViewModel';
 import { BudgetProgressBar } from './BudgetProgressBar';
-import { BudgetStatusBadge } from './BudgetStatusBadge';
 
 export interface BudgetDetailSheetProps {
   visible: boolean;
@@ -32,6 +30,10 @@ export function BudgetDetailSheet({
   const percentageUsed = budget.percentageUsed ?? (budget.amount > 0 ? (spentAmount / budget.amount) * 100 : 0);
   const healthStatus = budget.healthStatus ?? 'ON_TRACK';
 
+  const statusColor =
+    healthStatus === 'OVER_BUDGET' ? colors.error : healthStatus === 'NEAR_LIMIT' ? colors.warning : colors.success;
+  const statusLabel = healthStatus === 'OVER_BUDGET' ? 'Over budget' : healthStatus === 'NEAR_LIMIT' ? 'At risk' : 'On track';
+
   const startDateFormatted = new Date(budget.startDate).toLocaleDateString('en-IN', {
     day: 'numeric',
     month: 'short',
@@ -46,7 +48,6 @@ export function BudgetDetailSheet({
   const now = new Date();
   const endDate = new Date(budget.endDate);
   const daysRemaining = Math.max(1, Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
-  const dailyRecommended = remainingAmount > 0 ? remainingAmount / daysRemaining : 0;
 
   return (
     <Modal
@@ -70,87 +71,81 @@ export function BudgetDetailSheet({
                   {budget.periodKind} ({startDateFormatted} – {endDateFormatted})
                 </Text>
               </View>
-              <BudgetStatusBadge status={healthStatus} />
+              <Text style={[styles.statusText, { color: statusColor, fontSize: typography.body.fontSize }]}>
+                {statusLabel}
+              </Text>
             </View>
 
-            {/* Progress Section */}
-            <View style={[styles.progressCard, { backgroundColor: colors.surfaceSecondary }]}>
+            {/* Progress Section - "left" is the hero, matching Home's ring
+                (§6.1: "Left is the question a budget answers; utilized
+                makes the reader do the subtraction") */}
+            <View style={styles.progressSection}>
               <View style={styles.progressRow}>
-                <Text style={[styles.spentValue, { color: colors.textPrimary, fontSize: typography.heading.fontSize, fontVariant: ['tabular-nums'] }]}>
-                  ₹{spentAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                <Text
+                  style={[
+                    styles.heroValue,
+                    { color: colors.textPrimary, fontSize: typography.numericLarge.fontSize, fontVariant: ['tabular-nums'] },
+                  ]}
+                >
+                  ₹{Math.abs(remainingAmount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                  <Text style={[styles.heroSuffix, { color: colors.textSecondary, fontSize: typography.body.fontSize }]}>
+                    {' '}
+                    {remainingAmount >= 0 ? 'left' : 'over'}
+                  </Text>
                 </Text>
-                <Text style={[styles.limitValue, { color: colors.textSecondary, fontSize: typography.body.fontSize }]}>
-                  of ₹{budget.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                <Text
+                  style={[
+                    styles.percentageValue,
+                    { color: statusColor, fontSize: typography.title.fontSize, fontVariant: ['tabular-nums'] },
+                  ]}
+                >
+                  {percentageUsed.toFixed(0)}%
                 </Text>
               </View>
 
               <BudgetProgressBar percentage={percentageUsed} status={healthStatus} />
 
               <View style={styles.progressFooter}>
-                <Text style={[styles.percentageText, { color: colors.textSecondary, fontSize: typography.caption.fontSize }]}>
-                  {percentageUsed.toFixed(1)}% Used
+                <Text style={[styles.footerText, { color: colors.textSecondary, fontSize: typography.caption.fontSize }]}>
+                  ₹{spentAmount.toLocaleString('en-IN', { minimumFractionDigits: 0 })} of ₹
+                  {budget.amount.toLocaleString('en-IN', { minimumFractionDigits: 0 })} spent
                 </Text>
-                <Text
-                  style={[
-                    styles.remainingText,
-                    {
-                      color: remainingAmount >= 0 ? colors.success : colors.error,
-                      fontSize: typography.caption.fontSize,
-                      fontVariant: ['tabular-nums'],
-                    },
-                  ]}
-                >
-                  {remainingAmount >= 0
-                    ? `₹${remainingAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })} Left`
-                    : `₹${Math.abs(remainingAmount).toLocaleString('en-IN', { minimumFractionDigits: 2 })} Over Limit`}
+                <Text style={[styles.footerText, { color: colors.textSecondary, fontSize: typography.caption.fontSize }]}>
+                  {daysRemaining} days left
                 </Text>
               </View>
             </View>
 
-            {/* Metrics Breakdown */}
-            <View style={styles.metricsGrid}>
-              <View style={[styles.metricTile, { backgroundColor: colors.surfaceSecondary }]}>
-                <Text style={[styles.metricLabel, { color: colors.textSecondary, fontSize: typography.caption.fontSize }]}>
-                  Daily Allowance
-                </Text>
-                <Text style={[styles.metricValue, { color: colors.textPrimary, fontSize: typography.title.fontSize, fontVariant: ['tabular-nums'] }]}>
-                  ₹{dailyRecommended.toFixed(0)}/day
-                </Text>
-              </View>
-              <View style={[styles.metricTile, { backgroundColor: colors.surfaceSecondary }]}>
-                <Text style={[styles.metricLabel, { color: colors.textSecondary, fontSize: typography.caption.fontSize }]}>
-                  Days Remaining
-                </Text>
-                <Text style={[styles.metricValue, { color: colors.textPrimary, fontSize: typography.title.fontSize }]}>
-                  {daysRemaining} days
-                </Text>
-              </View>
-            </View>
-
-            {/* Actions */}
+            {/* Actions - both outlined, neither filled: Edit is the primary
+                action (accent outline), Archive is not destructive (fixes
+                #10) so it carries no red/warning treatment at all. */}
             <View style={styles.actionsContainer}>
               <TouchableOpacity
                 onPress={() => onEdit(budget)}
-                style={[styles.primaryActionBtn, { backgroundColor: colors.brandPrimary }]}
+                style={[styles.outlineBtn, { borderColor: colors.brandPrimary }]}
                 accessibilityRole="button"
                 accessibilityLabel="Edit budget limit"
               >
-                <Icon name="Pencil" size={18} color="#FFFFFF" />
-                <Text style={[styles.primaryActionText, { fontSize: typography.body.fontSize }]}>Edit Budget Limit</Text>
+                <Text style={[styles.outlineBtnText, { color: colors.brandPrimary, fontSize: typography.body.fontSize }]}>
+                  Edit amount
+                </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 onPress={() => onArchive(budget)}
-                style={[styles.secondaryActionBtn, { backgroundColor: withAlpha(colors.error, 0.15) }]}
+                style={[styles.outlineBtn, { borderColor: colors.borderSubtle }]}
                 accessibilityRole="button"
                 accessibilityLabel="Archive budget"
               >
-                <Icon name="Trash" size={18} color={colors.error} />
-                <Text style={[styles.secondaryActionText, { color: colors.error, fontSize: typography.body.fontSize }]}>
-                  Archive Budget
+                <Text style={[styles.outlineBtnText, { color: colors.textPrimary, fontSize: typography.body.fontSize }]}>
+                  Archive
                 </Text>
               </TouchableOpacity>
             </View>
+
+            <Text style={[styles.consequenceCaption, { color: colors.textMuted, fontSize: typography.caption.fontSize }]}>
+              Archiving hides this budget but keeps it in reporting history.
+            </Text>
           </ScrollView>
 
           {/* Close button */}
@@ -210,73 +205,52 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   periodText: {},
-  progressCard: {
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 16,
+  statusText: {
+    fontWeight: '700',
+  },
+  progressSection: {
+    marginBottom: 20,
   },
   progressRow: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'baseline',
-    gap: 8,
     marginBottom: 12,
   },
-  spentValue: {
+  heroValue: {
+    fontWeight: '400',
+  },
+  heroSuffix: {
+    fontWeight: '400',
+  },
+  percentageValue: {
     fontWeight: '700',
   },
-  limitValue: {},
   progressFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: 10,
   },
-  percentageText: {},
-  remainingText: {
-    fontWeight: '700',
-  },
-  metricsGrid: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 20,
-  },
-  metricTile: {
-    flex: 1,
-    padding: 14,
-    borderRadius: 12,
-  },
-  metricLabel: {
-    marginBottom: 4,
-  },
-  metricValue: {
-    fontWeight: '700',
-  },
+  footerText: {},
   actionsContainer: {
+    flexDirection: 'row',
     gap: 10,
-    marginBottom: 10,
+    marginBottom: 12,
   },
-  primaryActionBtn: {
-    flexDirection: 'row',
+  outlineBtn: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
     paddingVertical: 14,
     borderRadius: 12,
+    borderWidth: 1,
   },
-  primaryActionText: {
-    color: '#FFFFFF',
+  outlineBtnText: {
     fontWeight: '600',
   },
-  secondaryActionBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 14,
-    borderRadius: 12,
-  },
-  secondaryActionText: {
-    fontWeight: '600',
+  consequenceCaption: {
+    textAlign: 'center',
   },
   closeButton: {
     paddingVertical: 16,
