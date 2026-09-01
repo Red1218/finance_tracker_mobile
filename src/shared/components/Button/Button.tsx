@@ -7,7 +7,7 @@ export function Button({ variant = 'primary', loading, disabled, title, style, o
   const { colors, spacing, radius, typography } = useTheme();
   const [isFocused, setIsFocused] = useState(false);
 
-  const variantStyles: Record<ButtonVariant, { backgroundColor: string; textColor: string }> = {
+  const variantStyles: Record<ButtonVariant, { backgroundColor: string; textColor: string; borderColor?: string }> = {
     primary: {
       backgroundColor: colors.brandPrimary,
       textColor: '#FFFFFF',
@@ -20,12 +20,21 @@ export function Button({ variant = 'primary', loading, disabled, title, style, o
       backgroundColor: colors.error,
       textColor: '#FFFFFF',
     },
+    // "Primary-as-outline" convention: border only, no fill. Used where a
+    // filled accent button would be too heavy (e.g. sign-in's single
+    // primary action on an otherwise cardless screen).
+    outline: {
+      backgroundColor: 'transparent',
+      textColor: colors.brandPrimary,
+      borderColor: colors.brandPrimary,
+    },
   };
 
   const currentVariant = variantStyles[variant] || variantStyles.primary;
 
-  const backgroundColor = disabled ? colors.disabled : currentVariant.backgroundColor;
+  const backgroundColor = disabled ? (variant === 'outline' ? 'transparent' : colors.disabled) : currentVariant.backgroundColor;
   const textColor = disabled ? colors.textMuted : currentVariant.textColor;
+  const borderColor = disabled ? (currentVariant.borderColor ? colors.borderSubtle : undefined) : currentVariant.borderColor;
 
   const containerStyle: ViewStyle = {
     backgroundColor,
@@ -36,6 +45,7 @@ export function Button({ variant = 'primary', loading, disabled, title, style, o
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
+    ...(borderColor ? { borderWidth: 1, borderColor } : null),
     ...(isFocused
       ? {
           outlineWidth: 2,
