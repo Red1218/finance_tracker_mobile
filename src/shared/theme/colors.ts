@@ -3,6 +3,11 @@ export interface ColorTokens {
   backgroundSecondary: string;
   surfacePrimary: string;
   surfaceElevated: string;
+  // Three-step neutral ramp (docs §4) — surfaceElevated is the "surfaces"
+  // step; these two are the "hairlines" and "icon badges" steps. Not yet
+  // consumed anywhere; components adopt them in later, per-screen sessions.
+  surfaceElevatedHairline: string;
+  surfaceElevatedBadge: string;
   surfaceSecondary: string;
   brandPrimary: string;
   brandPrimaryPressed: string;
@@ -25,7 +30,12 @@ export const darkColors: ColorTokens = Object.freeze({
   backgroundPrimary: '#0F172A',
   backgroundSecondary: '#0A0A0A',
   surfacePrimary: '#1E293B',
-  surfaceElevated: '#334155',
+  // "surfaces" step of the three-step neutral ramp (docs §4).
+  surfaceElevated: 'rgba(255, 255, 255, 0.045)',
+  // "hairlines" step — ring/donut track fills.
+  surfaceElevatedHairline: 'rgba(255, 255, 255, 0.07)',
+  // "icon badges" step — small icon/avatar/status badge fills.
+  surfaceElevatedBadge: 'rgba(255, 255, 255, 0.05)',
   surfaceSecondary: '#18181B',
   // oklch(0.66 0.095 290) — spec's own approximation (docs §4).
   brandPrimary: '#9184D9',
@@ -57,7 +67,12 @@ export const lightColors: ColorTokens = Object.freeze({
   backgroundPrimary: '#F8FAFC',
   backgroundSecondary: '#F1F5F9',
   surfacePrimary: '#FFFFFF',
+  // Placeholder — §11 lists "final light-mode ramp steps" as an open design
+  // decision. Left equal to today's flat surfaceElevated so light mode is
+  // visually unchanged until that decision lands, rather than guessing.
   surfaceElevated: '#FFFFFF',
+  surfaceElevatedHairline: '#FFFFFF',
+  surfaceElevatedBadge: '#FFFFFF',
   surfaceSecondary: '#F1F5F9',
   // oklch(0.52 0.13 290) — spec's own approximation (docs §4). Darkened from
   // the dark-theme accent: the dark-ground value only manages 3.1:1 on white.
