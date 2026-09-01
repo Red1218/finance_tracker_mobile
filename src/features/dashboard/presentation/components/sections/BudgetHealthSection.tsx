@@ -78,8 +78,8 @@ export function BudgetHealthSection({ viewModel, onRetry, onNavigateToBudgets }:
             const spent = budget.amountConsumed;
             const limit = budget.budgetLimit;
             const percentage = Math.min(Math.max(Math.round(budget.consumptionRatio), 0), 100);
-            const isWarning = percentage >= 80 || budget.statusLabel === 'AtRisk' || budget.statusLabel === 'OverBudget';
-            const statusType = budget.statusLabel === 'OverBudget' ? 'error' : isWarning ? 'warning' : 'success';
+            const statusType =
+              budget.statusLabel === 'OverBudget' ? 'error' : budget.statusLabel === 'AtRisk' ? 'warning' : 'success';
 
             return (
               <View
@@ -113,7 +113,11 @@ export function BudgetHealthSection({ viewModel, onRetry, onNavigateToBudgets }:
                   <View
                     style={[
                       styles.barFill,
-                      { width: `${percentage}%`, backgroundColor: isWarning ? colors.error : colors.success },
+                      {
+                        width: `${percentage}%`,
+                        backgroundColor:
+                          statusType === 'error' ? colors.error : statusType === 'warning' ? colors.warning : colors.success,
+                      },
                     ]}
                   />
                 </View>
