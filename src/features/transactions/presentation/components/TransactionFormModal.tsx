@@ -167,7 +167,11 @@ export function TransactionFormModal({
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.modalOverlay}
       >
-        <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={handleClose} />
+        <TouchableOpacity
+          style={[styles.backdrop, { backgroundColor: colors.overlay }]}
+          activeOpacity={1}
+          onPress={handleClose}
+        />
 
         <View style={[styles.modalContent, { backgroundColor: colors.surfacePrimary, borderColor: colors.border }]}>
           <View style={[styles.handleBar, { backgroundColor: colors.borderSubtle }]} />
@@ -489,7 +493,6 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
   },
   modalContent: {
     borderTopLeftRadius: 24,
