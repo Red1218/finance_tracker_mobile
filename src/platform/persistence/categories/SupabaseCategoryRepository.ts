@@ -58,7 +58,7 @@ export class SupabaseCategoryRepository extends BaseRepository implements ICateg
       }
 
       if (kind) {
-        query = query.eq('kind', kind === CategoryKind.Income ? 'income' : 'expense');
+        query = query.eq('kind', kind === CategoryKind.Income ? CategoryKind.Income : CategoryKind.Expense);
       }
       
       const { data, error } = await query;
@@ -165,7 +165,7 @@ export class SupabaseCategoryRepository extends BaseRepository implements ICateg
         .from(SupabaseCategoryRepository.TABLE)
         .select('id', { count: 'exact', head: true })
         .ilike('name', name.trim())
-        .eq('kind', kind === CategoryKind.Income ? 'income' : 'expense')
+        .eq('kind', kind === CategoryKind.Income ? CategoryKind.Income : CategoryKind.Expense)
         .is('archived_at', null);
 
       if (excludeCategoryId) {
