@@ -37,14 +37,14 @@ export function TransactionRow({ transaction, onPress }: TransactionRowProps) {
 
   return (
     <TouchableOpacity
-      style={[styles.container, { backgroundColor: colors.surfacePrimary, borderColor: colors.border }]}
+      style={[styles.container, { borderBottomColor: colors.divider }]}
       onPress={() => onPress?.(transaction)}
       disabled={!onPress}
       activeOpacity={0.7}
       accessibilityRole="button"
       accessibilityLabel={`${transaction.description || 'Transaction'}, ${transaction.formattedAmount}`}
     >
-      <View style={[styles.iconContainer, { backgroundColor: colors.surfaceSecondary }]}>
+      <View style={[styles.iconContainer, { backgroundColor: colors.surfaceElevatedBadge }]}>
         <Icon name={iconName} size={20} color={iconColor} />
       </View>
 
@@ -80,10 +80,9 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    minHeight: 64,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    minHeight: 56,
   },
   iconContainer: {
     width: 40,
