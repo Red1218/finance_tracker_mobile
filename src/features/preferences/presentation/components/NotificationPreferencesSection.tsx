@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Switch, TouchableOpacity } from 'react-native';
 import { useTheme } from '../../../../shared/theme';
-import { Card } from '../../../../shared/components/Card';
 import { Icon } from '../../../../shared/components/Icon';
 import { PermissionStatus } from '../../application/ports/INotificationPermissionPort';
 
@@ -32,16 +31,16 @@ export function NotificationPreferencesSection({
   onRequestPermission,
   onOpenSystemSettings,
 }: NotificationPreferencesSectionProps) {
-  const { colors, typography } = useTheme();
+  const { colors, spacing, typography } = useTheme();
 
   return (
-    <Card variant="elevated" style={styles.cardContainer}>
-      <View style={styles.headerRow}>
-        <Icon name="Bell" size="md" color={colors.brandPrimary} />
-        <Text style={[styles.sectionTitle, { color: colors.textPrimary, fontSize: typography.heading.fontSize }]} accessibilityRole="header">
-          Notifications & Alerts
-        </Text>
-      </View>
+    <View style={[styles.cardContainer, { paddingVertical: spacing.space16, borderBottomWidth: 1, borderBottomColor: colors.divider }]}>
+      <Text
+        style={[styles.groupLabel, { color: colors.textSecondary, marginBottom: spacing.space16 }]}
+        accessibilityRole="header"
+      >
+        Notifications & Alerts
+      </Text>
 
       {viewModel.permissionState === 'DENIED' && (
         <View style={[styles.warningCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.warning }]}>
@@ -155,23 +154,17 @@ export function NotificationPreferencesSection({
           accessibilityRole="switch"
         />
       </View>
-    </Card>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  cardContainer: {
-    padding: 16,
-    marginBottom: 12,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-    gap: 8,
-  },
-  sectionTitle: {
+  cardContainer: {},
+  groupLabel: {
+    fontSize: 12,
     fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
   },
   warningCard: {
     flexDirection: 'row',

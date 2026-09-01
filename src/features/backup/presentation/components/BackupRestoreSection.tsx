@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '../../../../shared/theme';
-import { Card } from '../../../../shared/components/Card';
 import { Icon } from '../../../../shared/components/Icon';
 
 export interface BackupRestoreSectionProps {
@@ -17,13 +16,12 @@ export function BackupRestoreSection({
   isExporting = false,
   isRestoring = false,
 }: BackupRestoreSectionProps) {
-  const { colors, typography } = useTheme();
+  const { colors, spacing, typography } = useTheme();
 
   return (
-    <Card variant="elevated" style={styles.cardContainer}>
+    <View style={[styles.cardContainer, { paddingVertical: spacing.space16, borderBottomWidth: 1, borderBottomColor: colors.divider }]}>
       <View style={styles.headerRow}>
-        <Icon name="Database" size="md" color={colors.brandPrimary} />
-        <Text style={[styles.sectionTitle, { color: colors.textPrimary, fontSize: typography.heading.fontSize }]} accessibilityRole="header">
+        <Text style={[styles.groupLabel, { color: colors.textSecondary }]} accessibilityRole="header">
           Data & Backup
         </Text>
         <View style={[styles.badge, { backgroundColor: colors.borderSubtle }]}>
@@ -63,23 +61,23 @@ export function BackupRestoreSection({
           </Text>
         </TouchableOpacity>
       </View>
-    </Card>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  cardContainer: {
-    padding: 16,
-    marginBottom: 12,
-  },
+  cardContainer: {},
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 8,
     gap: 8,
   },
-  sectionTitle: {
+  groupLabel: {
+    fontSize: 12,
     fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
   },
   badge: {
     paddingHorizontal: 8,

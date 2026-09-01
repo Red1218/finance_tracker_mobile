@@ -1,5 +1,10 @@
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
+
+vi.mock('expo-router', () => ({
+  useRouter: () => ({ back: vi.fn(), push: vi.fn() }),
+}));
+
 import { SettingsScreen } from '../SettingsScreen';
 import { SyncModule } from '../../../../sync/composition/SyncModule';
 import { PreferencesModule } from '../../../composition/PreferencesModule';

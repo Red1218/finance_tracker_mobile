@@ -25,8 +25,8 @@ export function DefaultsSection({
   const incomeCategories = categories.filter((c) => c.kind === CategoryKind.Income && !c.isArchived);
 
   return (
-    <View style={[styles.sectionCard, { backgroundColor: colors.surfacePrimary, borderRadius: radius.medium, padding: spacing.space16, marginBottom: spacing.space16 }]}>
-      <Text style={[{ color: colors.textPrimary, marginBottom: spacing.space16 }, typography.title]}>
+    <View style={[styles.sectionCard, { paddingVertical: spacing.space16, borderBottomWidth: 1, borderBottomColor: colors.divider }]}>
+      <Text style={[styles.groupLabel, { color: colors.textSecondary, marginBottom: spacing.space16 }]}>
         Defaults
       </Text>
 
@@ -135,6 +135,12 @@ export function DefaultsSection({
 
 const styles = StyleSheet.create({
   sectionCard: {},
+  groupLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
   chipRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',

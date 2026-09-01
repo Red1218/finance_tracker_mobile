@@ -20,8 +20,8 @@ export function FinanceSection({
   const { colors, spacing, typography, radius } = useTheme();
 
   return (
-    <View style={[styles.sectionCard, { backgroundColor: colors.surfacePrimary, borderRadius: radius.medium, padding: spacing.space16, marginBottom: spacing.space16 }]}>
-      <Text style={[{ color: colors.textPrimary, marginBottom: spacing.space16 }, typography.title]}>
+    <View style={[styles.sectionCard, { paddingVertical: spacing.space16, borderBottomWidth: 1, borderBottomColor: colors.divider }]}>
+      <Text style={[styles.groupLabel, { color: colors.textSecondary, marginBottom: spacing.space16 }]}>
         Finance
       </Text>
 
@@ -106,6 +106,12 @@ export function FinanceSection({
 
 const styles = StyleSheet.create({
   sectionCard: {},
+  groupLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',

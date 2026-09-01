@@ -14,23 +14,20 @@ export function AccountSecuritySection({
   onSignOut,
   disabled,
 }: AccountSecuritySectionProps) {
-  const { colors, spacing, typography, radius } = useTheme();
+  const { colors, spacing, typography } = useTheme();
 
   return (
     <View
       style={[
         styles.sectionCard,
         {
-          backgroundColor: colors.surfacePrimary,
-          borderRadius: radius.medium,
-          padding: spacing.space16,
-          marginBottom: spacing.space16,
-          borderColor: colors.borderSubtle,
-          borderWidth: 1,
+          paddingVertical: spacing.space16,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.divider,
         },
       ]}
     >
-      <Text style={[{ color: colors.textPrimary, marginBottom: spacing.space12 }, typography.title]}>
+      <Text style={[styles.groupLabel, { color: colors.textSecondary, marginBottom: spacing.space12 }]}>
         Account & Security
       </Text>
 
@@ -58,4 +55,10 @@ export function AccountSecuritySection({
 
 const styles = StyleSheet.create({
   sectionCard: {},
+  groupLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
 });

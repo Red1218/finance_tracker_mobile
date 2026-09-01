@@ -14,8 +14,8 @@ export function AppearanceSection({ viewModel, onThemeChange, disabled }: Appear
   const { colors, spacing, typography, radius } = useTheme();
 
   return (
-    <View style={[styles.sectionCard, { backgroundColor: colors.surfacePrimary, borderRadius: radius.medium, padding: spacing.space16, marginBottom: spacing.space16 }]}>
-      <Text style={[{ color: colors.textPrimary, marginBottom: spacing.space12 }, typography.title]}>
+    <View style={[styles.sectionCard, { paddingVertical: spacing.space16, borderBottomWidth: 1, borderBottomColor: colors.divider }]}>
+      <Text style={[styles.groupLabel, { color: colors.textSecondary, marginBottom: spacing.space12 }]}>
         Appearance
       </Text>
 
@@ -53,6 +53,12 @@ export function AppearanceSection({ viewModel, onThemeChange, disabled }: Appear
 
 const styles = StyleSheet.create({
   sectionCard: {},
+  groupLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
   segmentedContainer: {
     flexDirection: 'row',
     padding: 4,
