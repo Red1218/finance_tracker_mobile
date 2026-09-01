@@ -1,6 +1,6 @@
 import { TouchableOpacityProps } from 'react-native';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'destructive';
+export type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'outline';
 
 export interface ButtonProps extends TouchableOpacityProps {
   variant?: ButtonVariant;
